@@ -1,0 +1,47 @@
+from pydantic import field_validator
+from pydantic_settings import BaseSettings
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+class Settings(BaseSettings):
+    # Arcade
+    arcade_gateway_url: str = "https://mcp.arcade.dev/sse"
+
+    # LLM
+    openai_api_key: str = ""
+    anthropic_api_key: str = ""
+
+    # App
+    app_url: str = "http://localhost:8765"
+    app_secret_key: str = "change-me-to-a-random-string"
+
+    # Database
+    database_url: str = "sqlite+aiosqlite:///local.db"
+
+    # Custom verifier (optional — requires ARCADE_API_KEY)
+    arcade_custom_verifier: bool = False
+    arcade_api_key: str = ""
+
+    @field_validator("openai_api_key", "anthropic_api_key", "arcade_api_key", mode="before")
+    @classmethod
+    def strip_env_comments(cls, v: str) -> str:
+        """Strip inline comments that python-dotenv may leave in values."""
+        v = v.strip()
+        if v.startswith("#"):
+            return ""
+        return v
+
+    @field_validator("app_url")
+    @classmethod
+    def ensure_app_url_has_scheme(cls, v: str) -> str:
+        v = v.rstrip("/")
+        if not v.startswith(("http://", "https://")):
+            v = f"http://{v}"
+        return v
+
+    model_config = {"env_file": ".env", "extra": "ignore"}
+
+
+settings = Settings()

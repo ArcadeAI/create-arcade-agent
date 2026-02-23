@@ -1,0 +1,63 @@
+{
+  "name": "langchain",
+  "displayName": "LangChain (Python)",
+  "hint": "FastAPI + LangGraph + Jinja2",
+  "language": "python",
+  "devCommand": "uvicorn app.main:app --host localhost --port 8765",
+  "port": 8765,
+  "sharedFiles": {
+    "system-prompt.md": "app/system-prompt.md"
+  },
+  "dotfileRenames": {
+    "_gitignore": ".gitignore",
+    "_env.example": ".env.example"
+  },
+  "placeholders": {
+    "pyproject.toml": {
+      "field": "name",
+      "format": "toml"
+    }
+  },
+  "install": [
+    {
+      "cmd": "python3",
+      "args": [
+        "-m",
+        "venv",
+        ".venv"
+      ],
+      "label": "Creating virtual environment"
+    },
+    {
+      "cmd": ".venv/bin/pip",
+      "args": [
+        "install",
+        "--upgrade",
+        "pip"
+      ],
+      "label": "Upgrading pip",
+      "winCmd": ".venv\\Scripts\\pip"
+    },
+    {
+      "cmd": ".venv/bin/pip",
+      "args": [
+        "install",
+        "-r",
+        "requirements.txt"
+      ],
+      "label": "Installing dependencies",
+      "winCmd": ".venv\\Scripts\\pip"
+    }
+  ],
+  "migrate": [
+    {
+      "cmd": ".venv/bin/alembic",
+      "args": [
+        "upgrade",
+        "head"
+      ],
+      "label": "Running migrations",
+      "winCmd": ".venv\\Scripts\\alembic"
+    }
+  ]
+}

@@ -4,3 +4,4 @@ dist/
 .env
 .env.local
 .next/
+__pycache__/

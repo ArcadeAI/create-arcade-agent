@@ -1,0 +1,34 @@
+"use client"
+
+import { Inbox, Loader2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+
+interface EmptyStateProps {
+  onPlan: () => void
+  loading: boolean
+}
+
+export function EmptyState({ onPlan, loading }: EmptyStateProps) {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8">
+      <Inbox size={48} className="text-muted-foreground/50" />
+      <div className="flex flex-col items-center gap-2">
+        <h2 className="text-2xl font-semibold">Ready to triage?</h2>
+        <p className="max-w-md text-center text-muted-foreground">
+          Your agent will scan Slack, prioritize your messages, and build your
+          action plan.
+        </p>
+      </div>
+      <Button size="lg" disabled={loading} onClick={onPlan}>
+        {loading ? (
+          <>
+            <Loader2 className="animate-spin" />
+            Planning...
+          </>
+        ) : (
+          "Plan my day"
+        )}
+      </Button>
+    </div>
+  )
+}

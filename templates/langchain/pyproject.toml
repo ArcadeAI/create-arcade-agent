@@ -1,0 +1,5 @@
+[project]
+name = "arcade-agent"
+version = "0.1.0"
+description = "AI agent powered by LangGraph + Arcade"
+requires-python = ">=3.10"

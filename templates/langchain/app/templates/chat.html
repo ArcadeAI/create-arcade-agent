@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Chat - Arcade Agent{% endblock %}
+{% block content %}
+<div class="flex flex-col h-screen bg-gray-50">
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-200 flex-shrink-0">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+      <h1 class="text-lg font-semibold">Arcade Agent</h1>
+      <button id="logout-btn" class="text-sm text-gray-500 hover:text-gray-900">Logout</button>
+    </div>
+  </header>
+
+  <main class="flex-1 overflow-hidden flex flex-col max-w-4xl mx-auto w-full px-4">
+    <!-- Connection gate -->
+    <div id="gate" class="flex-1 flex items-center justify-center">
+      <div id="gate-checking" class="text-center">
+        <div class="animate-spin h-8 w-8 border-4 border-gray-300 border-t-gray-900 rounded-full mx-auto mb-4"></div>
+        <p class="text-gray-500 text-sm">Connecting to Arcade...</p>
+      </div>
+      <div id="gate-auth" class="hidden bg-white border border-gray-200 rounded-lg shadow-sm p-8 max-w-md text-center">
+        <div class="text-4xl mb-4">&#128272;</div>
+        <h2 class="text-lg font-semibold mb-2">Connect to Arcade</h2>
+        <p class="text-gray-600 text-sm mb-6">Sign in with your Arcade account to give the agent access to your tools. This opens in a new tab.</p>
+        <a id="gate-auth-link" href="#" target="_blank" rel="noopener noreferrer"
+           class="inline-block px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 text-sm transition-colors mb-3">
+          Sign in with Arcade
+        </a>
+        <div>
+          <button id="gate-auth-retry" class="text-sm text-gray-500 hover:text-gray-900 underline">
+            I've already signed in &mdash; retry
+          </button>
+        </div>
+      </div>
+      <div id="gate-error" class="hidden bg-white border border-red-200 rounded-lg shadow-sm p-8 max-w-md text-center">
+        <div class="text-4xl mb-4">&#9888;&#65039;</div>
+        <h2 class="text-lg font-semibold mb-2 text-red-700">Connection Failed</h2>
+        <p id="gate-error-msg" class="text-gray-600 text-sm mb-4"></p>
+        <button onclick="retryArcadeConnection()" class="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 text-sm">Retry</button>
+      </div>
+    </div>
+
+    <!-- Chat area (hidden until connected) -->
+    <div id="chat-area" class="hidden flex-1 overflow-hidden flex flex-col">
+      <div id="messages" class="flex-1 overflow-y-auto py-6 space-y-4">
+        <p id="empty-state" class="text-center text-gray-400 py-12">Ask the agent to triage your Slack inbox.</p>
+      </div>
+
+      <div class="flex-shrink-0 border-t border-gray-200 bg-white p-3">
+        <form id="chat-form" class="flex gap-2">
+          <textarea id="chat-input" placeholder="Ask the agent..."
+                    class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 resize-none text-sm"
+                    rows="2"></textarea>
+          <button type="submit" id="send-btn"
+                  class="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 disabled:bg-gray-400 transition-colors self-end text-sm">
+            Send
+          </button>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/chat.js"></script>
+{% endblock %}

@@ -1,0 +1,49 @@
+{
+  "name": "mastra",
+  "displayName": "Mastra (TypeScript)",
+  "hint": "Next.js + Mastra + React",
+  "language": "typescript",
+  "devCommand": "npm run dev",
+  "port": 3000,
+  "sharedFiles": {
+    "system-prompt.md": "src/mastra/agents/system-prompt.md",
+    "nextjs-ui": ""
+  },
+  "dotfileRenames": {
+    "_gitignore": ".gitignore",
+    "_env.example": ".env.example"
+  },
+  "placeholders": {
+    "package.json": {
+      "field": "name",
+      "format": "json"
+    }
+  },
+  "install": [
+    {
+      "cmd": "npm",
+      "args": [
+        "install"
+      ],
+      "label": "Installing dependencies"
+    }
+  ],
+  "migrate": [
+    {
+      "cmd": "npx",
+      "args": [
+        "drizzle-kit",
+        "generate"
+      ],
+      "label": "Generating migrations"
+    },
+    {
+      "cmd": "npx",
+      "args": [
+        "drizzle-kit",
+        "migrate"
+      ],
+      "label": "Running migrations"
+    }
+  ]
+}

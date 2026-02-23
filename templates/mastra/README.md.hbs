@@ -1,0 +1,91 @@
+# {{projectName}}
+
+A reference AI agent template that ships with a working Slack triage use case. Built with [Mastra](https://mastra.ai), [Next.js](https://nextjs.org), and [Arcade](https://arcade.dev).
+
+The agent connects to Arcade's MCP Gateway to call Slack tools (and any other tools you configure), with automatic OAuth handling and streaming responses.
+
+## Prerequisites
+
+- Node.js 18+
+- [Arcade account](https://app.arcade.dev) + MCP Gateway URL
+- [OpenAI API key](https://platform.openai.com) or [Anthropic API key](https://console.anthropic.com)
+
+## Quick Start
+
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+2. **Configure environment:**
+   ```bash
+   cp .env.example .env
+   ```
+   Fill in your `ARCADE_GATEWAY_URL` and at least one LLM API key in `.env`.
+
+3. **Set up the database:**
+   ```bash
+   npx drizzle-kit generate
+   npx drizzle-kit migrate
+   ```
+
+4. **Start the dev server:**
+   ```bash
+   npm run dev
+   ```
+
+5. **Open [http://localhost:3000](http://localhost:3000)**, register an account, and start chatting.
+
+When the agent first tries to use an Arcade tool, you'll be prompted to authenticate with Arcade via OAuth in your browser. After authorizing, click "Continue After Authorization" in the chat to retry.
+
+{{> customization.md}}
+
+## Project Structure
+
+```
+├── app/
+│   ├── page.tsx                    # Login/register page
+│   ├── layout.tsx                  # Root layout
+│   ├── globals.css                 # Tailwind + CSS vars
+│   ├── chat/
+│   │   └── page.tsx                # Chat interface
+│   └── api/
+│       ├── chat/route.ts           # Agent streaming endpoint
+│       └── auth/
+│           ├── arcade/
+│           │   ├── callback/route.ts  # Arcade OAuth callback
+│           │   ├── connect/route.ts   # Pre-flight connection check
+│           │   └── verify/route.ts    # Custom user verifier (optional)
+│           ├── login/route.ts      # Login endpoint
+│           ├── register/route.ts   # Registration endpoint
+│           └── logout/route.ts     # Logout endpoint
+├── src/mastra/
+│   ├── index.ts                    # Mastra instance
+│   ├── agents/
+│   │   ├── triage-agent.ts         # Agent definition (customization point)
+│   │   └── system-prompt.md        # System prompt (customization point)
+│   └── tools/
+│       └── arcade.ts               # MCP Gateway connection + OAuth provider
+├── lib/
+│   ├── auth.ts                     # Session + password helpers
+│   └── db/
+│       ├── index.ts                # Drizzle client
+│       └── schema.ts               # Database schema
+├── .env.example                    # Environment variable template
+├── drizzle.config.ts               # Drizzle Kit configuration
+└── next.config.ts                  # Next.js configuration
+```
+
+## How It Works
+
+1. **Mastra agent** (`src/mastra/agents/triage-agent.ts`) defines the AI agent with a system prompt and tools
+2. **MCPClient** (`src/mastra/tools/arcade.ts`) connects to Arcade's MCP Gateway using OAuth authentication — no API keys needed
+3. **Chat API route** (`app/api/chat/route.ts`) streams agent responses using `handleChatStream` from `@mastra/ai-sdk`
+4. **Frontend** (`app/chat/page.tsx`) renders the chat with `useChat` from `@ai-sdk/react`, including OAuth authorization URL handling
+5. **Auth layer** (`lib/auth.ts`) provides bcrypt password hashing + httpOnly cookie sessions backed by SQLite
+
+When Arcade tools require OAuth authorization (e.g., Slack access), the gateway returns an authorization URL. The agent relays it to the user, who authorizes in a new tab, then clicks "Continue After Authorization" to retry.
+
+{{> coat-security.md}}
+
+{{> env-vars-table.md}}

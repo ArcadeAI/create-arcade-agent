@@ -1,0 +1,17 @@
+/**
+ * Plan API Route — Daily Planning Agent
+ *
+ * POST /api/plan
+ *
+ * Triggers the triage agent to scan connected services (Slack, Calendar,
+ * Linear, GitHub, Gmail, etc.), classify each item, and stream back
+ * structured InboxItem data as NDJSON.
+ */
+
+import { streamText, stepCountIs } from "ai";
+import { getSession } from "@/lib/auth";
+import { getModel } from "@/src/mastra/agents/triage-agent";
+import { getArcadeMCPClient } from "@/src/mastra/tools/arcade";
+import type { InboxItem } from "@/types/inbox";
+
+{{> plan-route-body}}

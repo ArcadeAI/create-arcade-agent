@@ -1,0 +1,60 @@
+## Customization
+
+### Change the agent's purpose
+
+{{#if (eq name "mastra")}}
+Edit `src/mastra/agents/system-prompt.md` to change what the agent does (PR reviews, calendar management, email drafting, etc.). The agent definition in `src/mastra/agents/triage-agent.ts` has `// --- CUSTOMIZATION POINT ---` markers for model selection and other settings.
+{{else if (eq name "ai-sdk")}}
+Edit `lib/system-prompt.md` to change what the agent does (PR reviews, calendar management, email drafting, etc.). The agent configuration in `lib/agent.ts` has model selection you can customize.
+{{else}}
+Edit `app/system-prompt.md` to change what the agent does (PR reviews, calendar management, email drafting, etc.). The agent configuration in `app/agent.py` has `# --- CUSTOMIZATION POINT ---` markers for model selection and other settings.
+{{/if}}
+
+### Add or change Arcade tools
+
+1. Go to [app.arcade.dev/mcp-gateways](https://app.arcade.dev/mcp-gateways)
+2. Add tools to your gateway (Gmail, GitHub, Google Calendar, etc.)
+3. Update `ARCADE_GATEWAY_URL` in `.env` if needed
+
+The agent automatically discovers all tools available on your gateway.
+
+### Switch LLM provider
+
+The template auto-detects which provider to use based on which API key is set in `.env`:
+- Set `ANTHROPIC_API_KEY` → uses Claude
+- Set `OPENAI_API_KEY` → uses GPT-4o
+- If both are set, Anthropic takes priority
+
+{{#if (eq name "mastra")}}
+You can also manually configure the model in `src/mastra/agents/triage-agent.ts`.
+{{else if (eq name "ai-sdk")}}
+You can also manually configure the model in `lib/agent.ts`.
+{{else}}
+You can also manually configure the model in `app/agent.py`.
+{{/if}}
+
+### Modify the database
+
+{{#if (eq language "typescript")}}
+Edit `lib/db/schema.ts` to add tables, then regenerate migrations:
+
+```bash
+npx drizzle-kit generate
+npx drizzle-kit migrate
+```
+{{else}}
+Edit `app/models.py` to add models, then create a new migration:
+
+```bash
+alembic revision --autogenerate -m "description"
+alembic upgrade head
+```
+{{/if}}
+
+### Production considerations
+
+This template uses app-level token storage — all users share the same Arcade Gateway connection via a single `.arcade-auth/` directory. For production deployments:
+
+- **Per-user tokens**: Store OAuth tokens in the database keyed by user ID
+- **Per-session PKCE**: Associate PKCE verifiers with user sessions to prevent cross-session conflicts
+- **Token refresh**: Implement automatic token refresh per-user

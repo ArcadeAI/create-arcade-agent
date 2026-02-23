@@ -1,0 +1,35 @@
+/* Minimal additions beyond Tailwind CDN */
+.chat-messages {
+  scroll-behavior: smooth;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Tool accordion */
+summary { list-style: none; }
+summary::-webkit-details-marker { display: none; }
+details[open] .tool-chevron { transform: rotate(90deg); }

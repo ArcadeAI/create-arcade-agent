@@ -1,0 +1,29 @@
+## Production Security: Custom User Verification
+
+By default, anyone who has the Arcade authorization link can complete the OAuth flow. In production with multiple users, this opens a [COAT attack](https://www.arcade.dev/blog/arcade-proactively-addressed-coat-vulnerability-in-agentic-ai) vector — an attacker could send an auth link to a victim, and if the victim completes it, the attacker gains access to the victim's account.
+
+The **custom user verifier** solves this by confirming that the person completing the authorization is the same user who started it, using your app's session.
+
+### Setup
+
+1. **Enable in `.env`:**
+   ```
+   ARCADE_CUSTOM_VERIFIER=true
+   ARCADE_API_KEY=your-arcade-api-key   # From https://app.arcade.dev/settings
+   ```
+
+2. **Configure in Arcade Dashboard:**
+   - Go to your gateway settings at [app.arcade.dev/mcp-gateways](https://app.arcade.dev/mcp-gateways)
+   - Under **Auth > Settings**, set the custom verifier URL to:
+     ```
+{{#if (eq language "typescript")}}
+     {your-app-url}/api/auth/arcade/verify
+{{else}}
+     {your-app-url}/api/arcade/verify
+{{/if}}
+     ```
+     For local development: `http://localhost:{{port}}{{#if (eq language "typescript")}}/api/auth/arcade/verify{{else}}/api/arcade/verify{{/if}}`
+
+3. **Test it:** When a tool requires authorization, Arcade will redirect the user through your verifier endpoint. The endpoint checks the user's session, confirms their identity with Arcade, and redirects them back.
+
+For full details, see the [Arcade Secure Auth Guide](https://docs.arcade.dev/en/guides/user-facing-agents/secure-auth-production).

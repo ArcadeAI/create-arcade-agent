@@ -1,0 +1,17 @@
+## Environment Variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `ARCADE_GATEWAY_URL` | Yes | MCP Gateway URL from [app.arcade.dev/mcp-gateways](https://app.arcade.dev/mcp-gateways) |
+| `OPENAI_API_KEY` | One of these | OpenAI API key |
+| `ANTHROPIC_API_KEY` | One of these | Anthropic API key |
+{{#if (eq language "typescript")}}
+| `NEXT_PUBLIC_APP_URL` | No | App URL for OAuth callback (default: `http://localhost:{{port}}`) |
+| `DATABASE_URL` | No | SQLite file path (default: `local.db`) |
+{{else}}
+| `APP_URL` | No | App URL for verifier callback (default: `http://localhost:{{port}}`) |
+| `APP_SECRET_KEY` | No | Secret key for session security (change in production!) |
+| `DATABASE_URL` | No | SQLAlchemy async URL (default: `sqlite+aiosqlite:///local.db`) |
+{{/if}}
+| `ARCADE_CUSTOM_VERIFIER` | No | Set to `true` to enable COAT protection (see below) |
+| `ARCADE_API_KEY` | When verifier enabled | Arcade API key for user verification |
