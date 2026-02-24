@@ -1,0 +1,13 @@
+/**
+ * Sources API Route — WhoAmI Auth Check
+ *
+ * POST /api/sources
+ *
+ * Calls *_WhoAmI tools in parallel to check which services are
+ * authenticated. Returns a map of source → { status, authUrl? }.
+ */
+
+import { getSession } from "@/lib/auth";
+import { getArcadeMCPClient } from "@/src/mastra/tools/arcade";
+
+{{> sources-route-body}}

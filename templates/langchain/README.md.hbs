@@ -1,0 +1,86 @@
+# {{projectName}}
+
+A reference AI agent template that ships with a working Slack triage use case. Built with [LangGraph](https://langchain-ai.github.io/langgraph/), [FastAPI](https://fastapi.tiangolo.com), and [Arcade](https://arcade.dev).
+
+The agent connects to Arcade's MCP Gateway to call Slack tools (and any other tools you configure), with automatic OAuth handling and streaming responses.
+
+## Prerequisites
+
+- Python 3.11+
+- [Arcade account](https://app.arcade.dev) + MCP Gateway URL
+- [OpenAI API key](https://platform.openai.com) or [Anthropic API key](https://console.anthropic.com)
+
+## Quick Start
+
+1. **Activate the virtual environment:**
+   ```bash
+   source .venv/bin/activate
+   ```
+
+2. **Configure environment:**
+   ```bash
+   cp .env.example .env
+   ```
+   Fill in your `ARCADE_GATEWAY_URL` and at least one LLM API key in `.env`.
+
+3. **Set up the database** (if not already done by the CLI):
+   ```bash
+   alembic upgrade head
+   ```
+
+4. **Start the dev server:**
+   ```bash
+   uvicorn app.main:app --reload
+   ```
+
+5. **Open [http://localhost:8000](http://localhost:8000)**, register an account, and start chatting.
+
+When the agent first tries to use an Arcade tool that requires OAuth (e.g., Slack), it will return an authorization URL. Click the link to authorize in a new tab, then click "Continue After Authorization" in the chat to retry.
+
+{{> customization.md}}
+
+## Project Structure
+
+```
+├── app/
+│   ├── main.py                 # FastAPI app entry point
+│   ├── config.py               # Settings loaded from .env
+│   ├── agent.py                # LangGraph agent + model selection (customization point)
+│   ├── system-prompt.md        # System prompt (customization point)
+│   ├── arcade_oauth.py         # MCP Gateway OAuth connection
+│   ├── auth.py                 # Session + password helpers
+│   ├── database.py             # SQLAlchemy async engine
+│   ├── models.py               # User, Session models
+│   ├── routes/
+│   │   ├── auth.py             # Login, register, logout endpoints
+│   │   ├── chat.py             # Streaming chat endpoint (SSE)
+│   │   └── arcade.py           # Connection check + OAuth callback + custom verifier
+│   ├── static/
+│   │   ├── chat.js             # Chat UI logic
+│   │   └── styles.css          # Minimal custom styles
+│   └── templates/
+│       ├── base.html           # Layout with Tailwind CDN
+│       ├── login.html          # Login/register page
+│       └── chat.html           # Chat interface
+├── alembic/
+│   ├── env.py                  # Async migration config
+│   └── versions/
+│       └── 001_initial.py      # Users + sessions tables
+├── .env.example                # Environment variable template
+├── alembic.ini                 # Alembic configuration
+└── pyproject.toml              # Python project metadata
+```
+
+## How It Works
+
+1. **LangGraph agent** (`app/agent.py`) defines a ReAct agent with a system prompt and tools from Arcade
+2. **OAuth client** (`app/arcade_oauth.py`) connects to Arcade's MCP Gateway using OAuth authentication with file-based token persistence
+3. **Chat endpoint** (`app/routes/chat.py`) streams agent responses as SSE events
+4. **Frontend** (`app/templates/chat.html` + `app/static/chat.js`) renders the chat with streaming, tool calls, and auth URL handling
+5. **Auth layer** (`app/auth.py`) provides bcrypt password hashing + httpOnly cookie sessions backed by SQLite
+
+When Arcade tools require OAuth authorization (e.g., Slack access), the tool response includes an authorization URL. The chat UI displays it as a clickable link. After the user authorizes in a new tab, they click "Continue After Authorization" to retry.
+
+{{> coat-security.md}}
+
+{{> env-vars-table.md}}

@@ -1,0 +1,49 @@
+{
+  "name": "ai-sdk",
+  "displayName": "AI SDK (TypeScript)",
+  "hint": "Next.js + Vercel AI SDK + React",
+  "language": "typescript",
+  "devCommand": "npm run dev",
+  "port": 8765,
+  "sharedFiles": {
+    "system-prompt.md": "lib/system-prompt.md",
+    "nextjs-ui": ""
+  },
+  "dotfileRenames": {
+    "_gitignore": ".gitignore",
+    "_env.example": ".env.example"
+  },
+  "placeholders": {
+    "package.json": {
+      "field": "name",
+      "format": "json"
+    }
+  },
+  "install": [
+    {
+      "cmd": "npm",
+      "args": [
+        "install"
+      ],
+      "label": "Installing dependencies"
+    }
+  ],
+  "migrate": [
+    {
+      "cmd": "npx",
+      "args": [
+        "drizzle-kit",
+        "generate"
+      ],
+      "label": "Generating migrations"
+    },
+    {
+      "cmd": "npx",
+      "args": [
+        "drizzle-kit",
+        "migrate"
+      ],
+      "label": "Running migrations"
+    }
+  ]
+}
