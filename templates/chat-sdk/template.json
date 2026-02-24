@@ -1,0 +1,27 @@
+{
+  "name": "chat-sdk",
+  "displayName": "Chat SDK (TypeScript)",
+  "hint": "Multi-platform bot — Slack, Discord, Teams, GitHub",
+  "language": "typescript",
+  "devCommand": "npm run dev",
+  "port": 3000,
+  "sharedFiles": {},
+  "dotfileRenames": {
+    "_gitignore": ".gitignore",
+    "_env.example": ".env.example"
+  },
+  "placeholders": {
+    "package.json": {
+      "field": "name",
+      "format": "json"
+    }
+  },
+  "install": [
+    {
+      "cmd": "npm",
+      "args": ["install"],
+      "label": "Installing dependencies"
+    }
+  ],
+  "migrate": []
+}
