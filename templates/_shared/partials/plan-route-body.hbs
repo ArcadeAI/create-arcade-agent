@@ -270,7 +270,7 @@ export async function POST() {
           ...tool,
           execute: orig
             ? async (args: Record<string, unknown>, opts: unknown) => {
-                const result = await (orig as Function).call(null, args, opts);
+                const result = await (orig as (...a: unknown[]) => unknown).call(null, args, opts);
                 return truncateToolResult(result);
               }
             : undefined,

@@ -30,10 +30,7 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const busy = status === "submitted" || status === "streaming";
-
-  useEffect(() => {
-    if (error) setChatError(error.message);
-  }, [error]);
+  const displayError = error ? error.message : chatError;
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -59,9 +56,9 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
         </SheetHeader>
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-3 py-4">
-          {chatError && (
+          {displayError && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
-              {chatError}
+              {displayError}
             </div>
           )}
           {messages.map((msg) => {

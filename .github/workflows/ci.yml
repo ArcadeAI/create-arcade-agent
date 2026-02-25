@@ -39,6 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint-and-build
     strategy:
+      fail-fast: false
       matrix:
         template: [ai-sdk, mastra, langchain]
     steps:

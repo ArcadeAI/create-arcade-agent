@@ -239,7 +239,7 @@ npm install
 
 GitHub Actions runs on PRs to `main` and pushes to `main`:
 
-1. **lint-and-build** -- ESLint + Prettier + typecheck + build (Node 18 & 22)
+1. **lint-and-build** -- ESLint + Prettier + typecheck + build (Node 22)
 2. **lint-python** -- Ruff lint + format check on Python templates
 3. **smoke-test-templates** -- Scaffolds each template and verifies the generated project builds and lints
 
