@@ -69,6 +69,11 @@ jobs:
         working-directory: ci-test-${{ matrix.template }}
         run: cp .env.example .env
 
+      - name: Type check (TypeScript templates)
+        if: matrix.template != 'langchain'
+        working-directory: ci-test-${{ matrix.template }}
+        run: npm run typecheck
+
       - name: Build (TypeScript templates)
         if: matrix.template != 'langchain'
         working-directory: ci-test-${{ matrix.template }}
