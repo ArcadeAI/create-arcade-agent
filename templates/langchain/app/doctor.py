@@ -14,6 +14,36 @@ import httpx
 from app.config import settings
 
 RECOMMENDED_TOOLKITS = ["Slack", "Google Calendar", "Linear", "GitHub", "Gmail"]
+RECOMMENDED_TOOLS = [
+    "Slack_ListConversations",
+    "Slack_GetMessages",
+    "Slack_GetConversationMetadata",
+    "Slack_WhoAmI",
+    "GoogleCalendar_ListEvents",
+    "GoogleCalendar_ListCalendars",
+    "GoogleCalendar_WhoAmI",
+    "Linear_GetNotifications",
+    "Linear_GetRecentActivity",
+    "Linear_ListIssues",
+    "Linear_GetIssue",
+    "Linear_ListProjects",
+    "Linear_GetProject",
+    "Linear_WhoAmI",
+    "Github_ListNotifications",
+    "Github_GetNotificationSummary",
+    "Github_ListPullRequests",
+    "Github_GetPullRequest",
+    "Github_GetUserOpenItems",
+    "Github_GetUserRecentActivity",
+    "Github_GetReviewWorkload",
+    "Github_GetIssue",
+    "Github_WhoAmI",
+    "Gmail_ListEmails",
+    "Gmail_ListThreads",
+    "Gmail_GetThread",
+    "Gmail_SearchThreads",
+    "Gmail_WhoAmI",
+]
 
 
 async def _gateway_reachable(url: str) -> bool:
@@ -45,15 +75,21 @@ async def main() -> int:
         print("\nDoctor found setup issues:\n")
         for err in errors:
             print(f"- {err}")
-        print("\nRecommended toolkits in your Arcade gateway:")
+        print("\nRecommended minimum toolkits (enable only needed tools):")
         for toolkit in RECOMMENDED_TOOLKITS:
             print(f"- {toolkit}")
+        print("\nRecommended minimum tools (exact names):")
+        for tool in RECOMMENDED_TOOLS:
+            print(f"- {tool}")
         return 1
 
     print("Doctor check passed.")
-    print("Recommended toolkits in your Arcade gateway:")
+    print("Recommended minimum toolkits (enable only needed tools):")
     for toolkit in RECOMMENDED_TOOLKITS:
         print(f"- {toolkit}")
+    print("Recommended minimum tools (exact names):")
+    for tool in RECOMMENDED_TOOLS:
+        print(f"- {tool}")
     return 0
 
 

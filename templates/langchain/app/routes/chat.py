@@ -65,8 +65,9 @@ async def chat(request: Request, db: AsyncSession = Depends(get_db)):
             {
                 "error": (
                     "ARCADE_GATEWAY_URL is missing. Create one at "
-                    "https://app.arcade.dev/mcp-gateways, add Slack, Google Calendar, "
-                    "Linear, GitHub, and Gmail, then set ARCADE_GATEWAY_URL in .env."
+                    "https://app.arcade.dev/mcp-gateways, add only the minimum required "
+                    "tools from Slack, Google Calendar, Linear, GitHub, and Gmail, then "
+                    "set ARCADE_GATEWAY_URL in .env."
                 )
             },
             status_code=400,

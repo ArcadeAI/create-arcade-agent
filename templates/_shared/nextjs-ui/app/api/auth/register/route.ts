@@ -4,8 +4,6 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { hashPassword, createSession } from "@/lib/auth";
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 export async function POST(request: Request) {
   let body: unknown;
   try {
@@ -22,9 +20,6 @@ export async function POST(request: Request) {
 
   if (!email || !password) {
     return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
-  }
-  if (!EMAIL_REGEX.test(email)) {
-    return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
   }
   if (password.length < 8) {
     return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });

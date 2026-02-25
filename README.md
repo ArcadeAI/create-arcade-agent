@@ -28,9 +28,10 @@ An MCP Gateway is a managed tool endpoint in Arcade that your agent connects to 
 Benefits:
 
 - **One connection point** -- use one `ARCADE_GATEWAY_URL` instead of wiring many tool servers
+- **Managed auth** -- Arcade manages user verification, tool OAuth, and handling secrets
 - **Tool curation** -- choose exactly which tools your agent can see
 - **Faster iteration** -- update tool access in Arcade without changing integration code
-- **Cleaner model context** -- smaller, focused toolsets improve tool selection reliability
+- **Clean model context** -- smaller, focused toolsets improve tool selection reliability
 - **Portable setup** -- same gateway pattern works across frameworks and MCP clients
 
 ## Usage
@@ -129,15 +130,16 @@ cp .env.example .env
 
 ### Arcade Gateway setup
 
-Add these toolkits to your Arcade Gateway to enable the default triage agent:
+For best agent performance, create a dedicated gateway for this starter and keep tool access narrow.
 
-- Slack
-- Google Calendar
-- Linear
-- GitHub
-- Gmail
-
-Configure toolkits at [app.arcade.dev/mcp-gateways](https://app.arcade.dev/mcp-gateways).
+1. Create a gateway at [app.arcade.dev/mcp-gateways](https://app.arcade.dev/mcp-gateways).
+2. Add only these minimum tools (exact names):
+   - Slack: `Slack_ListConversations`, `Slack_GetMessages`, `Slack_GetConversationMetadata`, `Slack_WhoAmI`
+   - Google Calendar: `GoogleCalendar_ListEvents`, `GoogleCalendar_ListCalendars`, `GoogleCalendar_WhoAmI`
+   - Linear: `Linear_GetNotifications`, `Linear_GetRecentActivity`, `Linear_ListIssues`, `Linear_GetIssue`, `Linear_ListProjects`, `Linear_GetProject`, `Linear_WhoAmI`
+   - GitHub: `Github_ListNotifications`, `Github_GetNotificationSummary`, `Github_ListPullRequests`, `Github_GetPullRequest`, `Github_GetUserOpenItems`, `Github_GetUserRecentActivity`, `Github_GetReviewWorkload`, `Github_GetIssue`, `Github_WhoAmI`
+   - Gmail: `Gmail_ListEmails`, `Gmail_ListThreads`, `Gmail_GetThread`, `Gmail_SearchThreads`, `Gmail_WhoAmI`
+3. Avoid enabling broad "all tools" access. Start small and add tools only when the agent needs them.
 
 ## Running the generated project
 
@@ -181,7 +183,7 @@ Make sure you are running Node.js >= 18. Check with `node --version`.
 If the app says `ARCADE_GATEWAY_URL is missing`:
 
 1. Create a gateway at [app.arcade.dev/mcp-gateways](https://app.arcade.dev/mcp-gateways)
-2. Add these toolkits: Slack, Google Calendar, Linear, GitHub, Gmail
+2. Add the exact minimum tools listed in the **Arcade Gateway setup** section above
 3. Copy the gateway URL into `.env` as `ARCADE_GATEWAY_URL`
 4. Retry connection in the app
 

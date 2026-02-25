@@ -128,7 +128,7 @@ function DashboardContent() {
         auth_incomplete: "Authorization was not completed. Please try connecting again.",
         auth_failed: "Authorization failed. Please try again.",
         gateway_missing:
-          "ARCADE_GATEWAY_URL is missing. Create one at https://app.arcade.dev/mcp-gateways, add Slack, Google Calendar, Linear, GitHub, and Gmail, then set ARCADE_GATEWAY_URL in .env.",
+          "ARCADE_GATEWAY_URL is missing. Create one at https://app.arcade.dev/mcp-gateways, add only the minimum required tools from Slack, Google Calendar, Linear, GitHub, and Gmail, then set ARCADE_GATEWAY_URL in .env.",
         verify_failed: "User verification failed. Please try again.",
       };
       setError(messages[urlError] || `Authentication error: ${urlError}`);

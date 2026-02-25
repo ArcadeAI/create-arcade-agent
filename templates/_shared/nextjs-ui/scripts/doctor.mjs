@@ -3,6 +3,36 @@ import { resolve } from "node:path";
 
 const ENV_PATH = resolve(process.cwd(), ".env");
 const REQUIRED_TOOLKITS = ["Slack", "Google Calendar", "Linear", "GitHub", "Gmail"];
+const REQUIRED_TOOLS = [
+  "Slack_ListConversations",
+  "Slack_GetMessages",
+  "Slack_GetConversationMetadata",
+  "Slack_WhoAmI",
+  "GoogleCalendar_ListEvents",
+  "GoogleCalendar_ListCalendars",
+  "GoogleCalendar_WhoAmI",
+  "Linear_GetNotifications",
+  "Linear_GetRecentActivity",
+  "Linear_ListIssues",
+  "Linear_GetIssue",
+  "Linear_ListProjects",
+  "Linear_GetProject",
+  "Linear_WhoAmI",
+  "Github_ListNotifications",
+  "Github_GetNotificationSummary",
+  "Github_ListPullRequests",
+  "Github_GetPullRequest",
+  "Github_GetUserOpenItems",
+  "Github_GetUserRecentActivity",
+  "Github_GetReviewWorkload",
+  "Github_GetIssue",
+  "Github_WhoAmI",
+  "Gmail_ListEmails",
+  "Gmail_ListThreads",
+  "Gmail_GetThread",
+  "Gmail_SearchThreads",
+  "Gmail_WhoAmI",
+];
 
 function parseEnvFile(path) {
   if (!existsSync(path)) return {};
@@ -62,14 +92,18 @@ async function main() {
   if (errors.length > 0) {
     console.error("\nDoctor found setup issues:\n");
     for (const err of errors) console.error(`- ${err}`);
-    console.error("\nRecommended toolkits in your Arcade gateway:");
+    console.error("\nRecommended minimum toolkits (enable only needed tools):");
     for (const toolkit of REQUIRED_TOOLKITS) console.error(`- ${toolkit}`);
+    console.error("\nRecommended minimum tools (exact names):");
+    for (const tool of REQUIRED_TOOLS) console.error(`- ${tool}`);
     process.exit(1);
   }
 
   console.log("Doctor check passed.");
-  console.log("Recommended toolkits in your Arcade gateway:");
+  console.log("Recommended minimum toolkits (enable only needed tools):");
   for (const toolkit of REQUIRED_TOOLKITS) console.log(`- ${toolkit}`);
+  console.log("Recommended minimum tools (exact names):");
+  for (const tool of REQUIRED_TOOLS) console.log(`- ${tool}`);
 }
 
 main().catch((err) => {
