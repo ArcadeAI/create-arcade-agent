@@ -46,7 +46,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+      - name: Cache npm packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-smoke-${{ matrix.template }}-${{ hashFiles(format('templates/{0}/package.json', matrix.template), 'package-lock.json') }}
+          restore-keys: |
+            npm-smoke-${{ matrix.template }}-
+            npm-smoke-
       - uses: actions/setup-python@v5
         if: matrix.template == 'langchain'
         with:
