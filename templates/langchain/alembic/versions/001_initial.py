@@ -7,8 +7,9 @@ Create Date: 2025-01-01 00:00:00.000000
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
+
+from alembic import op
 
 revision: str = "001"
 down_revision: Union[str, None] = None
@@ -23,9 +24,7 @@ def upgrade() -> None:
         sa.Column("email", sa.String(), nullable=False),
         sa.Column("password_hash", sa.String(), nullable=False),
         sa.Column("name", sa.String(), nullable=True),
-        sa.Column(
-            "created_at", sa.DateTime(), server_default=sa.text("CURRENT_TIMESTAMP")
-        ),
+        sa.Column("created_at", sa.DateTime(), server_default=sa.text("CURRENT_TIMESTAMP")),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("email"),
     )
@@ -35,9 +34,7 @@ def upgrade() -> None:
         sa.Column("id", sa.String(), nullable=False),
         sa.Column("user_id", sa.Integer(), sa.ForeignKey("users.id"), nullable=False),
         sa.Column("expires_at", sa.DateTime(), nullable=False),
-        sa.Column(
-            "created_at", sa.DateTime(), server_default=sa.text("CURRENT_TIMESTAMP")
-        ),
+        sa.Column("created_at", sa.DateTime(), server_default=sa.text("CURRENT_TIMESTAMP")),
         sa.PrimaryKeyConstraint("id"),
     )
 

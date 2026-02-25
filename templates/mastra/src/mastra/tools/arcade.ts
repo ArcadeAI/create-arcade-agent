@@ -19,16 +19,14 @@ import { join } from "path";
 // Create/modify your gateway at https://app.arcade.dev/mcp-gateways
 // to add tools like Gmail, GitHub, Google Calendar, etc.
 
-const gatewayUrl =
-  process.env.ARCADE_GATEWAY_URL || "https://mcp.arcade.dev/sse";
+const gatewayUrl = process.env.ARCADE_GATEWAY_URL || "https://mcp.arcade.dev/sse";
 function ensureScheme(url: string): string {
   const trimmed = url.replace(/\/+$/, "");
   return /^https?:\/\//.test(trimmed) ? trimmed : `http://${trimmed}`;
 }
 function getCallbackUrl(): string {
   const base = ensureScheme(
-    process.env.NEXT_PUBLIC_APP_URL ||
-    `http://localhost:${process.env.PORT || 8765}`
+    process.env.NEXT_PUBLIC_APP_URL || `http://localhost:${process.env.PORT || 8765}`
   );
   return base + "/api/auth/arcade/callback";
 }
@@ -48,7 +46,9 @@ function ensureDir() {
 function readJson<T>(path: string): T | undefined {
   try {
     if (existsSync(path)) return JSON.parse(readFileSync(path, "utf-8"));
-  } catch {}
+  } catch {
+    // ignore JSON parse errors
+  }
   return undefined;
 }
 
@@ -63,11 +63,7 @@ const PENDING_AUTH_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 function setPendingAuthUrl(url: string) {
   ensureDir();
-  writeFileSync(
-    PENDING_AUTH_URL_FILE,
-    JSON.stringify({ url, createdAt: Date.now() }),
-    "utf-8"
-  );
+  writeFileSync(PENDING_AUTH_URL_FILE, JSON.stringify({ url, createdAt: Date.now() }), "utf-8");
 }
 
 export function getPendingAuthUrl(): string | null {
@@ -129,9 +125,7 @@ class ArcadeOAuthProvider implements OAuthClientProvider {
 
   async redirectToAuthorization(authorizationUrl: URL): Promise<void> {
     setPendingAuthUrl(authorizationUrl.toString());
-    console.log(
-      `\n🔐 Arcade authorization required. Visit:\n${authorizationUrl.toString()}\n`
-    );
+    console.log(`\n🔐 Arcade authorization required. Visit:\n${authorizationUrl.toString()}\n`);
   }
 
   // NOTE: PKCE verifier is stored in a single file (.arcade-auth/verifier.txt),

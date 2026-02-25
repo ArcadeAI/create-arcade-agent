@@ -1,0 +1,5 @@
+dist/
+node_modules/
+*.lock
+*.hbs
+templates/langchain/**/*.py

@@ -2,11 +2,12 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
+from fastapi import Request, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Request, Response
 
-from app.models import User, Session as SessionModel
+from app.models import Session as SessionModel
+from app.models import User
 
 SESSION_COOKIE = "session_id"
 SESSION_MAX_AGE = timedelta(days=7)
@@ -43,9 +44,7 @@ async def get_current_user(request: Request, db: AsyncSession) -> User | None:
     if not session_id:
         return None
 
-    result = await db.execute(
-        select(SessionModel).where(SessionModel.id == session_id)
-    )
+    result = await db.execute(select(SessionModel).where(SessionModel.id == session_id))
     session = result.scalar_one_or_none()
     if not session:
         return None
@@ -58,14 +57,10 @@ async def get_current_user(request: Request, db: AsyncSession) -> User | None:
     return result.scalar_one_or_none()
 
 
-async def destroy_session(
-    request: Request, db: AsyncSession, response: Response
-) -> None:
+async def destroy_session(request: Request, db: AsyncSession, response: Response) -> None:
     session_id = request.cookies.get(SESSION_COOKIE)
     if session_id:
-        result = await db.execute(
-            select(SessionModel).where(SessionModel.id == session_id)
-        )
+        result = await db.execute(select(SessionModel).where(SessionModel.id == session_id))
         session = result.scalar_one_or_none()
         if session:
             await db.delete(session)

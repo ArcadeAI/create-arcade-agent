@@ -12,13 +12,7 @@ import { ChatPanel } from "@/components/chat/chat-panel";
 import { AuthPrompt } from "@/components/chat/auth-prompt";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, ShieldAlert, AlertTriangle, RotateCcw } from "lucide-react";
 
 // --- Arcade connection state machine ---
@@ -97,7 +91,10 @@ export default function DashboardPage() {
     connectInFlight.current = true;
     fetch("/api/auth/arcade/connect", { method: "POST" })
       .then((r) => {
-        if (r.status === 401) { router.push("/"); return; }
+        if (r.status === 401) {
+          router.push("/");
+          return;
+        }
         return r.json();
       })
       .then((data) => {
@@ -131,7 +128,10 @@ export default function DashboardPage() {
 
   // --- Plan / triage state ---
   const [items, setItems] = useState<InboxItem[]>([]);
-  const [stats, setStats] = useState<{ total: number; bySource: Record<string, number> }>({ total: 0, bySource: {} });
+  const [stats, setStats] = useState<{ total: number; bySource: Record<string, number> }>({
+    total: 0,
+    bySource: {},
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
@@ -149,7 +149,9 @@ export default function DashboardPage() {
       const data = await res.json();
       const statuses: Record<string, SourceStatus> = {};
       const urls: { url: string; toolName?: string }[] = [];
-      for (const [source, info] of Object.entries(data.sources as Record<string, { status: string; authUrl?: string }>)) {
+      for (const [source, info] of Object.entries(
+        data.sources as Record<string, { status: string; authUrl?: string }>
+      )) {
         statuses[source] = info.status as SourceStatus;
         if (info.authUrl) urls.push({ url: info.authUrl, toolName: source });
       }
@@ -216,7 +218,9 @@ export default function DashboardPage() {
                 break;
               case "sources":
                 setSourceStatuses(
-                  Object.fromEntries(event.sources.map((s: string) => [s, "checking" as SourceStatus]))
+                  Object.fromEntries(
+                    event.sources.map((s: string) => [s, "checking" as SourceStatus])
+                  )
                 );
                 break;
               case "auth_required":
@@ -252,9 +256,7 @@ export default function DashboardPage() {
       }
     } catch (err) {
       if ((err as Error).name !== "AbortError") {
-        setError(
-          err instanceof Error ? err.message : "Something went wrong"
-        );
+        setError(err instanceof Error ? err.message : "Something went wrong");
       }
     } finally {
       setLoading(false);
@@ -282,18 +284,12 @@ export default function DashboardPage() {
   if (arcadeStatus.state !== "connected") {
     return (
       <div className="flex min-h-screen flex-col bg-background">
-        <Header
-          onChatToggle={() => {}}
-          chatOpen={false}
-          onLogout={handleLogout}
-        />
+        <Header onChatToggle={() => {}} chatOpen={false} onLogout={handleLogout} />
         <main className="flex flex-1 items-center justify-center px-4">
           {arcadeStatus.state === "checking" && (
             <div className="text-center">
               <Loader2 className="mx-auto mb-4 size-8 animate-spin text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                Connecting to Arcade...
-              </p>
+              <p className="text-sm text-muted-foreground">Connecting to Arcade...</p>
             </div>
           )}
 
@@ -305,15 +301,12 @@ export default function DashboardPage() {
                 </div>
                 <CardTitle>Connect to Arcade</CardTitle>
                 <CardDescription>
-                  Sign in with your Arcade account to give the agent access to
-                  your tools.
+                  Sign in with your Arcade account to give the agent access to your tools.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <Button asChild className="w-full">
-                  <a href={arcadeStatus.authUrl}>
-                    Sign in with Arcade
-                  </a>
+                  <a href={arcadeStatus.authUrl}>Sign in with Arcade</a>
                 </Button>
                 <button
                   onClick={retryConnection}
@@ -331,9 +324,7 @@ export default function DashboardPage() {
                 <div className="mx-auto mb-2">
                   <AlertTriangle className="size-10 text-destructive" />
                 </div>
-                <CardTitle className="text-destructive">
-                  Connection Failed
-                </CardTitle>
+                <CardTitle className="text-destructive">Connection Failed</CardTitle>
                 <CardDescription>{arcadeStatus.message}</CardDescription>
               </CardHeader>
               <CardContent>
@@ -396,12 +387,17 @@ export default function DashboardPage() {
             <div className="flex flex-col items-center gap-2">
               <h2 className="text-2xl font-semibold">No items found</h2>
               <p className="max-w-md text-center text-muted-foreground">
-                The agent finished scanning but didn&apos;t find any items
-                to triage. This can happen if tools need authorization or if
-                there&apos;s no recent activity.
+                The agent finished scanning but didn&apos;t find any items to triage. This can
+                happen if tools need authorization or if there&apos;s no recent activity.
               </p>
             </div>
-            <Button size="lg" onClick={() => { setPlanRan(false); handlePlan(); }}>
+            <Button
+              size="lg"
+              onClick={() => {
+                setPlanRan(false);
+                handlePlan();
+              }}
+            >
               Try again
             </Button>
           </div>
@@ -425,11 +421,7 @@ export default function DashboardPage() {
         {hasItems && (
           <>
             <div className="flex justify-end">
-              <Button
-                variant="outline"
-                onClick={handlePlan}
-                disabled={loading}
-              >
+              <Button variant="outline" onClick={handlePlan} disabled={loading}>
                 {loading ? (
                   <>
                     <Loader2 className="size-4 animate-spin" />

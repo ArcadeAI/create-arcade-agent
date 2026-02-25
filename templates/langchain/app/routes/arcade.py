@@ -156,9 +156,7 @@ async def callback(request: Request):
     code = request.query_params.get("code")
     state = request.query_params.get("state")
     if not code:
-        return JSONResponse(
-            {"error": "Missing authorization code"}, status_code=400
-        )
+        return JSONResponse({"error": "Missing authorization code"}, status_code=400)
 
     stored_state = get_state()
     if not stored_state or state != stored_state:
@@ -198,9 +196,7 @@ async def verify(request: Request, db: AsyncSession = Depends(get_db)):
 
     flow_id = request.query_params.get("flow_id")
     if not flow_id:
-        return JSONResponse(
-            {"error": "Missing flow_id parameter"}, status_code=400
-        )
+        return JSONResponse({"error": "Missing flow_id parameter"}, status_code=400)
 
     user = await get_current_user(request, db)
     if not user:

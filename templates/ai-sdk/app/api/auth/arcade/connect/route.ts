@@ -26,10 +26,7 @@ export async function POST() {
   }
 
   const result = await connectPromise;
-  return Response.json(
-    result.data,
-    result.status ? { status: result.status } : undefined
-  );
+  return Response.json(result.data, result.status ? { status: result.status } : undefined);
 }
 
 async function doConnect(): Promise<{

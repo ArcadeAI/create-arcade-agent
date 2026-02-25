@@ -2,11 +2,11 @@ import json
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
-from sse_starlette.sse import EventSourceResponse
+from langchain_core.messages import AIMessage, HumanMessage
 from sqlalchemy.ext.asyncio import AsyncSession
-from langchain_core.messages import HumanMessage, AIMessage
+from sse_starlette.sse import EventSourceResponse
 
-from app.agent import get_llm, SYSTEM_PROMPT
+from app.agent import SYSTEM_PROMPT, get_llm
 from app.arcade_oauth import get_cached_tools, get_mcp_client
 from app.auth import get_current_user
 from app.database import get_db
@@ -94,9 +94,7 @@ async def chat(request: Request, db: AsyncSession = Depends(get_db)):
                             if hasattr(msg, "content") and msg.content:
                                 yield {
                                     "event": "message",
-                                    "data": json.dumps(
-                                        {"type": "text", "content": msg.content}
-                                    ),
+                                    "data": json.dumps({"type": "text", "content": msg.content}),
                                 }
                             if hasattr(msg, "tool_calls") and msg.tool_calls:
                                 for tc in msg.tool_calls:
@@ -114,11 +112,7 @@ async def chat(request: Request, db: AsyncSession = Depends(get_db)):
 
                     if node_name == "tools" and "messages" in update:
                         for msg in update["messages"]:
-                            content = (
-                                msg.content
-                                if hasattr(msg, "content")
-                                else str(msg)
-                            )
+                            content = msg.content if hasattr(msg, "content") else str(msg)
                             auth_url = _extract_auth_url(content)
 
                             if auth_url:
@@ -128,9 +122,7 @@ async def chat(request: Request, db: AsyncSession = Depends(get_db)):
                                         {
                                             "type": "auth_required",
                                             "authorization_url": auth_url,
-                                            "tool_name": getattr(
-                                                msg, "name", "tool"
-                                            ),
+                                            "tool_name": getattr(msg, "name", "tool"),
                                         }
                                     ),
                                 }
@@ -140,12 +132,8 @@ async def chat(request: Request, db: AsyncSession = Depends(get_db)):
                                     "data": json.dumps(
                                         {
                                             "type": "tool_result",
-                                            "tool_name": getattr(
-                                                msg, "name", "tool"
-                                            ),
-                                            "tool_call_id": getattr(
-                                                msg, "tool_call_id", ""
-                                            ),
+                                            "tool_name": getattr(msg, "name", "tool"),
+                                            "tool_call_id": getattr(msg, "tool_call_id", ""),
                                             "tool_output": _format_content(content),
                                         }
                                     ),
@@ -155,6 +143,7 @@ async def chat(request: Request, db: AsyncSession = Depends(get_db)):
 
         except Exception as e:
             import traceback
+
             traceback.print_exc()
             yield {
                 "event": "error",

@@ -13,7 +13,7 @@ export async function getProjectName(argv: string[]): Promise<string> {
       validate: (v) => {
         if (!v.trim()) return "Name is required";
         if (/[/\\]/.test(v.trim())) return "Project name cannot contain path separators";
-        if (v.trim().startsWith('.')) return "Project name cannot start with a dot";
+        if (v.trim().startsWith(".")) return "Project name cannot start with a dot";
         return undefined;
       },
     });
@@ -26,9 +26,7 @@ export async function getProjectName(argv: string[]): Promise<string> {
   return projectName;
 }
 
-function discoverTemplates(
-  templatesDir: string
-): { meta: TemplateMeta; dir: string }[] {
+function discoverTemplates(templatesDir: string): { meta: TemplateMeta; dir: string }[] {
   const entries = readdirSync(templatesDir, { withFileTypes: true });
   const templates: { meta: TemplateMeta; dir: string }[] = [];
 

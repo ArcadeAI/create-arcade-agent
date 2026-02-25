@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import type { InboxItem, ItemSource } from "@/types/inbox"
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import type { InboxItem, ItemSource } from "@/types/inbox";
 import {
   MessageSquare,
   Calendar,
@@ -11,12 +11,9 @@ import {
   Mail,
   Globe,
   type LucideIcon,
-} from "lucide-react"
+} from "lucide-react";
 
-const sourceConfig: Record<
-  ItemSource,
-  { icon: LucideIcon; label: string; className: string }
-> = {
+const sourceConfig: Record<ItemSource, { icon: LucideIcon; label: string; className: string }> = {
   slack: {
     icon: MessageSquare,
     label: "Slack",
@@ -47,17 +44,21 @@ const sourceConfig: Record<
     label: "Other",
     className: "bg-gray-100 text-gray-600 border-gray-200",
   },
-}
+};
 
 const priorityConfig: Record<
   InboxItem["priority"],
   { label: string; variant: "destructive" | "secondary" | "outline"; className?: string }
 > = {
   P0: { label: "P0", variant: "destructive" },
-  P1: { label: "P1", variant: "secondary", className: "bg-amber-100 text-amber-800 hover:bg-amber-100" },
+  P1: {
+    label: "P1",
+    variant: "secondary",
+    className: "bg-amber-100 text-amber-800 hover:bg-amber-100",
+  },
   P2: { label: "P2", variant: "secondary" },
   FYI: { label: "FYI", variant: "outline" },
-}
+};
 
 const categoryLabels: Record<InboxItem["category"], string> = {
   NEEDS_REPLY: "Needs Reply",
@@ -67,21 +68,21 @@ const categoryLabels: Record<InboxItem["category"], string> = {
   ATTEND: "Attend",
   FYI: "FYI",
   IGNORE: "Ignore",
-}
+};
 
 interface TaskCardProps {
-  item: InboxItem
+  item: InboxItem;
 }
 
 export function TaskCard({ item }: TaskCardProps) {
-  const priority = priorityConfig[item.priority]
-  const source = sourceConfig[item.source] || sourceConfig.other
-  const SourceIcon = source.icon
-  const subtitle = item.sourceDetail || item.participants?.map((p) => p.name).join(", ")
+  const priority = priorityConfig[item.priority];
+  const source = sourceConfig[item.source] || sourceConfig.other;
+  const SourceIcon = source.icon;
+  const subtitle = item.sourceDetail || item.participants?.map((p) => p.name).join(", ");
 
   const formattedTime = item.scheduledTime
     ? new Date(item.scheduledTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
-    : null
+    : null;
 
   return (
     <Card className="animate-card-in transition-shadow hover:shadow-md">
@@ -98,9 +99,7 @@ export function TaskCard({ item }: TaskCardProps) {
           {formattedTime && (
             <span className="text-xs font-medium text-blue-600">{formattedTime}</span>
           )}
-          <span className="ml-auto text-xs text-muted-foreground">
-            {item.effort}
-          </span>
+          <span className="ml-auto text-xs text-muted-foreground">{item.effort}</span>
         </div>
 
         {item.url ? (
@@ -117,16 +116,12 @@ export function TaskCard({ item }: TaskCardProps) {
         )}
 
         <div className="flex items-baseline justify-between gap-4">
-          {subtitle && (
-            <span className="truncate text-xs text-muted-foreground">
-              {subtitle}
-            </span>
-          )}
+          {subtitle && <span className="truncate text-xs text-muted-foreground">{subtitle}</span>}
           <span className="shrink-0 text-xs italic text-muted-foreground">
             {item.suggestedNextStep}
           </span>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

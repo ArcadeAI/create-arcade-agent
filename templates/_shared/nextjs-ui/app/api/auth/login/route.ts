@@ -9,36 +9,24 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: "Invalid request body" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
   const { email, password } = body;
 
   if (!email || !password) {
-    return NextResponse.json(
-      { error: "Email and password are required" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
   }
 
   const user = await db.query.users.findFirst({
     where: eq(users.email, email),
   });
   if (!user) {
-    return NextResponse.json(
-      { error: "Invalid credentials" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
 
   const valid = await verifyPassword(password, user.passwordHash);
   if (!valid) {
-    return NextResponse.json(
-      { error: "Invalid credentials" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
 
   await createSession(user.id);

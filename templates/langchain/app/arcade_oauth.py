@@ -19,7 +19,7 @@ import secrets
 import string
 import time
 from pathlib import Path
-from urllib.parse import urlencode, urljoin, urlparse
+from urllib.parse import urlencode, urlparse
 
 import httpx
 
@@ -154,8 +154,7 @@ def get_state() -> str | None:
 def _generate_pkce() -> tuple[str, str]:
     """Generate PKCE code_verifier and code_challenge."""
     code_verifier = "".join(
-        secrets.choice(string.ascii_letters + string.digits + "-._~")
-        for _ in range(128)
+        secrets.choice(string.ascii_letters + string.digits + "-._~") for _ in range(128)
     )
     digest = hashlib.sha256(code_verifier.encode()).digest()
     code_challenge = base64.urlsafe_b64encode(digest).decode().rstrip("=")
@@ -257,9 +256,7 @@ async def discover_and_authorize() -> str:
             else f"{auth_server_url}/token"
         )
         registration_endpoint = (
-            oauth_meta.get(
-                "registration_endpoint", f"{auth_server_url}/register"
-            )
+            oauth_meta.get("registration_endpoint", f"{auth_server_url}/register")
             if oauth_meta
             else f"{auth_server_url}/register"
         )
@@ -390,6 +387,7 @@ def create_mcp_client():
             }
         }
     )
+
 
 # --- Cached MCP client (avoids "Session termination failed" spam) ---
 

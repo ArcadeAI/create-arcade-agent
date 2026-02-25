@@ -1,19 +1,19 @@
-'use client'
+"use client";
 
-import { Loader2, Check } from 'lucide-react'
+import { Loader2, Check } from "lucide-react";
 import {
   Accordion,
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
-} from '@/components/ui/accordion'
-import { Badge } from '@/components/ui/badge'
+} from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
 
 interface ToolCallProps {
-  toolName: string
-  args: Record<string, unknown>
-  result?: Record<string, unknown>
-  status: 'running' | 'done'
+  toolName: string;
+  args: Record<string, unknown>;
+  result?: Record<string, unknown>;
+  status: "running" | "done";
 }
 
 export function ToolCall({ toolName, args, result, status }: ToolCallProps) {
@@ -23,13 +23,13 @@ export function ToolCall({ toolName, args, result, status }: ToolCallProps) {
         <AccordionTrigger className="py-2">
           <span className="flex items-center gap-2">
             <span className="font-mono text-xs">{toolName}</span>
-            <Badge variant={status === 'done' ? 'secondary' : 'outline'}>
-              {status === 'running' ? (
+            <Badge variant={status === "done" ? "secondary" : "outline"}>
+              {status === "running" ? (
                 <Loader2 className="size-3 animate-spin" />
               ) : (
                 <Check className="size-3" />
               )}
-              {status === 'running' ? 'Running' : 'Done'}
+              {status === "running" ? "Running" : "Done"}
             </Badge>
           </span>
         </AccordionTrigger>
@@ -53,5 +53,5 @@ export function ToolCall({ toolName, args, result, status }: ToolCallProps) {
         </AccordionContent>
       </AccordionItem>
     </Accordion>
-  )
+  );
 }

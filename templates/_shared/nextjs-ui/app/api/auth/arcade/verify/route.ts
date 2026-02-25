@@ -48,22 +48,15 @@ export async function GET(req: Request) {
 
   const apiKey = process.env.ARCADE_API_KEY;
   if (!apiKey) {
-    console.error(
-      "ARCADE_CUSTOM_VERIFIER is enabled but ARCADE_API_KEY is not set."
-    );
-    return NextResponse.redirect(
-      new URL("/dashboard?error=verify_misconfigured", req.url)
-    );
+    console.error("ARCADE_CUSTOM_VERIFIER is enabled but ARCADE_API_KEY is not set.");
+    return NextResponse.redirect(new URL("/dashboard?error=verify_misconfigured", req.url));
   }
 
   const url = new URL(req.url);
   const flowId = url.searchParams.get("flow_id");
 
   if (!flowId) {
-    return NextResponse.json(
-      { error: "Missing flow_id parameter" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Missing flow_id parameter" }, { status: 400 });
   }
 
   // Verify the user is logged into this app
@@ -88,9 +81,7 @@ export async function GET(req: Request) {
     if (!response.ok) {
       const body = await response.text();
       console.error("Arcade confirm_user failed:", response.status, body);
-      return NextResponse.redirect(
-        new URL("/dashboard?error=verify_failed", req.url)
-      );
+      return NextResponse.redirect(new URL("/dashboard?error=verify_failed", req.url));
     }
 
     const data = await response.json();
@@ -100,8 +91,6 @@ export async function GET(req: Request) {
     return NextResponse.redirect(redirectTo);
   } catch (error) {
     console.error("Arcade verify error:", error);
-    return NextResponse.redirect(
-      new URL("/dashboard?error=verify_failed", req.url)
-    );
+    return NextResponse.redirect(new URL("/dashboard?error=verify_failed", req.url));
   }
 }

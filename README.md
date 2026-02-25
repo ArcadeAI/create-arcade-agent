@@ -13,10 +13,10 @@ The generated agent is a daily planning and triage assistant that connects to Sl
 
 ## Templates
 
-| Template | Flag value | Tech stack | UI |
-|---|---|---|---|
-| **AI SDK** | `ai-sdk` | Next.js 16 + Vercel AI SDK + `@ai-sdk/mcp` + Drizzle ORM + SQLite | React 19 + Tailwind CSS |
-| **Mastra** | `mastra` | Next.js 16 + Mastra + `@mastra/mcp` + Drizzle ORM + SQLite | React 19 + Tailwind CSS |
+| Template      | Flag value  | Tech stack                                                              | UI                            |
+| ------------- | ----------- | ----------------------------------------------------------------------- | ----------------------------- |
+| **AI SDK**    | `ai-sdk`    | Next.js 16 + Vercel AI SDK + `@ai-sdk/mcp` + Drizzle ORM + SQLite       | React 19 + Tailwind CSS       |
+| **Mastra**    | `mastra`    | Next.js 16 + Mastra + `@mastra/mcp` + Drizzle ORM + SQLite              | React 19 + Tailwind CSS       |
 | **LangChain** | `langchain` | FastAPI + LangGraph + `langchain-mcp-adapters` + SQLAlchemy + aiosqlite | Jinja2 templates + vanilla JS |
 
 All three templates connect to Arcade's MCP Gateway for tool discovery and execution. The TypeScript templates (`ai-sdk` and `mastra`) share a common Next.js frontend. The Python template (`langchain`) uses server-rendered HTML with SSE streaming.
@@ -101,19 +101,19 @@ cp .env.example .env
 
 ### Required environment variables
 
-| Variable | Description | Where to get it |
-|---|---|---|
-| `ARCADE_GATEWAY_URL` | Your Arcade MCP Gateway URL | [app.arcade.dev/mcp-gateways](https://app.arcade.dev/mcp-gateways) |
+| Variable                                | Description                             | Where to get it                                                                                              |
+| --------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `ARCADE_GATEWAY_URL`                    | Your Arcade MCP Gateway URL             | [app.arcade.dev/mcp-gateways](https://app.arcade.dev/mcp-gateways)                                           |
 | `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | LLM provider API key (set at least one) | [platform.openai.com](https://platform.openai.com) or [console.anthropic.com](https://console.anthropic.com) |
 
 ### Optional environment variables
 
-| Variable | Description |
-|---|---|
-| `ARCADE_CUSTOM_VERIFIER` | Set to `true` to enable per-user token binding (COAT protection) |
-| `ARCADE_API_KEY` | Required when custom verifier is enabled; get from [app.arcade.dev/settings](https://app.arcade.dev/settings) |
-| `DATABASE_URL` | SQLite file path (defaults to `local.db`) |
-| `PORT` | Server port (defaults to `8765` for langchain, `3000` for Next.js templates) |
+| Variable                 | Description                                                                                                   |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `ARCADE_CUSTOM_VERIFIER` | Set to `true` to enable per-user token binding (COAT protection)                                              |
+| `ARCADE_API_KEY`         | Required when custom verifier is enabled; get from [app.arcade.dev/settings](https://app.arcade.dev/settings) |
+| `DATABASE_URL`           | SQLite file path (defaults to `local.db`)                                                                     |
+| `PORT`                   | Server port (defaults to `8765` for langchain, `3000` for Next.js templates)                                  |
 
 ### Arcade Gateway setup
 

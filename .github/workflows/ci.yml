@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-build:
+    name: Lint, Format & Build (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run typecheck
+      - run: npm run build
+
+  lint-python:
+    name: Lint Python Templates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/ruff-action@v3
+        with:
+          args: check templates/langchain/
+      - uses: astral-sh/ruff-action@v3
+        with:
+          args: format --check templates/langchain/
+
+  smoke-test-templates:
+    name: Smoke Test — ${{ matrix.template }}
+    runs-on: ubuntu-latest
+    needs: lint-and-build
+    strategy:
+      matrix:
+        template: [ai-sdk, mastra, langchain]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        if: matrix.template == 'langchain'
+        with:
+          python-version: "3.12"
+      - run: npm ci
+      - run: npm run build
+
+      - name: Scaffold template
+        run: node dist/index.js ci-test-${{ matrix.template }} --template ${{ matrix.template }}
+
+      - name: Create .env from example
+        working-directory: ci-test-${{ matrix.template }}
+        run: cp .env.example .env
+
+      - name: Build (TypeScript templates)
+        if: matrix.template != 'langchain'
+        working-directory: ci-test-${{ matrix.template }}
+        run: npm run build
+
+      - name: Lint (TypeScript templates)
+        if: matrix.template != 'langchain'
+        working-directory: ci-test-${{ matrix.template }}
+        run: npm run lint
+
+      - name: Syntax check (Python template)
+        if: matrix.template == 'langchain'
+        working-directory: ci-test-${{ matrix.template }}
+        run: |
+          .venv/bin/python -m py_compile app/main.py
+          .venv/bin/python -m py_compile app/config.py

@@ -22,27 +22,19 @@
   "install": [
     {
       "cmd": "npm",
-      "args": [
-        "install"
-      ],
+      "args": ["install"],
       "label": "Installing dependencies"
     }
   ],
   "migrate": [
     {
       "cmd": "npx",
-      "args": [
-        "drizzle-kit",
-        "generate"
-      ],
+      "args": ["drizzle-kit", "generate"],
       "label": "Generating migrations"
     },
     {
       "cmd": "npx",
-      "args": [
-        "drizzle-kit",
-        "migrate"
-      ],
+      "args": ["drizzle-kit", "migrate"],
       "label": "Running migrations"
     }
   ]

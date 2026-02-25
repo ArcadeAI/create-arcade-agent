@@ -1,12 +1,12 @@
-'use client'
+"use client";
 
-import { ShieldAlert } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ShieldAlert } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface AuthPromptProps {
-  toolName: string
-  authUrl: string
-  onContinue: () => void
+  toolName: string;
+  authUrl: string;
+  onContinue: () => void;
 }
 
 export function AuthPrompt({ toolName, authUrl, onContinue }: AuthPromptProps) {
@@ -21,14 +21,12 @@ export function AuthPrompt({ toolName, authUrl, onContinue }: AuthPromptProps) {
       </p>
       <div className="flex gap-2">
         <Button size="sm" asChild>
-          <a href={authUrl}>
-            Authorize
-          </a>
+          <a href={authUrl}>Authorize</a>
         </Button>
         <Button size="sm" variant="outline" onClick={onContinue}>
           Continue
         </Button>
       </div>
     </div>
-  )
+  );
 }

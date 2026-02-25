@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import { Inbox, Loader2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Inbox, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface EmptyStateProps {
-  onPlan: () => void
-  loading: boolean
+  onPlan: () => void;
+  loading: boolean;
 }
 
 export function EmptyState({ onPlan, loading }: EmptyStateProps) {
@@ -15,8 +15,8 @@ export function EmptyState({ onPlan, loading }: EmptyStateProps) {
       <div className="flex flex-col items-center gap-2">
         <h2 className="text-2xl font-semibold">Ready to triage?</h2>
         <p className="max-w-md text-center text-muted-foreground">
-          Your agent will scan your inbox, calendar, tasks, and PRs, then
-          prioritize everything and build your action plan.
+          Your agent will scan your inbox, calendar, tasks, and PRs, then prioritize everything and
+          build your action plan.
         </p>
       </div>
       <Button size="lg" disabled={loading} onClick={onPlan}>
@@ -30,5 +30,5 @@ export function EmptyState({ onPlan, loading }: EmptyStateProps) {
         )}
       </Button>
     </div>
-  )
+  );
 }
