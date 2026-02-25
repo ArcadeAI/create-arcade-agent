@@ -81,18 +81,20 @@ Invite the bot to a Slack channel and @mention it. The first time, it will post 
 
 Best for production. Requires Redis for persistent storage (Vercel's filesystem is read-only).
 
-### 1. Set up Redis
-
-[Upstash](https://upstash.com) is recommended — free tier, one-click Vercel integration.
-
-1. Create a Redis database at [console.upstash.com](https://console.upstash.com)
-2. Copy the `redis://` connection string
-
-### 2. Push to GitHub and deploy
+### 1. Push to GitHub and import to Vercel
 
 1. Push your project to a GitHub repo
 2. Import it at [vercel.com/new](https://vercel.com/new)
-3. Add these environment variables in the Vercel dashboard:
+
+### 2. Add Redis via Vercel Storage
+
+1. In your Vercel project dashboard, go to **Storage**
+2. Click **Create Database** → **Upstash Redis**
+3. Follow the prompts — Vercel will automatically add the `REDIS_URL` environment variable to your project
+
+### 3. Add environment variables
+
+In your Vercel project, go to **Settings** → **Environment Variables** and add:
 
 | Variable | Value |
 | --- | --- |
@@ -100,24 +102,25 @@ Best for production. Requires Redis for persistent storage (Vercel's filesystem 
 | `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | LLM provider key |
 | `SLACK_BOT_TOKEN` | Bot User OAuth Token |
 | `SLACK_SIGNING_SECRET` | Signing Secret |
-| `REDIS_URL` | Redis connection string from Upstash |
 | `APP_URL` | Your Vercel deployment URL (e.g. `https://my-bot.vercel.app`) |
 
-### 3. Disable Deployment Protection
+> **Note:** `REDIS_URL` is already set from the previous step.
+
+### 4. Disable Deployment Protection
 
 Vercel's Deployment Protection blocks external webhooks by default.
 
 1. Go to your project → **Settings** → **Deployment Protection**
 2. Set **Vercel Authentication** to **Off**
 
-### 4. Configure Slack Event Subscriptions
+### 5. Configure Slack Event Subscriptions
 
 1. Go to your Slack app → **Event Subscriptions** → Enable Events
 2. Set the Request URL to: `https://<your-vercel-url>/api/chat-webhook`
 3. Subscribe to bot events: `app_mention`
 4. Save changes
 
-### 5. Test it
+### 6. Test it
 
 Invite the bot to a Slack channel and @mention it. The first time, it will post an Arcade authorization link — click it, then @mention again.
 
