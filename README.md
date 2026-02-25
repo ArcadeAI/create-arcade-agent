@@ -6,7 +6,7 @@ The generated agent is a daily planning and triage assistant that connects to Sl
 
 ## Prerequisites
 
-- **Node.js >= 18** -- required for all templates (used to run the CLI itself and the TypeScript templates)
+- **Node.js >= 18** -- required for all templates (used to run the CLI itself and the Next.js + TypeScript templates)
 - **Python >= 3.10** -- required only for the `langchain` template
 - **An Arcade account** -- sign up at [arcade.dev](https://arcade.dev) and create an MCP Gateway at [app.arcade.dev/mcp-gateways](https://app.arcade.dev/mcp-gateways)
 - **An LLM API key** -- either an [OpenAI API key](https://platform.openai.com) or an [Anthropic API key](https://console.anthropic.com) (if both are set, Anthropic takes priority)
@@ -19,7 +19,7 @@ The generated agent is a daily planning and triage assistant that connects to Sl
 | **Mastra**    | `mastra`    | Next.js 16 + Mastra + `@mastra/mcp` + Drizzle ORM + SQLite              | React 19 + Tailwind CSS       |
 | **LangChain** | `langchain` | FastAPI + LangGraph + `langchain-mcp-adapters` + SQLAlchemy + aiosqlite | Jinja2 templates + vanilla JS |
 
-All three templates connect to Arcade's MCP Gateway for tool discovery and execution. The TypeScript templates (`ai-sdk` and `mastra`) share a common Next.js frontend. The Python template (`langchain`) uses server-rendered HTML with SSE streaming.
+All three templates connect to Arcade's MCP Gateway for tool discovery and execution. The Next.js + TypeScript templates (`ai-sdk` and `mastra`) share a common frontend. The Python template (`langchain`) uses server-rendered HTML with SSE streaming.
 
 ## What Is an MCP Gateway?
 
@@ -61,7 +61,7 @@ npx create-arcade-agent my-agent --template langchain
 
 ## Generated project structure
 
-### TypeScript templates (ai-sdk, mastra)
+### Next.js + TypeScript templates (ai-sdk, mastra)
 
 ```
 my-agent/
@@ -126,7 +126,7 @@ cp .env.example .env
 | `ARCADE_CUSTOM_VERIFIER` | Set to `true` to enable per-user token binding (COAT protection)                                              |
 | `ARCADE_API_KEY`         | Required when custom verifier is enabled; get from [app.arcade.dev/settings](https://app.arcade.dev/settings) |
 | `DATABASE_URL`           | SQLite file path (defaults to `local.db`)                                                                     |
-| `PORT`                   | Server port (defaults to `8765` for langchain, `3000` for Next.js templates)                                  |
+| `PORT`                   | Server port (defaults to `8765` for all templates)                                                              |
 
 ### Arcade Gateway setup
 
@@ -143,7 +143,7 @@ For best agent performance, create a dedicated gateway for this starter and keep
 
 ## Running the generated project
 
-### TypeScript templates
+### Next.js + TypeScript templates
 
 ```bash
 cd my-agent
@@ -172,7 +172,7 @@ Each template marks extensibility points with `CUSTOMIZATION POINT` comments:
 
 ### Port already in use
 
-The default port is `8765` for the langchain template and `3000` for the Next.js templates. If the port is occupied, either stop the other process or change the `PORT` variable in `.env`.
+The default port is `8765` for all templates. If the port is occupied, either stop the other process or change the `PORT` variable in `.env`.
 
 ### `npm install` fails
 
@@ -204,7 +204,7 @@ On Windows, use `.venv\Scripts\activate` instead of `source .venv/bin/activate`.
 Migrations run automatically during scaffolding. If they fail, you can run them manually:
 
 ```bash
-# TypeScript templates
+# Next.js + TypeScript templates
 npx drizzle-kit generate
 npx drizzle-kit migrate
 

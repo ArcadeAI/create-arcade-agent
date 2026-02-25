@@ -131,7 +131,7 @@ jobs:
         working-directory: ci-test-${{ matrix.template }}
         run: cp .env.example .env
 
-      - name: Doctor (TypeScript templates)
+      - name: Doctor (Next.js + TypeScript templates)
         if: matrix.template != 'langchain'
         working-directory: ci-test-${{ matrix.template }}
         run: npm run doctor
@@ -141,17 +141,17 @@ jobs:
         working-directory: ci-test-${{ matrix.template }}
         run: python -m app.doctor
 
-      - name: Type check (TypeScript templates)
+      - name: Type check (Next.js + TypeScript templates)
         if: matrix.template != 'langchain'
         working-directory: ci-test-${{ matrix.template }}
         run: npm run typecheck
 
-      - name: Build (TypeScript templates)
+      - name: Build (Next.js + TypeScript templates)
         if: matrix.template != 'langchain'
         working-directory: ci-test-${{ matrix.template }}
         run: npm run build
 
-      - name: Lint (TypeScript templates)
+      - name: Lint (Next.js + TypeScript templates)
         if: matrix.template != 'langchain'
         working-directory: ci-test-${{ matrix.template }}
         run: npm run lint

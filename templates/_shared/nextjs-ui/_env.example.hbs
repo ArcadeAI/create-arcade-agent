@@ -1,7 +1,7 @@
 {{> env-vars-shared}}
 
 # --- App ---
-NEXT_PUBLIC_APP_URL=http://localhost:3000  # Used for OAuth callback URL
+NEXT_PUBLIC_APP_URL=http://localhost:{{port}}  # Used for OAuth callback URL; keep this aligned with PORT
 
 # --- Database ---
 DATABASE_URL=local.db       # SQLite file path (default: local.db)

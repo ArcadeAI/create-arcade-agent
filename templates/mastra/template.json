@@ -1,6 +1,6 @@
 {
   "name": "mastra",
-  "displayName": "Mastra (TypeScript)",
+  "displayName": "Mastra (Next.js + TypeScript)",
   "hint": "Next.js + Mastra + React",
   "language": "typescript",
   "devCommand": "npm run dev",
