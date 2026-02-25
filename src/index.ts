@@ -21,8 +21,8 @@ async function main() {
 
   const targetDir = resolve(process.cwd(), projectName);
   // Ensure target is a direct child of cwd
-  if (resolve(targetDir, '..') !== process.cwd()) {
-    p.cancel('Project must be created in the current directory.');
+  if (resolve(targetDir, "..") !== process.cwd()) {
+    p.cancel("Project must be created in the current directory.");
     process.exit(1);
   }
   if (existsSync(targetDir)) {

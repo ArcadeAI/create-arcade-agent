@@ -1,4 +1,9 @@
-import { oauthProvider, mcpClient, getPendingAuthUrl, clearPendingAuthUrl } from "@/src/mastra/tools/arcade";
+import {
+  oauthProvider,
+  mcpClient,
+  getPendingAuthUrl,
+  clearPendingAuthUrl,
+} from "@/src/mastra/tools/arcade";
 
 // Serialize concurrent connect attempts to prevent PKCE verifier overwrites
 let connectPromise: Promise<{ data: Record<string, unknown>; status?: number }> | null = null;
@@ -17,10 +22,7 @@ export async function POST() {
   }
 
   const result = await connectPromise;
-  return Response.json(
-    result.data,
-    result.status ? { status: result.status } : undefined
-  );
+  return Response.json(result.data, result.status ? { status: result.status } : undefined);
 }
 
 async function doConnect(): Promise<{

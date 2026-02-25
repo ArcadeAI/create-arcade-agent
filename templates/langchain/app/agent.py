@@ -10,8 +10,8 @@ system prompt and configure matching tools in your Arcade Gateway.
 
 from pathlib import Path
 
-from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
+from langchain_openai import ChatOpenAI
 
 from app.config import settings
 
@@ -34,6 +34,4 @@ def get_llm():
             model="gpt-4.1",
             api_key=settings.openai_api_key,
         )
-    raise RuntimeError(
-        "No LLM API key configured. Set OPENAI_API_KEY or ANTHROPIC_API_KEY in .env"
-    )
+    raise RuntimeError("No LLM API key configured. Set OPENAI_API_KEY or ANTHROPIC_API_KEY in .env")

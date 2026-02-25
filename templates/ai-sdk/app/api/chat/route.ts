@@ -38,14 +38,10 @@ export async function POST(req: Request) {
     // Check if this was an Arcade auth issue
     const authUrl = getPendingAuthUrl();
     if (authUrl) {
-      return Response.json(
-        { error: "arcade_auth_required", authUrl },
-        { status: 401 }
-      );
+      return Response.json({ error: "arcade_auth_required", authUrl }, { status: 401 });
     }
 
-    const message =
-      error instanceof Error ? error.message : "Something went wrong";
+    const message = error instanceof Error ? error.message : "Something went wrong";
     return Response.json({ error: message }, { status: 500 });
   }
 }

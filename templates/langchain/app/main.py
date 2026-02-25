@@ -1,8 +1,8 @@
-from pathlib import Path
 from contextlib import asynccontextmanager
+from pathlib import Path
 from urllib.parse import urlparse
 
-from fastapi import FastAPI, Depends, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -12,7 +12,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from app.auth import get_current_user
 from app.config import settings
 from app.database import get_db
-from app.routes import auth, chat, arcade, plan
+from app.routes import arcade, auth, chat, plan
 
 _parsed_app_url = urlparse(settings.app_url)
 _canonical_host = _parsed_app_url.hostname

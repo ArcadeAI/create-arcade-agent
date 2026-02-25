@@ -16,7 +16,4 @@ export function getModel() {
 
 // --- CUSTOMIZATION POINT ---
 // Edit system-prompt.md (in this directory) to change the agent's purpose.
-export const systemPrompt = readFileSync(
-  join(process.cwd(), "lib/system-prompt.md"),
-  "utf-8"
-);
+export const systemPrompt = readFileSync(join(process.cwd(), "lib/system-prompt.md"), "utf-8");

@@ -1,12 +1,13 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import bcrypt
+from fastapi import Request, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Request, Response
 
-from app.models import User, Session as SessionModel
+from app.models import Session as SessionModel
+from app.models import User
 
 SESSION_COOKIE = "session_id"
 SESSION_MAX_AGE = timedelta(days=7)
@@ -22,7 +23,7 @@ def verify_password(password: str, hashed: str) -> bool:
 
 async def create_session(db: AsyncSession, user_id: int, response: Response) -> str:
     session_id = str(uuid.uuid4())
-    expires_at = datetime.now(timezone.utc) + SESSION_MAX_AGE
+    expires_at = datetime.now(UTC) + SESSION_MAX_AGE
 
     db.add(SessionModel(id=session_id, user_id=user_id, expires_at=expires_at))
     await db.commit()
@@ -43,13 +44,11 @@ async def get_current_user(request: Request, db: AsyncSession) -> User | None:
     if not session_id:
         return None
 
-    result = await db.execute(
-        select(SessionModel).where(SessionModel.id == session_id)
-    )
+    result = await db.execute(select(SessionModel).where(SessionModel.id == session_id))
     session = result.scalar_one_or_none()
     if not session:
         return None
-    if session.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+    if session.expires_at.replace(tzinfo=UTC) < datetime.now(UTC):
         await db.delete(session)
         await db.commit()
         return None
@@ -58,14 +57,10 @@ async def get_current_user(request: Request, db: AsyncSession) -> User | None:
     return result.scalar_one_or_none()
 
 
-async def destroy_session(
-    request: Request, db: AsyncSession, response: Response
-) -> None:
+async def destroy_session(request: Request, db: AsyncSession, response: Response) -> None:
     session_id = request.cookies.get(SESSION_COOKIE)
     if session_id:
-        result = await db.execute(
-            select(SessionModel).where(SessionModel.id == session_id)
-        )
+        result = await db.execute(select(SessionModel).where(SessionModel.id == session_id))
         session = result.scalar_one_or_none()
         if session:
             await db.delete(session)

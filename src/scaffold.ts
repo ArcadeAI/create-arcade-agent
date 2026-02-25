@@ -9,20 +9,14 @@ import {
   statSync,
   writeFileSync,
 } from "fs";
-import { resolve, join, relative, dirname, extname, basename } from "path";
+import { resolve, join, relative, dirname } from "path";
 import type { TemplateMeta } from "./types.js";
 
 function registerHelpers() {
   Handlebars.registerHelper("eq", (a, b) => a === b);
   Handlebars.registerHelper("ne", (a, b) => a !== b);
-  Handlebars.registerHelper(
-    "and",
-    (...args) => args.slice(0, -1).every(Boolean)
-  );
-  Handlebars.registerHelper(
-    "or",
-    (...args) => args.slice(0, -1).some(Boolean)
-  );
+  Handlebars.registerHelper("and", (...args) => args.slice(0, -1).every(Boolean));
+  Handlebars.registerHelper("or", (...args) => args.slice(0, -1).some(Boolean));
   Handlebars.registerHelper("includes", (arr: unknown[], val: unknown) =>
     Array.isArray(arr) ? arr.includes(val) : false
   );

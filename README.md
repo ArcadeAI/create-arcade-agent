@@ -13,10 +13,10 @@ The generated agent is a daily planning and triage assistant that connects to Sl
 
 ## Templates
 
-| Template | Flag value | Tech stack | UI |
-|---|---|---|---|
-| **AI SDK** | `ai-sdk` | Next.js 16 + Vercel AI SDK + `@ai-sdk/mcp` + Drizzle ORM + SQLite | React 19 + Tailwind CSS |
-| **Mastra** | `mastra` | Next.js 16 + Mastra + `@mastra/mcp` + Drizzle ORM + SQLite | React 19 + Tailwind CSS |
+| Template      | Flag value  | Tech stack                                                              | UI                            |
+| ------------- | ----------- | ----------------------------------------------------------------------- | ----------------------------- |
+| **AI SDK**    | `ai-sdk`    | Next.js 16 + Vercel AI SDK + `@ai-sdk/mcp` + Drizzle ORM + SQLite       | React 19 + Tailwind CSS       |
+| **Mastra**    | `mastra`    | Next.js 16 + Mastra + `@mastra/mcp` + Drizzle ORM + SQLite              | React 19 + Tailwind CSS       |
 | **LangChain** | `langchain` | FastAPI + LangGraph + `langchain-mcp-adapters` + SQLAlchemy + aiosqlite | Jinja2 templates + vanilla JS |
 
 All three templates connect to Arcade's MCP Gateway for tool discovery and execution. The TypeScript templates (`ai-sdk` and `mastra`) share a common Next.js frontend. The Python template (`langchain`) uses server-rendered HTML with SSE streaming.
@@ -101,19 +101,19 @@ cp .env.example .env
 
 ### Required environment variables
 
-| Variable | Description | Where to get it |
-|---|---|---|
-| `ARCADE_GATEWAY_URL` | Your Arcade MCP Gateway URL | [app.arcade.dev/mcp-gateways](https://app.arcade.dev/mcp-gateways) |
+| Variable                                | Description                             | Where to get it                                                                                              |
+| --------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `ARCADE_GATEWAY_URL`                    | Your Arcade MCP Gateway URL             | [app.arcade.dev/mcp-gateways](https://app.arcade.dev/mcp-gateways)                                           |
 | `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | LLM provider API key (set at least one) | [platform.openai.com](https://platform.openai.com) or [console.anthropic.com](https://console.anthropic.com) |
 
 ### Optional environment variables
 
-| Variable | Description |
-|---|---|
-| `ARCADE_CUSTOM_VERIFIER` | Set to `true` to enable per-user token binding (COAT protection) |
-| `ARCADE_API_KEY` | Required when custom verifier is enabled; get from [app.arcade.dev/settings](https://app.arcade.dev/settings) |
-| `DATABASE_URL` | SQLite file path (defaults to `local.db`) |
-| `PORT` | Server port (defaults to `8765` for langchain, `3000` for Next.js templates) |
+| Variable                 | Description                                                                                                   |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `ARCADE_CUSTOM_VERIFIER` | Set to `true` to enable per-user token binding (COAT protection)                                              |
+| `ARCADE_API_KEY`         | Required when custom verifier is enabled; get from [app.arcade.dev/settings](https://app.arcade.dev/settings) |
+| `DATABASE_URL`           | SQLite file path (defaults to `local.db`)                                                                     |
+| `PORT`                   | Server port (defaults to `8765` for langchain, `3000` for Next.js templates)                                  |
 
 ### Arcade Gateway setup
 
@@ -206,6 +206,58 @@ The generated project uses file-based storage for both the SQLite database and A
 - **SQLite** -- suitable for low-traffic use. For production workloads, consider migrating to PostgreSQL or another production database.
 - **Custom user verification** -- enable `ARCADE_CUSTOM_VERIFIER=true` and set `ARCADE_API_KEY` in production to bind Arcade tool authorizations to your app's user sessions and prevent cross-origin authorization token (COAT) attacks.
 - **Session secret** -- the langchain template uses `APP_SECRET_KEY` for session signing. Change the default value to a cryptographically random string in production.
+
+## Development
+
+### Setup
+
+```bash
+git clone <repo-url>
+cd create-arcade-agent
+npm install
+```
+
+### Scripts
+
+| Command                | Description                                  |
+| ---------------------- | -------------------------------------------- |
+| `npm run build`        | Compile TypeScript CLI to `dist/`            |
+| `npm run dev`          | Watch mode (`tsc --watch`)                   |
+| `npm run lint`         | ESLint check (`src/` + `templates/` TS)      |
+| `npm run lint:fix`     | ESLint auto-fix                              |
+| `npm run format`       | Prettier format all files                    |
+| `npm run format:check` | Prettier check (CI mode)                     |
+| `npm run typecheck`    | Type check without emitting (`tsc --noEmit`) |
+
+### Linting & formatting
+
+- **TypeScript/JS** -- [ESLint](https://eslint.org/) v9 (flat config) + [Prettier](https://prettier.io/). Covers `src/` (CLI source) and `templates/` (TS/JS template files). Config: `eslint.config.mjs`, `.prettierrc`.
+- **Python** -- [Ruff](https://docs.astral.sh/ruff/) for `templates/langchain/`. Config: `templates/langchain/ruff.toml`. Run with `ruff check templates/langchain/` and `ruff format templates/langchain/`.
+- **Ignored** -- `dist/`, `templates/_shared/nextjs-ui/` (has its own ESLint config for generated projects), `.hbs` files, and `*.lock` files are excluded from linting/formatting.
+
+### CI
+
+GitHub Actions runs on PRs to `main` and pushes to `main`:
+
+1. **lint-and-build** -- ESLint + Prettier + typecheck + build (Node 22)
+2. **lint-python** -- Ruff lint + format check on Python templates
+3. **smoke-test-templates** -- Scaffolds each template and verifies the generated project builds and lints
+
+### Testing locally
+
+```bash
+# Build the CLI
+npm run build
+
+# Scaffold a template
+node dist/index.js test-project --template ai-sdk
+
+# Verify the generated project
+cd test-project
+cp .env.example .env
+npm run build
+npm run lint
+```
 
 ## License
 

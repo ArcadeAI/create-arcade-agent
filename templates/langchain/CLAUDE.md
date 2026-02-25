@@ -18,27 +18,31 @@ A Slack triage agent built with LangGraph (LangChain's agent framework), FastAPI
 ```bash
 source .venv/bin/activate
 uvicorn app.main:app --reload          # Dev server
+ruff check app/                        # Lint
+ruff format app/                       # Format
+ty check .                             # Type check
 alembic revision --autogenerate -m ""  # New migration
 alembic upgrade head                   # Run migrations
 ```
 
 ## Key Files
 
-| File | Purpose |
-|---|---|
-| `app/agent.py` | Agent definition — model selection |
-| `app/system-prompt.md` | System prompt (customization point) |
-| `app/arcade_oauth.py` | MCP OAuth flow — discovery, PKCE, token exchange, file-based persistence |
-| `app/routes/chat.py` | SSE streaming chat endpoint |
-| `app/routes/arcade.py` | OAuth connect/callback + custom user verifier |
-| `app/routes/auth.py` | Login, register, logout |
-| `app/auth.py` | Session management (bcrypt, cookies) |
-| `app/models.py` | SQLAlchemy models (User, Session) |
-| `app/static/chat.js` | Chat UI — SSE streaming, tool calls, auth URLs |
+| File                   | Purpose                                                                  |
+| ---------------------- | ------------------------------------------------------------------------ |
+| `app/agent.py`         | Agent definition — model selection                                       |
+| `app/system-prompt.md` | System prompt (customization point)                                      |
+| `app/arcade_oauth.py`  | MCP OAuth flow — discovery, PKCE, token exchange, file-based persistence |
+| `app/routes/chat.py`   | SSE streaming chat endpoint                                              |
+| `app/routes/arcade.py` | OAuth connect/callback + custom user verifier                            |
+| `app/routes/auth.py`   | Login, register, logout                                                  |
+| `app/auth.py`          | Session management (bcrypt, cookies)                                     |
+| `app/models.py`        | SQLAlchemy models (User, Session)                                        |
+| `app/static/chat.js`   | Chat UI — SSE streaming, tool calls, auth URLs                           |
 
 ## Auth Architecture
 
 Three layers:
+
 1. **App auth** — email/password with bcrypt, session cookies, SQLite storage
 2. **Arcade Gateway OAuth** — MCP OAuth flow with file-based token persistence in `.arcade-auth/` (discovery → registration → PKCE → token exchange)
 3. **Tool-level OAuth** — Arcade handles per-tool auth (Slack, GitHub, etc.); auth URLs surfaced in chat UI
@@ -53,6 +57,7 @@ Three layers:
 ## Customization Points
 
 Marked with `# --- CUSTOMIZATION POINT ---` comments:
+
 - `app/system-prompt.md` — Agent purpose and behavior
 - `app/agent.py` — Model selection
 - `app/models.py` — Database schema

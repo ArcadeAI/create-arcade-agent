@@ -1,23 +1,32 @@
-{% extends "base.html" %}
-{% block title %}Login - Arcade Agent{% endblock %}
-{% block content %}
+{% extends "base.html" %} {% block title %}Login - Arcade Agent{% endblock %} {% block content %}
 <div class="min-h-screen flex items-center justify-center">
   <div class="w-full max-w-sm">
     <h1 class="text-2xl font-bold text-center mb-2">Arcade Agent Template</h1>
-    <p class="text-sm text-gray-500 text-center mb-8">
-      Slack triage powered by LangGraph + Arcade
-    </p>
+    <p class="text-sm text-gray-500 text-center mb-8">Slack triage powered by LangGraph + Arcade</p>
 
     <form id="auth-form" class="space-y-4">
-      <input type="email" id="email" placeholder="Email" required
-             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900">
-      <input type="password" id="password" placeholder="Password" required
-             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900">
+      <input
+        type="email"
+        id="email"
+        placeholder="Email"
+        required
+        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900"
+      />
+      <input
+        type="password"
+        id="password"
+        placeholder="Password"
+        required
+        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900"
+      />
 
       <p id="error-msg" class="text-sm text-red-600 hidden"></p>
 
-      <button type="submit" id="submit-btn"
-              class="w-full py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 disabled:bg-gray-400 transition-colors">
+      <button
+        type="submit"
+        id="submit-btn"
+        class="w-full py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 disabled:bg-gray-400 transition-colors"
+      >
         Login
       </button>
     </form>
@@ -28,54 +37,52 @@
     </p>
   </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
+{% endblock %} {% block scripts %}
 <script>
   let isRegister = false;
-  const form = document.getElementById('auth-form');
-  const submitBtn = document.getElementById('submit-btn');
-  const toggleBtn = document.getElementById('toggle-mode');
-  const toggleText = document.getElementById('toggle-text');
-  const errorMsg = document.getElementById('error-msg');
+  const form = document.getElementById("auth-form");
+  const submitBtn = document.getElementById("submit-btn");
+  const toggleBtn = document.getElementById("toggle-mode");
+  const toggleText = document.getElementById("toggle-text");
+  const errorMsg = document.getElementById("error-msg");
 
-  toggleBtn.addEventListener('click', () => {
+  toggleBtn.addEventListener("click", () => {
     isRegister = !isRegister;
-    submitBtn.textContent = isRegister ? 'Register' : 'Login';
-    toggleText.textContent = isRegister ? 'Already have an account?' : 'No account yet?';
-    toggleBtn.textContent = isRegister ? 'Login' : 'Register';
-    errorMsg.classList.add('hidden');
+    submitBtn.textContent = isRegister ? "Register" : "Login";
+    toggleText.textContent = isRegister ? "Already have an account?" : "No account yet?";
+    toggleBtn.textContent = isRegister ? "Login" : "Register";
+    errorMsg.classList.add("hidden");
   });
 
-  form.addEventListener('submit', async (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    errorMsg.classList.add('hidden');
+    errorMsg.classList.add("hidden");
     submitBtn.disabled = true;
-    submitBtn.textContent = '...';
+    submitBtn.textContent = "...";
 
-    const endpoint = isRegister ? '/api/auth/register' : '/api/auth/login';
+    const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
     try {
       const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: document.getElementById('email').value,
-          password: document.getElementById('password').value,
+          email: document.getElementById("email").value,
+          password: document.getElementById("password").value,
         }),
       });
       const data = await res.json();
       if (!res.ok) {
-        errorMsg.textContent = data.error || 'Something went wrong';
-        errorMsg.classList.remove('hidden');
+        errorMsg.textContent = data.error || "Something went wrong";
+        errorMsg.classList.remove("hidden");
         return;
       }
-      window.location.href = '/dashboard';
+      window.location.href = "/dashboard";
     } catch {
-      errorMsg.textContent = 'Network error. Please try again.';
-      errorMsg.classList.remove('hidden');
+      errorMsg.textContent = "Network error. Please try again.";
+      errorMsg.classList.remove("hidden");
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = isRegister ? 'Register' : 'Login';
+      submitBtn.textContent = isRegister ? "Register" : "Login";
     }
   });
 </script>

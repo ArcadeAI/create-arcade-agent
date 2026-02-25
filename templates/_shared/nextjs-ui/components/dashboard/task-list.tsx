@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import type { InboxItem } from "@/types/inbox"
-import { TaskCard } from "@/components/dashboard/task-card"
+import type { InboxItem } from "@/types/inbox";
+import { TaskCard } from "@/components/dashboard/task-card";
 
 interface TaskListProps {
-  items: InboxItem[]
+  items: InboxItem[];
 }
 
 export function TaskList({ items }: TaskListProps) {
@@ -23,5 +23,5 @@ export function TaskList({ items }: TaskListProps) {
         ))}
       </div>
     </section>
-  )
+  );
 }

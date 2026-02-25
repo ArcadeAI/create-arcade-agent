@@ -21,30 +21,18 @@
   "install": [
     {
       "cmd": "python3",
-      "args": [
-        "-m",
-        "venv",
-        ".venv"
-      ],
+      "args": ["-m", "venv", ".venv"],
       "label": "Creating virtual environment"
     },
     {
       "cmd": ".venv/bin/pip",
-      "args": [
-        "install",
-        "--upgrade",
-        "pip"
-      ],
+      "args": ["install", "--upgrade", "pip"],
       "label": "Upgrading pip",
       "winCmd": ".venv\\Scripts\\pip"
     },
     {
       "cmd": ".venv/bin/pip",
-      "args": [
-        "install",
-        "-r",
-        "requirements.txt"
-      ],
+      "args": ["install", "-r", "requirements.txt"],
       "label": "Installing dependencies",
       "winCmd": ".venv\\Scripts\\pip"
     }
@@ -52,10 +40,7 @@
   "migrate": [
     {
       "cmd": ".venv/bin/alembic",
-      "args": [
-        "upgrade",
-        "head"
-      ],
+      "args": ["upgrade", "head"],
       "label": "Running migrations",
       "winCmd": ".venv\\Scripts\\alembic"
     }

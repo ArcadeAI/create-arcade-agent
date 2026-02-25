@@ -3,13 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -61,44 +55,24 @@ export default function AuthPage() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-xl">
-            {isRegister ? "Create account" : "Sign in"}
-          </CardTitle>
+          <CardTitle className="text-xl">{isRegister ? "Create account" : "Sign in"}</CardTitle>
           <CardDescription>
-            {isRegister
-              ? "Get started with Arcade Agent"
-              : "Welcome back to Arcade Agent"}
+            {isRegister ? "Get started with Arcade Agent" : "Welcome back to Arcade Agent"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form ref={formRef} onSubmit={handleSubmit} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="you@example.com"
-              />
+              <Input id="email" name="email" type="email" placeholder="you@example.com" />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="Your password"
-              />
+              <Input id="password" name="password" type="password" placeholder="Your password" />
             </div>
-            {error && (
-              <p className="text-sm text-destructive">{error}</p>
-            )}
+            {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading
-                ? "Loading..."
-                : isRegister
-                  ? "Create account"
-                  : "Sign in"}
+              {loading ? "Loading..." : isRegister ? "Create account" : "Sign in"}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm text-muted-foreground">
@@ -117,9 +91,7 @@ export default function AuthPage() {
           </div>
         </CardContent>
       </Card>
-      <p className="mt-6 text-xs text-muted-foreground">
-        Powered by Arcade
-      </p>
+      <p className="mt-6 text-xs text-muted-foreground">Powered by Arcade</p>
     </div>
   );
 }
