@@ -11,9 +11,43 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Detect Changed Areas
+    runs-on: ubuntu-latest
+    outputs:
+      core: ${{ steps.filter.outputs.core }}
+      ai_sdk: ${{ steps.filter.outputs.ai_sdk }}
+      mastra: ${{ steps.filter.outputs.mastra }}
+      langchain: ${{ steps.filter.outputs.langchain }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            core:
+              - ".github/workflows/**"
+              - "src/**"
+              - "templates/_shared/**"
+              - "package.json"
+              - "package-lock.json"
+              - "tsconfig.json"
+              - "eslint.config.mjs"
+              - ".prettierrc"
+              - ".prettierignore"
+            ai_sdk:
+              - "templates/ai-sdk/**"
+            mastra:
+              - "templates/mastra/**"
+            langchain:
+              - "templates/langchain/**"
+
   lint-and-build:
     name: Lint, Format & Build
     runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.core == 'true' || needs.changes.outputs.ai_sdk == 'true' || needs.changes.outputs.mastra == 'true' || needs.changes.outputs.langchain == 'true' }}
     env:
       NPM_CONFIG_AUDIT: "false"
       NPM_CONFIG_FUND: "false"
@@ -39,6 +73,8 @@ jobs:
   lint-python:
     name: Lint Python Templates
     runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.core == 'true' || needs.changes.outputs.langchain == 'true' }}
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/ruff-action@v3
@@ -51,7 +87,8 @@ jobs:
   smoke-test-templates:
     name: Smoke Test — ${{ matrix.template }}
     runs-on: ubuntu-latest
-    needs: lint-and-build
+    needs: [changes, lint-and-build]
+    if: ${{ needs.changes.outputs.core == 'true' || (matrix.template == 'ai-sdk' && needs.changes.outputs.ai_sdk == 'true') || (matrix.template == 'mastra' && needs.changes.outputs.mastra == 'true') || (matrix.template == 'langchain' && needs.changes.outputs.langchain == 'true') }}
     env:
       NPM_CONFIG_AUDIT: "false"
       NPM_CONFIG_FUND: "false"
