@@ -1,2 +1,7 @@
 [environment]
 python-version = "3.12"
+
+[rules]
+# Pydantic models use dynamic constructors with aliases (e.g. `model` vs `model_name`)
+# that ty doesn't resolve yet. SQLAlchemy Column types also cause false positives.
+ignore = ["unknown-argument", "missing-argument", "invalid-argument-type"]
