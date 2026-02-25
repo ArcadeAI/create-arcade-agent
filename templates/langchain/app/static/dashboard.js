@@ -21,6 +21,7 @@ const statusBar = document.getElementById("status-bar");
 const statusText = document.getElementById("status-text");
 const errorBar = document.getElementById("error-bar");
 const planBtn = document.getElementById("plan-btn");
+const planDisabledHint = document.getElementById("plan-disabled-hint");
 const replanBtn = document.getElementById("replan-btn");
 const logoutBtn = document.getElementById("logout-btn");
 const chatToggleBtn = document.getElementById("chat-toggle-btn");
@@ -36,8 +37,71 @@ let items = [];
 let chatOpen = false;
 let chatConversation = [];
 let isChatStreaming = false;
+let isPlanning = false;
 let sourceStatuses = {}; // { github: 'checking' | 'connected' | 'auth_required', ... }
 let authUrlsBySource = {}; // { github: 'https://...', ... }
+const skippedProviders = new Set();
+
+const REQUIRED_PROVIDERS = ["slack", "google", "linear", "github"];
+const SOURCE_TO_PROVIDER = {
+  slack: "slack",
+  google_calendar: "google",
+  gmail: "google",
+  linear: "linear",
+  github: "github",
+};
+const PROVIDER_CONFIG = {
+  slack: { label: "Slack", color: "bg-purple-100 text-purple-700 border-purple-200", icon: "💬" },
+  google: { label: "Google", color: "bg-blue-100 text-blue-700 border-blue-200", icon: "📅" },
+  linear: { label: "Linear", color: "bg-indigo-100 text-indigo-700 border-indigo-200", icon: "✅" },
+  github: { label: "GitHub", color: "bg-gray-100 text-gray-700 border-gray-300", icon: "🔀" },
+  other: { label: "Other", color: "bg-gray-100 text-gray-600 border-gray-200", icon: "🌐" },
+};
+
+function normalizeSourceName(name) {
+  if (!name) return null;
+  if (SOURCE_TO_PROVIDER[name]) return name;
+  if (name.startsWith("Slack_")) return "slack";
+  if (name.startsWith("Google") || name.startsWith("Calendar")) return "google_calendar";
+  if (name.startsWith("Linear_")) return "linear";
+  if (name.startsWith("Github_") || name.startsWith("GitHub_")) return "github";
+  if (name.startsWith("Gmail_")) return "gmail";
+  return null;
+}
+
+function providerForSource(source) {
+  return SOURCE_TO_PROVIDER[source] || "other";
+}
+
+function getProviderState() {
+  const grouped = {};
+  for (const [source, status] of Object.entries(sourceStatuses)) {
+    const provider = providerForSource(source);
+    grouped[provider] = grouped[provider] || [];
+    grouped[provider].push(status);
+  }
+
+  const providerStatuses = {};
+  for (const provider of REQUIRED_PROVIDERS) {
+    const statuses = grouped[provider] || [];
+    if (statuses.includes("auth_required")) providerStatuses[provider] = "auth_required";
+    else if (statuses.includes("checking")) providerStatuses[provider] = "checking";
+    else if (statuses.includes("connected")) providerStatuses[provider] = "connected";
+    else providerStatuses[provider] = "unknown";
+  }
+
+  const providerAuthUrls = {};
+  for (const [source, url] of Object.entries(authUrlsBySource)) {
+    const provider = providerForSource(source);
+    if (!providerAuthUrls[provider]) providerAuthUrls[provider] = url;
+  }
+
+  const unresolvedProviders = REQUIRED_PROVIDERS.filter(
+    (provider) => providerStatuses[provider] !== "connected" && !skippedProviders.has(provider)
+  );
+
+  return { providerStatuses, providerAuthUrls, unresolvedProviders };
+}
 
 // --- Date display ---
 const dateEl = document.getElementById("header-date");
@@ -138,7 +202,18 @@ async function checkSourceStatuses() {
       sourceStatuses[source] = info.status;
       if (info.authUrl) authUrlsBySource[source] = info.authUrl;
     }
+    for (const provider of [...skippedProviders]) {
+      const sourcesForProvider = Object.keys(sourceStatuses).filter(
+        (source) => providerForSource(source) === provider
+      );
+      const providerConnected = sourcesForProvider.some(
+        (source) => sourceStatuses[source] === "connected"
+      );
+      if (providerConnected) skippedProviders.delete(provider);
+    }
     renderToolStatus();
+    renderAuthPrompts();
+    showState();
   } catch {
     /* silent */
   }
@@ -186,8 +261,11 @@ function renderToolStatus() {
     main.insertBefore(container, main.firstChild);
   }
 
-  const entries = Object.entries(sourceStatuses);
-  if (entries.length === 0) {
+  const { providerStatuses, providerAuthUrls } = getProviderState();
+  const entries = REQUIRED_PROVIDERS.map((provider) => [provider, providerStatuses[provider]]).filter(
+    ([, status]) => status !== "unknown"
+  );
+  if (!entries.length) {
     container.classList.add("hidden");
     return;
   }
@@ -196,8 +274,8 @@ function renderToolStatus() {
   container.innerHTML =
     '<span class="font-medium">Sources:</span>' +
     entries
-      .map(([source, status]) => {
-        const config = SOURCE_CONFIG[source] || SOURCE_CONFIG.other;
+      .map(([provider, status]) => {
+        const config = PROVIDER_CONFIG[provider] || PROVIDER_CONFIG.other;
         const dotClass =
           status === "connected"
             ? "bg-green-500"
@@ -212,14 +290,14 @@ function renderToolStatus() {
             : status === "auth_required"
               ? "border-amber-200 bg-amber-50"
               : "border-gray-200 bg-gray-50";
-        const authUrl = status === "auth_required" ? authUrlsBySource[source] : null;
+        const authUrl = status === "auth_required" ? providerAuthUrls[provider] : null;
         const inner =
           `<span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 ${borderClass}">` +
           `${config.icon} <span>${escapeHtml(config.label)}</span>` +
           `<span class="inline-block w-2 h-2 rounded-full ${dotClass}"></span>` +
           `</span>`;
         if (authUrl) {
-          return `<a href="${sanitizeUrl(authUrl)}" class="hover:opacity-80 transition-opacity">${inner}</a>`;
+          return `<a href="${sanitizeUrl(authUrl)}" target="_blank" rel="noopener noreferrer" class="hover:opacity-80 transition-opacity">${inner}</a>`;
         }
         return inner;
       })
@@ -319,51 +397,63 @@ function renderStats(data) {
 }
 
 function showState() {
+  const { unresolvedProviders } = getProviderState();
   const hasItems = items.length > 0;
-  const isLoading = planBtn.disabled;
+  const hasUnresolvedProviders = unresolvedProviders.length > 0;
   const hasAuthPrompts = !authPrompts.classList.contains("hidden");
 
-  emptyState.classList.toggle("hidden", hasItems || isLoading || hasAuthPrompts);
-  loadingSkeletons.classList.toggle("hidden", !isLoading || hasItems || hasAuthPrompts);
+  emptyState.classList.toggle("hidden", hasItems || isPlanning || hasAuthPrompts);
+  loadingSkeletons.classList.toggle("hidden", !isPlanning || hasItems || hasAuthPrompts);
   statsBar.classList.toggle("hidden", !hasItems);
   taskList.classList.toggle("hidden", !hasItems);
+  planBtn.disabled = isPlanning || hasUnresolvedProviders;
+  planDisabledHint.classList.toggle("hidden", !hasUnresolvedProviders || isPlanning);
   if (replanBtn) {
     replanBtn.classList.toggle("hidden", !hasItems);
   }
 }
 
 // --- Auth prompts ---
-function addAuthPrompt(url, toolName) {
-  if (authPrompts.querySelector(`[data-url="${CSS.escape(url)}"]`)) return;
+function renderAuthPrompts() {
+  const { unresolvedProviders, providerAuthUrls } = getProviderState();
+  authPrompts.innerHTML = "";
+
+  if (!unresolvedProviders.length) {
+    authPrompts.classList.add("hidden");
+    return;
+  }
+
   authPrompts.classList.remove("hidden");
+  for (const provider of unresolvedProviders) {
+    const config = PROVIDER_CONFIG[provider] || PROVIDER_CONFIG.other;
+    const authUrl = providerAuthUrls[provider];
+    const card = document.createElement("div");
+    card.className = "bg-amber-50 border border-amber-200 rounded-lg p-4";
+    card.innerHTML = `
+      <div class="flex items-center gap-2 mb-2">
+        <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <h3 class="font-semibold text-sm">${escapeHtml(config.label)} authorization required</h3>
+      </div>
+      <p class="text-gray-500 text-xs mb-3">${escapeHtml(config.label)} needs permission to continue.</p>
+      <div class="flex gap-2">
+        ${
+          authUrl
+            ? `<a href="${sanitizeUrl(authUrl)}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-red-500 text-white text-sm rounded-md hover:bg-red-600">Authorize</a>`
+            : ""
+        }
+        <button class="skip-auth px-3 py-1.5 border border-gray-300 text-sm rounded-md hover:bg-gray-50">Skip for now</button>
+      </div>
+    `;
 
-  const label = toolName || "Service";
-  const card = document.createElement("div");
-  card.className = "bg-amber-50 border border-amber-200 rounded-lg p-4";
-  card.dataset.url = url;
-  card.innerHTML = `
-    <div class="flex items-center gap-2 mb-2">
-      <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-      <h3 class="font-semibold text-sm">${escapeHtml(label)} authorization required</h3>
-    </div>
-    <p class="text-gray-500 text-xs mb-3">${escapeHtml(label)} needs permission to continue.</p>
-    <div class="flex gap-2">
-      <a href="${sanitizeUrl(url)}"
-         class="px-3 py-1.5 bg-red-500 text-white text-sm rounded-md hover:bg-red-600">Authorize</a>
-      <button class="dismiss-auth px-3 py-1.5 border border-gray-300 text-sm rounded-md hover:bg-gray-50">Continue</button>
-    </div>
-  `;
+    card.querySelector(".skip-auth").addEventListener("click", () => {
+      skippedProviders.add(provider);
+      errorBar.classList.add("hidden");
+      renderAuthPrompts();
+      showState();
+    });
 
-  card.querySelector(".dismiss-auth").addEventListener("click", () => {
-    card.remove();
-    if (!authPrompts.children.length) authPrompts.classList.add("hidden");
-    showState();
-    // Re-check sources — user may have just authorized
-    checkSourceStatuses();
-  });
-
-  authPrompts.appendChild(card);
-  showState();
+    authPrompts.appendChild(card);
+  }
 }
 
 // --- Plan execution ---
@@ -373,6 +463,15 @@ if (replanBtn) {
 }
 
 async function handlePlan() {
+  const { unresolvedProviders } = getProviderState();
+  if (unresolvedProviders.length) {
+    errorBar.textContent = "Authorize or skip remaining toolkits before planning your day.";
+    errorBar.classList.remove("hidden");
+    showState();
+    return;
+  }
+
+  isPlanning = true;
   planBtn.disabled = true;
   planBtn.textContent = "Planning...";
   if (replanBtn) {
@@ -422,11 +521,15 @@ async function handlePlan() {
               renderToolStatus();
               break;
             case "auth_required":
-              addAuthPrompt(event.authUrl || event.auth_url, event.toolName);
               if (event.toolName) {
-                sourceStatuses[event.toolName] = "auth_required";
-                authUrlsBySource[event.toolName] = event.authUrl || event.auth_url;
-                renderToolStatus();
+                const source = normalizeSourceName(event.toolName);
+                if (source) {
+                  sourceStatuses[source] = "auth_required";
+                  authUrlsBySource[source] = event.authUrl || event.auth_url;
+                  renderToolStatus();
+                  renderAuthPrompts();
+                  showState();
+                }
               }
               break;
             case "status":
@@ -447,6 +550,7 @@ async function handlePlan() {
     errorBar.textContent = err.message || "Something went wrong";
     errorBar.classList.remove("hidden");
   } finally {
+    isPlanning = false;
     planBtn.disabled = false;
     planBtn.textContent = "Plan my day";
     if (replanBtn) {
@@ -458,6 +562,7 @@ async function handlePlan() {
       if (sourceStatuses[key] === "checking") sourceStatuses[key] = "connected";
     }
     renderToolStatus();
+    renderAuthPrompts();
     showState();
   }
 }
@@ -558,7 +663,14 @@ async function sendChatMessage(text) {
                 : escapeHtml(assistantText);
             chatMessages.scrollTop = chatMessages.scrollHeight;
           } else if (data.type === "auth_required") {
-            addAuthPrompt(data.authorization_url, data.toolName);
+            const source = normalizeSourceName(data.toolName);
+            if (source && data.authorization_url) {
+              sourceStatuses[source] = "auth_required";
+              authUrlsBySource[source] = data.authorization_url;
+              renderToolStatus();
+              renderAuthPrompts();
+              showState();
+            }
           }
         } catch {
           /* skip */

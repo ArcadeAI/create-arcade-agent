@@ -1,7 +1,7 @@
 {
   "name": "ai-sdk",
-  "displayName": "AI SDK (TypeScript)",
-  "hint": "Next.js + Vercel AI SDK + React",
+  "displayName": "AI SDK (Next.js + TypeScript)",
+  "hint": "Next.js + Vercel AI SDK",
   "language": "typescript",
   "devCommand": "npm run dev",
   "port": 8765,

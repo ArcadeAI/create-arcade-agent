@@ -3,7 +3,6 @@ import {
   Calendar,
   GitPullRequest,
   CheckSquare,
-  Mail,
   Globe,
   Check,
   Loader2,
@@ -19,12 +18,21 @@ interface ToolStatusBarProps {
 
 const sourceConfig: Record<string, { icon: LucideIcon; label: string }> = {
   slack: { icon: MessageSquare, label: "Slack" },
-  google_calendar: { icon: Calendar, label: "Calendar" },
+  google: { icon: Calendar, label: "Google" },
   linear: { icon: CheckSquare, label: "Linear" },
   github: { icon: GitPullRequest, label: "GitHub" },
-  gmail: { icon: Mail, label: "Gmail" },
   other: { icon: Globe, label: "Other" },
 };
+
+const sourceToProvider: Record<string, string> = {
+  slack: "slack",
+  google_calendar: "google",
+  gmail: "google",
+  linear: "linear",
+  github: "github",
+};
+
+const providerOrder = ["slack", "google", "linear", "github"];
 
 function StatusDot({ status }: { status: SourceStatus }) {
   if (status === "checking") {
@@ -44,17 +52,46 @@ function StatusDot({ status }: { status: SourceStatus }) {
 }
 
 export function ToolStatusBar({ statuses, authUrls }: ToolStatusBarProps) {
-  const entries = Object.entries(statuses);
+  const providerStatuses: Record<string, SourceStatus[]> = {};
+  for (const [source, status] of Object.entries(statuses)) {
+    const provider = sourceToProvider[source] || "other";
+    providerStatuses[provider] = providerStatuses[provider] || [];
+    providerStatuses[provider].push(status);
+  }
+
+  const aggregateStatus = (all: SourceStatus[]): SourceStatus => {
+    if (all.some((status) => status === "auth_required")) return "auth_required";
+    if (all.some((status) => status === "checking")) return "checking";
+    if (all.some((status) => status === "connected")) return "connected";
+    return "unknown";
+  };
+
+  const providerAuthUrls = new Map<string, string>();
+  for (const auth of authUrls) {
+    if (!auth.toolName) continue;
+    const provider = sourceToProvider[auth.toolName] || auth.toolName;
+    if (!providerAuthUrls.has(provider)) {
+      providerAuthUrls.set(provider, auth.url);
+    }
+  }
+
+  const entries = Object.entries(providerStatuses)
+    .map(([provider, sourceList]) => [provider, aggregateStatus(sourceList)] as const)
+    .sort(([a], [b]) => {
+      const aIndex = providerOrder.indexOf(a);
+      const bIndex = providerOrder.indexOf(b);
+      return (aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex) -
+        (bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex);
+    });
   if (entries.length === 0) return null;
 
   return (
     <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
       <span className="font-medium">Sources:</span>
-      {entries.map(([source, status]) => {
-        const config = sourceConfig[source] || sourceConfig.other;
+      {entries.map(([provider, status]) => {
+        const config = sourceConfig[provider] || sourceConfig.other;
         const Icon = config.icon;
-        const authUrl =
-          status === "auth_required" ? authUrls.find((a) => a.toolName === source)?.url : undefined;
+        const authUrl = status === "auth_required" ? providerAuthUrls.get(provider) : undefined;
 
         const pill = (
           <span
@@ -76,8 +113,10 @@ export function ToolStatusBar({ statuses, authUrls }: ToolStatusBarProps) {
         if (authUrl) {
           return (
             <a
-              key={source}
+              key={provider}
               href={authUrl}
+              target="_blank"
+              rel="noreferrer noopener"
               className="hover:opacity-80 transition-opacity"
               title={`Authorize ${config.label}`}
             >
@@ -86,7 +125,7 @@ export function ToolStatusBar({ statuses, authUrls }: ToolStatusBarProps) {
           );
         }
 
-        return <span key={source}>{pill}</span>;
+        return <span key={provider}>{pill}</span>;
       })}
     </div>
   );

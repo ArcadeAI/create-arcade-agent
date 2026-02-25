@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 
 interface AuthPromptProps {
   toolName: string;
-  authUrl: string;
-  onContinue: () => void;
+  authUrl?: string;
+  onSkip: () => void;
 }
 
-export function AuthPrompt({ toolName, authUrl, onContinue }: AuthPromptProps) {
+export function AuthPrompt({ toolName, authUrl, onSkip }: AuthPromptProps) {
   return (
     <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950">
       <div className="flex items-center gap-2 mb-2">
@@ -20,11 +20,15 @@ export function AuthPrompt({ toolName, authUrl, onContinue }: AuthPromptProps) {
         The tool <span className="font-mono">{toolName}</span> needs permission to continue.
       </p>
       <div className="flex gap-2">
-        <Button size="sm" asChild>
-          <a href={authUrl}>Authorize</a>
-        </Button>
-        <Button size="sm" variant="outline" onClick={onContinue}>
-          Continue
+        {authUrl && (
+          <Button size="sm" asChild>
+            <a href={authUrl} target="_blank" rel="noreferrer noopener">
+              Authorize
+            </a>
+          </Button>
+        )}
+        <Button size="sm" variant="outline" onClick={onSkip}>
+          Skip for now
         </Button>
       </div>
     </div>

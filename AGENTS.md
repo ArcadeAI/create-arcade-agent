@@ -24,6 +24,8 @@ Guidance for AI coding agents working in this repository.
 - Preserve/extend `CUSTOMIZATION POINT` and `AI-EDIT-SAFE` markers.
 - Avoid introducing framework-specific complexity unless required.
 - Keep OAuth/security guidance aligned with Arcade docs (custom verifier for production user-facing apps).
+- Maintain cross-template UX parity for core flows (`ai-sdk`, `mastra`, `langchain`), especially auth, connection status, planning gates, and recovery actions.
+- If a UX behavior changes in one template, update the equivalent behavior in the other two templates (or document why parity is intentionally not possible).
 
 ## Important Locations
 

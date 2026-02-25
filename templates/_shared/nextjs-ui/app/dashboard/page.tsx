@@ -17,11 +17,61 @@ import { Loader2, ShieldAlert, AlertTriangle, RotateCcw } from "lucide-react";
 
 // --- Arcade connection state machine ---
 
+type ProviderKey = "slack" | "google" | "linear" | "github";
+
+const requiredProviders: ProviderKey[] = ["slack", "google", "linear", "github"];
+
+const providerLabels: Record<ProviderKey, string> = {
+  slack: "Slack",
+  google: "Google (Calendar + Gmail)",
+  linear: "Linear",
+  github: "GitHub",
+};
+
+const sourceToProvider: Record<string, ProviderKey> = {
+  slack: "slack",
+  google_calendar: "google",
+  gmail: "google",
+  linear: "linear",
+  github: "github",
+};
+
+function getProviderForSource(source?: string): ProviderKey | null {
+  if (!source) return null;
+  return sourceToProvider[source] ?? null;
+}
+
+function aggregateProviderStatus(
+  provider: ProviderKey,
+  sourceStatuses: Record<string, SourceStatus>
+): SourceStatus {
+  const mapped = Object.entries(sourceStatuses)
+    .filter(([source]) => getProviderForSource(source) === provider)
+    .map(([, status]) => status);
+
+  if (mapped.some((status) => status === "auth_required")) return "auth_required";
+  if (mapped.some((status) => status === "checking")) return "checking";
+  if (mapped.some((status) => status === "connected")) return "connected";
+  return "unknown";
+}
+
 type ArcadeStatus =
   | { state: "checking" }
   | { state: "needs_auth"; authUrl: string }
   | { state: "connected" }
   | { state: "error"; message: string };
+
+function getUrlErrorMessage(urlError: string | null): string | null {
+  if (!urlError) return null;
+  const messages: Record<string, string> = {
+    auth_incomplete: "Authorization was not completed. Please try connecting again.",
+    auth_failed: "Authorization failed. Please try again.",
+    gateway_missing:
+      "ARCADE_GATEWAY_URL is missing. Create one at https://app.arcade.dev/mcp-gateways, add only the minimum required tools from Slack, Google Calendar, Linear, GitHub, and Gmail, then set ARCADE_GATEWAY_URL in .env.",
+    verify_failed: "User verification failed. Please try again.",
+  };
+  return messages[urlError] || `Authentication error: ${urlError}`;
+}
 
 function parseArcadeResponse(data: {
   connected?: boolean;
@@ -48,6 +98,7 @@ function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlError = searchParams.get("error");
+  const urlErrorMessage = getUrlErrorMessage(urlError);
 
   // --- Arcade connection ---
   const [arcadeStatus, setArcadeStatus] = useState<ArcadeStatus>({
@@ -122,20 +173,6 @@ function DashboardContent() {
       });
   };
 
-  useEffect(() => {
-    if (urlError) {
-      const messages: Record<string, string> = {
-        auth_incomplete: "Authorization was not completed. Please try connecting again.",
-        auth_failed: "Authorization failed. Please try again.",
-        gateway_missing:
-          "ARCADE_GATEWAY_URL is missing. Create one at https://app.arcade.dev/mcp-gateways, add only the minimum required tools from Slack, Google Calendar, Linear, GitHub, and Gmail, then set ARCADE_GATEWAY_URL in .env.",
-        verify_failed: "User verification failed. Please try again.",
-      };
-      setError(messages[urlError] || `Authentication error: ${urlError}`);
-      window.history.replaceState({}, "", window.location.pathname);
-    }
-  }, [urlError]);
-
   // --- Plan / triage state ---
   const [items, setItems] = useState<InboxItem[]>([]);
   const [stats, setStats] = useState<{ total: number; bySource: Record<string, number> }>({
@@ -150,6 +187,24 @@ function DashboardContent() {
   const abortRef = useRef<AbortController | null>(null);
   const [planRan, setPlanRan] = useState(false);
   const [sourceStatuses, setSourceStatuses] = useState<Record<string, SourceStatus>>({});
+  const [skippedProviders, setSkippedProviders] = useState<ProviderKey[]>([]);
+
+  const providerStatuses = Object.fromEntries(
+    requiredProviders.map((provider) => [provider, aggregateProviderStatus(provider, sourceStatuses)])
+  ) as Record<ProviderKey, SourceStatus>;
+
+  const providerAuthUrls = Object.fromEntries(
+    requiredProviders.map((provider) => {
+      const url =
+        authUrls.find((auth) => getProviderForSource(auth.toolName) === provider)?.url || undefined;
+      return [provider, url];
+    })
+  ) as Record<ProviderKey, string | undefined>;
+
+  const unresolvedProviders = requiredProviders.filter(
+    (provider) => providerStatuses[provider] !== "connected" && !skippedProviders.includes(provider)
+  );
+  const planDisabled = unresolvedProviders.length > 0;
 
   // --- Check source auth status via WhoAmI tools ---
   const checkSources = useCallback(async () => {
@@ -167,6 +222,9 @@ function DashboardContent() {
       }
       setSourceStatuses(statuses);
       setAuthUrls(urls);
+      setSkippedProviders((prev) =>
+        prev.filter((provider) => aggregateProviderStatus(provider, statuses) !== "connected")
+      );
     } catch {
       // Silent — sources will still be checked when plan runs
     }
@@ -177,7 +235,22 @@ function DashboardContent() {
     checkSources();
   }, [arcadeStatus.state, checkSources]);
 
+  useEffect(() => {
+    const onFocus = () => {
+      if (arcadeStatus.state === "connected") {
+        checkSources();
+      }
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [arcadeStatus.state, checkSources]);
+
   const handlePlan = useCallback(async () => {
+    if (planDisabled) {
+      setError("Authorize or skip remaining toolkits before planning your day.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setItems([]);
@@ -235,7 +308,11 @@ function DashboardContent() {
                 break;
               case "auth_required":
                 setAuthUrls((prev) =>
-                  prev.some((a) => a.url === event.authUrl)
+                  prev.some(
+                    (a) =>
+                      getProviderForSource(a.toolName) &&
+                      getProviderForSource(a.toolName) === getProviderForSource(event.toolName)
+                  )
                     ? prev
                     : [...prev, { url: event.authUrl, toolName: event.toolName }]
                 );
@@ -273,22 +350,23 @@ function DashboardContent() {
       setStatusMessage(null);
       setPlanRan(true);
     }
-  }, []);
+  }, [planDisabled]);
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/");
   };
 
-  const dismissAuthUrl = (url: string) => {
-    setAuthUrls((prev) => prev.filter((a) => a.url !== url));
-    // Re-check sources — user may have just authorized
-    checkSources();
+  const skipProvider = (provider: ProviderKey) => {
+    setError(null);
+    setSkippedProviders((prev) => (prev.includes(provider) ? prev : [...prev, provider]));
   };
 
   const hasItems = items.length > 0;
-  const showEmpty = !hasItems && !loading && !planRan && authUrls.length === 0;
-  const showNoResults = !hasItems && !loading && planRan && authUrls.length === 0 && !error;
+  const displayError = error ?? urlErrorMessage;
+  const showEmpty = !hasItems && !loading && !planRan && unresolvedProviders.length === 0;
+  const showNoResults =
+    !hasItems && !loading && planRan && unresolvedProviders.length === 0 && !displayError;
 
   // --- Arcade connection gate ---
   if (arcadeStatus.state !== "connected") {
@@ -316,7 +394,9 @@ function DashboardContent() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <Button asChild className="w-full">
-                  <a href={arcadeStatus.authUrl}>Sign in with Arcade</a>
+                  <a href={arcadeStatus.authUrl} target="_blank" rel="noreferrer noopener">
+                    Sign in with Arcade
+                  </a>
                 </Button>
                 <button
                   onClick={retryConnection}
@@ -359,9 +439,9 @@ function DashboardContent() {
       />
 
       <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-6 py-8">
-        {error && (
+        {displayError && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
-            {error}
+            {displayError}
           </div>
         )}
 
@@ -369,14 +449,14 @@ function DashboardContent() {
           <ToolStatusBar statuses={sourceStatuses} authUrls={authUrls} />
         )}
 
-        {authUrls.length > 0 && (
+        {unresolvedProviders.length > 0 && (
           <div className="space-y-3">
-            {authUrls.map((auth) => (
+            {unresolvedProviders.map((provider) => (
               <AuthPrompt
-                key={auth.url}
-                toolName={auth.toolName || "Service"}
-                authUrl={auth.url}
-                onContinue={() => dismissAuthUrl(auth.url)}
+                key={provider}
+                toolName={providerLabels[provider]}
+                authUrl={providerAuthUrls[provider]}
+                onSkip={() => skipProvider(provider)}
               />
             ))}
           </div>
@@ -389,7 +469,14 @@ function DashboardContent() {
           </div>
         )}
 
-        {showEmpty && <EmptyState onPlan={handlePlan} loading={loading} />}
+        {showEmpty && (
+          <EmptyState
+            onPlan={handlePlan}
+            loading={loading}
+            planDisabled={planDisabled}
+            disabledReason="Authorize every toolkit or choose Skip for each remaining one to continue."
+          />
+        )}
 
         {showNoResults && (
           <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8">
@@ -413,7 +500,7 @@ function DashboardContent() {
           </div>
         )}
 
-        {loading && !hasItems && authUrls.length === 0 && (
+        {loading && !hasItems && unresolvedProviders.length === 0 && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               {Array.from({ length: 3 }).map((_, i) => (

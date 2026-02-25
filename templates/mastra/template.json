@@ -1,7 +1,7 @@
 {
   "name": "mastra",
-  "displayName": "Mastra (TypeScript)",
-  "hint": "Next.js + Mastra + React",
+  "displayName": "Mastra (Next.js + TypeScript)",
+  "hint": "Next.js + Mastra",
   "language": "typescript",
   "devCommand": "npm run dev",
   "port": 8765,

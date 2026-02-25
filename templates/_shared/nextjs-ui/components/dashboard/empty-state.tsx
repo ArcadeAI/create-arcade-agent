@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 interface EmptyStateProps {
   onPlan: () => void;
   loading: boolean;
+  planDisabled?: boolean;
+  disabledReason?: string;
 }
 
-export function EmptyState({ onPlan, loading }: EmptyStateProps) {
+export function EmptyState({ onPlan, loading, planDisabled = false, disabledReason }: EmptyStateProps) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8">
       <Inbox size={48} className="text-muted-foreground/50" />
@@ -19,7 +21,7 @@ export function EmptyState({ onPlan, loading }: EmptyStateProps) {
           build your action plan.
         </p>
       </div>
-      <Button size="lg" disabled={loading} onClick={onPlan}>
+      <Button size="lg" disabled={loading || planDisabled} onClick={onPlan}>
         {loading ? (
           <>
             <Loader2 className="animate-spin" />
@@ -29,6 +31,9 @@ export function EmptyState({ onPlan, loading }: EmptyStateProps) {
           "Plan my day"
         )}
       </Button>
+      {planDisabled && disabledReason && (
+        <p className="max-w-md text-center text-xs text-muted-foreground">{disabledReason}</p>
+      )}
     </div>
   );
 }

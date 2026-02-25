@@ -1,5 +1,5 @@
 [environment]
-python-version = "3.12"
+python-version = "3.11"
 
 [rules]
 # Pydantic models use dynamic constructors with aliases (e.g. `model` vs `model_name`)
