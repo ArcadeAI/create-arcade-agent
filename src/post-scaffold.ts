@@ -61,8 +61,20 @@ export function printSuccess(projectName: string, meta: TemplateMeta) {
     pc.dim(`  ARCADE_GATEWAY_URL  — from ${pc.cyan("https://app.arcade.dev/mcp-gateways")}`),
     pc.dim(`  OPENAI_API_KEY or ANTHROPIC_API_KEY`),
     "",
-    pc.dim("Add these toolkits to your Arcade Gateway:"),
-    pc.dim("  Slack, Google Calendar, Linear, GitHub, Gmail"),
+    pc.dim("Add only these minimum tools to your Arcade Gateway:"),
+    pc.dim("  Slack: Slack_ListConversations, Slack_GetMessages,"),
+    pc.dim("    Slack_GetConversationMetadata, Slack_WhoAmI"),
+    pc.dim("  Google Calendar: GoogleCalendar_ListEvents,"),
+    pc.dim("    GoogleCalendar_ListCalendars, GoogleCalendar_WhoAmI"),
+    pc.dim("  Linear: Linear_GetNotifications, Linear_GetRecentActivity,"),
+    pc.dim("    Linear_ListIssues, Linear_GetIssue, Linear_ListProjects,"),
+    pc.dim("    Linear_GetProject, Linear_WhoAmI"),
+    pc.dim("  GitHub: Github_ListNotifications, Github_GetNotificationSummary,"),
+    pc.dim("    Github_ListPullRequests, Github_GetPullRequest,"),
+    pc.dim("    Github_GetUserOpenItems, Github_GetUserRecentActivity,"),
+    pc.dim("    Github_GetReviewWorkload, Github_GetIssue, Github_WhoAmI"),
+    pc.dim("  Gmail: Gmail_ListEmails, Gmail_ListThreads, Gmail_GetThread,"),
+    pc.dim("    Gmail_SearchThreads, Gmail_WhoAmI"),
     pc.dim(`Configure at: ${pc.cyan("https://app.arcade.dev/mcp-gateways")}`)
   );
 
