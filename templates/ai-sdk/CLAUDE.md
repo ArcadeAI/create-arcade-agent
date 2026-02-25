@@ -20,6 +20,8 @@ A Slack triage agent built with the Vercel AI SDK, Next.js, and Arcade's MCP Gat
 npm run dev                    # Dev server
 npm run build                  # Production build
 npm run lint                   # ESLint
+npm run format                 # Prettier format
+npm run format:check           # Prettier check
 npx drizzle-kit generate       # Generate migrations
 npx drizzle-kit migrate        # Run migrations
 ```

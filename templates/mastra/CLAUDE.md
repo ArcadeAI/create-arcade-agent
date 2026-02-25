@@ -5,11 +5,13 @@ AI agent template: Mastra + Next.js + Arcade MCP Gateway.
 ## Key Commands
 
 ```bash
-npm run dev          # Start development server
-npm run build        # Production build
-npm run lint         # ESLint
-npx drizzle-kit generate  # Generate DB migrations after schema changes
-npx drizzle-kit migrate   # Apply migrations to SQLite
+npm run dev                # Start development server
+npm run build              # Production build
+npm run lint               # ESLint
+npm run format             # Prettier format
+npm run format:check       # Prettier check
+npx drizzle-kit generate   # Generate DB migrations after schema changes
+npx drizzle-kit migrate    # Apply migrations to SQLite
 ```
 
 ## Architecture
