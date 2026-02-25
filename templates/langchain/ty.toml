@@ -7,3 +7,6 @@ python-version = "3.12"
 unknown-argument = "ignore"
 missing-argument = "ignore"
 invalid-argument-type = "ignore"
+# ty doesn't narrow types through hasattr() or isinstance+continue patterns
+no-matching-overload = "ignore"
+not-iterable = "ignore"
