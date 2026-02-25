@@ -1,6 +1,7 @@
 import { Chat } from "chat";
 import { createSlackAdapter } from "@chat-adapter/slack";
 import { createMemoryState } from "@chat-adapter/state-memory";
+import { createRedisState } from "@chat-adapter/state-redis";
 import { streamText, generateText, stepCountIs } from "ai";
 import { getModel, systemPrompt } from "./agent";
 import { getArcadeMCPClient, initiateOAuth, getPendingAuthUrl, clearPendingAuthUrl } from "./arcade";
@@ -38,10 +39,10 @@ const adapters = {
 export const bot = new Chat({
   userName: "arcade-bot",
   adapters,
-  // For production, switch to Redis:
-  //   import { createRedisState } from "@chat-adapter/state-redis";
-  //   state: createRedisState({ url: process.env.REDIS_URL! }),
-  state: createMemoryState(),
+  // Redis for production/serverless; in-memory for local dev
+  state: process.env.REDIS_URL
+    ? createRedisState({ url: process.env.REDIS_URL })
+    : createMemoryState(),
 });
 
 // --- Event Handlers ---

@@ -13,6 +13,7 @@ import {
   mkdirSync,
 } from "fs";
 import { join } from "path";
+import Redis from "ioredis";
 
 // --- CUSTOMIZATION POINT ---
 // The MCP Gateway URL determines which tools are available.
@@ -34,7 +35,18 @@ function getCallbackUrl(): string {
   return base + "/api/auth/arcade/callback";
 }
 
-// --- File-based persistence (.arcade-auth/, gitignored) ---
+// --- Redis client (used when REDIS_URL is set, e.g. on Vercel) ---
+
+let redis: Redis | null = null;
+
+function getRedis(): Redis | null {
+  if (redis) return redis;
+  if (!process.env.REDIS_URL) return null;
+  redis = new Redis(process.env.REDIS_URL, { maxRetriesPerRequest: 3 });
+  return redis;
+}
+
+// --- File-based persistence (local dev fallback) ---
 
 const AUTH_DIR = join(process.cwd(), ".arcade-auth");
 const CLIENT_FILE = join(AUTH_DIR, "client.json");
@@ -45,14 +57,14 @@ function ensureDir() {
   if (!existsSync(AUTH_DIR)) mkdirSync(AUTH_DIR, { recursive: true });
 }
 
-function readJson<T>(path: string): T | undefined {
+function readJsonFile<T>(path: string): T | undefined {
   try {
     if (existsSync(path)) return JSON.parse(readFileSync(path, "utf-8"));
   } catch {}
   return undefined;
 }
 
-function writeJson(path: string, data: unknown) {
+function writeJsonFile(path: string, data: unknown) {
   ensureDir();
   writeFileSync(path, JSON.stringify(data, null, 2));
 }
@@ -69,10 +81,17 @@ export function clearPendingAuthUrl() {
   pendingAuthUrl = null;
 }
 
-// --- OAuth provider (implements OAuthClientProvider from MCP SDK) ---
-// This bot authenticates as a single entity (not per-user).
+// --- OAuth provider ---
+// Uses Redis when REDIS_URL is set (serverless), files otherwise (local dev).
+// The MCP SDK's OAuthClientProvider interface is synchronous, so we use an
+// in-memory cache that's hydrated from Redis before each auth attempt.
 
 class ArcadeOAuthProvider implements OAuthClientProvider {
+  private _clientInfo?: OAuthClientInformationFull;
+  private _tokens?: OAuthTokens;
+  private _verifier?: string;
+  private _pendingWrites: Promise<unknown>[] = [];
+
   get redirectUrl() {
     return getCallbackUrl();
   }
@@ -87,20 +106,56 @@ class ArcadeOAuthProvider implements OAuthClientProvider {
     };
   }
 
+  /** Pre-load cached values from Redis into memory (call before auth). */
+  async hydrate(): Promise<void> {
+    const r = getRedis();
+    if (!r) return;
+    const [clientStr, tokensStr, verifier] = await Promise.all([
+      r.get("arcade:client"),
+      r.get("arcade:tokens"),
+      r.get("arcade:verifier"),
+    ]);
+    if (clientStr) this._clientInfo = JSON.parse(clientStr);
+    if (tokensStr) this._tokens = JSON.parse(tokensStr);
+    if (verifier) this._verifier = verifier;
+  }
+
+  /** Wait for all pending Redis writes to complete. */
+  async flush(): Promise<void> {
+    await Promise.all(this._pendingWrites);
+    this._pendingWrites = [];
+  }
+
   clientInformation(): OAuthClientInformationFull | undefined {
-    return readJson<OAuthClientInformationFull>(CLIENT_FILE);
+    if (this._clientInfo) return this._clientInfo;
+    if (!getRedis()) return readJsonFile<OAuthClientInformationFull>(CLIENT_FILE);
+    return undefined;
   }
 
   saveClientInformation(info: OAuthClientInformationFull): void {
-    writeJson(CLIENT_FILE, info);
+    this._clientInfo = info;
+    const r = getRedis();
+    if (r) {
+      this._pendingWrites.push(r.set("arcade:client", JSON.stringify(info)));
+    } else {
+      writeJsonFile(CLIENT_FILE, info);
+    }
   }
 
   tokens(): OAuthTokens | undefined {
-    return readJson<OAuthTokens>(TOKENS_FILE);
+    if (this._tokens) return this._tokens;
+    if (!getRedis()) return readJsonFile<OAuthTokens>(TOKENS_FILE);
+    return undefined;
   }
 
   saveTokens(tokens: OAuthTokens): void {
-    writeJson(TOKENS_FILE, tokens);
+    this._tokens = tokens;
+    const r = getRedis();
+    if (r) {
+      this._pendingWrites.push(r.set("arcade:tokens", JSON.stringify(tokens)));
+    } else {
+      writeJsonFile(TOKENS_FILE, tokens);
+    }
   }
 
   async redirectToAuthorization(authorizationUrl: URL): Promise<void> {
@@ -111,12 +166,21 @@ class ArcadeOAuthProvider implements OAuthClientProvider {
   }
 
   saveCodeVerifier(verifier: string): void {
-    ensureDir();
-    writeFileSync(VERIFIER_FILE, verifier);
+    this._verifier = verifier;
+    const r = getRedis();
+    if (r) {
+      // 5 minute TTL — verifier is only needed until the callback arrives
+      this._pendingWrites.push(r.set("arcade:verifier", verifier, "EX", 300));
+    } else {
+      ensureDir();
+      writeFileSync(VERIFIER_FILE, verifier);
+    }
   }
 
   codeVerifier(): string {
-    return readFileSync(VERIFIER_FILE, "utf-8");
+    if (this._verifier) return this._verifier;
+    if (!getRedis()) return readFileSync(VERIFIER_FILE, "utf-8");
+    return "";
   }
 }
 
@@ -128,7 +192,10 @@ export { auth };
  * Returns "REDIRECT" if the user needs to authorize, "AUTHORIZED" if tokens are already valid.
  */
 export async function initiateOAuth(): Promise<"AUTHORIZED" | "REDIRECT"> {
-  return auth(oauthProvider, { serverUrl: gatewayUrl });
+  await oauthProvider.hydrate();
+  const result = await auth(oauthProvider, { serverUrl: gatewayUrl });
+  await oauthProvider.flush();
+  return result;
 }
 
 /**
@@ -136,10 +203,9 @@ export async function initiateOAuth(): Promise<"AUTHORIZED" | "REDIRECT"> {
  * Auto-detects transport: SSE for /sse URLs, Streamable HTTP otherwise.
  */
 export async function getArcadeMCPClient() {
-  const tokens = oauthProvider.tokens();
-  const headers = tokens?.access_token
-    ? { Authorization: `Bearer ${tokens.access_token}` }
-    : undefined;
+  await oauthProvider.hydrate();
+  const token = oauthProvider.tokens()?.access_token;
+  const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
   const transportType = gatewayUrl.endsWith("/sse") ? "sse" : "http";
   return createMCPClient({
     transport: { type: transportType, url: gatewayUrl, headers },

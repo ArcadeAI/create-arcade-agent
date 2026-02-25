@@ -4,9 +4,25 @@ A multi-platform chat bot powered by [Arcade](https://arcade.dev) and [Chat SDK]
 
 Deploy a single bot to Slack, Discord, Microsoft Teams, Google Chat, GitHub, and Linear — with AI-powered responses and Arcade tool integration.
 
-## Quick Start
+## Prerequisites
 
-### 1. Set up environment variables
+### Create a Slack App
+
+1. Go to [api.slack.com/apps](https://api.slack.com/apps) → **Create New App** → **From scratch**
+2. Under **OAuth & Permissions**, add these Bot Token Scopes:
+   - `app_mentions:read`
+   - `chat:write`
+   - `reactions:read`
+3. Install the app to your workspace and copy the **Bot User OAuth Token** (`xoxb-...`)
+4. Under **Basic Information**, copy the **Signing Secret**
+
+### Configure Arcade Gateway
+
+1. Create a gateway at [app.arcade.dev/mcp-gateways](https://app.arcade.dev/mcp-gateways)
+2. Add toolkits like Slack, Google Calendar, Linear, GitHub, Gmail
+3. Copy the gateway URL
+
+### Set up environment variables
 
 ```bash
 cp .env.example .env
@@ -16,43 +32,96 @@ Fill in:
 
 | Variable | Description |
 | --- | --- |
-| `ARCADE_GATEWAY_URL` | Your MCP Gateway URL from [app.arcade.dev/mcp-gateways](https://app.arcade.dev/mcp-gateways) |
+| `ARCADE_GATEWAY_URL` | Your MCP Gateway URL |
 | `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | LLM provider key (set one) |
-| `SLACK_BOT_TOKEN` | Bot User OAuth Token from your Slack app |
-| `SLACK_SIGNING_SECRET` | Signing Secret from your Slack app |
+| `SLACK_BOT_TOKEN` | Bot User OAuth Token (`xoxb-...`) |
+| `SLACK_SIGNING_SECRET` | Signing Secret from Basic Information |
 
-### 2. Create a Slack App
+---
 
-1. Go to [api.slack.com/apps](https://api.slack.com/apps) and click **Create New App** → **From scratch**
-2. Under **OAuth & Permissions**, add these Bot Token Scopes:
-   - `app_mentions:read`
-   - `chat:write`
-   - `reactions:read`
-3. Install the app to your workspace and copy the **Bot User OAuth Token** (`xoxb-...`)
-4. Under **Basic Information**, copy the **Signing Secret**
-5. Under **Event Subscriptions**:
-   - Enable events
-   - Set the Request URL to: `https://<your-domain>/api/chat-webhook`
-   - Subscribe to bot events: `app_mention`, `message.channels` (optional)
+## Option A: Run Locally with ngrok
 
-### 3. Configure Arcade Gateway
+Best for development and testing.
 
-Add these toolkits to your [Arcade MCP Gateway](https://app.arcade.dev/mcp-gateways):
-- Slack, Google Calendar, Linear, GitHub, Gmail
+### 1. Install and start ngrok
 
-### 4. Start the bot
+```bash
+# Install ngrok (https://ngrok.com)
+brew install ngrok   # macOS
+# or download from https://ngrok.com/download
+
+# Start a tunnel to your dev server
+ngrok http 3000
+```
+
+Copy the `https://...ngrok-free.app` URL that ngrok gives you.
+
+### 2. Configure Slack Event Subscriptions
+
+1. Go to your Slack app → **Event Subscriptions** → Enable Events
+2. Set the Request URL to: `https://<your-ngrok-url>/api/chat-webhook`
+3. Subscribe to bot events: `app_mention`
+4. Save changes
+
+### 3. Start the bot
 
 ```bash
 npm run dev
 ```
 
-For local development, use a tunnel like [ngrok](https://ngrok.com) to expose your webhook:
+### 4. Test it
 
-```bash
-ngrok http 3000
-```
+Invite the bot to a Slack channel and @mention it. The first time, it will post an Arcade authorization link — click it, then @mention again.
 
-Then update your Slack Event Subscription URL to the ngrok URL.
+> **Note:** ngrok URLs change every time you restart. Update the Slack Event Subscription URL each time.
+
+---
+
+## Option B: Deploy to Vercel
+
+Best for production. Requires Redis for persistent storage (Vercel's filesystem is read-only).
+
+### 1. Set up Redis
+
+[Upstash](https://upstash.com) is recommended — free tier, one-click Vercel integration.
+
+1. Create a Redis database at [console.upstash.com](https://console.upstash.com)
+2. Copy the `redis://` connection string
+
+### 2. Push to GitHub and deploy
+
+1. Push your project to a GitHub repo
+2. Import it at [vercel.com/new](https://vercel.com/new)
+3. Add these environment variables in the Vercel dashboard:
+
+| Variable | Value |
+| --- | --- |
+| `ARCADE_GATEWAY_URL` | Your MCP Gateway URL |
+| `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | LLM provider key |
+| `SLACK_BOT_TOKEN` | Bot User OAuth Token |
+| `SLACK_SIGNING_SECRET` | Signing Secret |
+| `REDIS_URL` | Redis connection string from Upstash |
+| `APP_URL` | Your Vercel deployment URL (e.g. `https://my-bot.vercel.app`) |
+
+### 3. Disable Deployment Protection
+
+Vercel's Deployment Protection blocks external webhooks by default.
+
+1. Go to your project → **Settings** → **Deployment Protection**
+2. Set **Vercel Authentication** to **Off**
+
+### 4. Configure Slack Event Subscriptions
+
+1. Go to your Slack app → **Event Subscriptions** → Enable Events
+2. Set the Request URL to: `https://<your-vercel-url>/api/chat-webhook`
+3. Subscribe to bot events: `app_mention`
+4. Save changes
+
+### 5. Test it
+
+Invite the bot to a Slack channel and @mention it. The first time, it will post an Arcade authorization link — click it, then @mention again.
+
+---
 
 ## How It Works
 
@@ -75,7 +144,7 @@ When someone @mentions the bot in Slack:
 ├── src/
 │   ├── bot.ts                      # Chat instance + event handlers
 │   ├── agent.ts                    # Model selection + system prompt
-│   └── arcade.ts                   # Arcade MCP client
+│   └── arcade.ts                   # Arcade MCP client + OAuth
 ├── system-prompt.md                # Bot personality (edit this!)
 ├── .env.example
 └── package.json
@@ -109,21 +178,6 @@ adapters.discord = createDiscordAdapter({
 ```
 
 See [chat-sdk.dev/docs](https://chat-sdk.dev/docs) for all available adapters.
-
-### Use Redis for production
-
-Replace the memory state with Redis for persistent subscriptions:
-
-```bash
-npm install @chat-adapter/state-redis
-```
-
-```typescript
-import { createRedisState } from "@chat-adapter/state-redis";
-
-// In the Chat constructor:
-state: createRedisState({ url: process.env.REDIS_URL! }),
-```
 
 ### Add or change Arcade tools
 

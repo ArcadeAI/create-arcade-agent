@@ -14,5 +14,10 @@ ARCADE_GATEWAY_URL=
 SLACK_BOT_TOKEN=
 SLACK_SIGNING_SECRET=
 
-# --- Optional: Redis (for production) ---
+# --- App URL (required for deployed environments) ---
+# Set to your deployment URL so OAuth callbacks work correctly
+# APP_URL=https://your-app.vercel.app
+
+# --- Redis (required for Vercel/serverless, optional for local dev) ---
+# Stores OAuth tokens and chat state across serverless invocations
 # REDIS_URL=redis://localhost:6379
