@@ -20,6 +20,7 @@ source .venv/bin/activate
 uvicorn app.main:app --reload          # Dev server
 ruff check app/                        # Lint
 ruff format app/                       # Format
+ty check .                             # Type check
 alembic revision --autogenerate -m ""  # New migration
 alembic upgrade head                   # Run migrations
 ```

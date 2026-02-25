@@ -271,7 +271,7 @@ async def plan(request: Request, db: AsyncSession = Depends(get_db)):
             ]
 
             tool_names = [t.name for t in tools]
-            sources = list(set(_map_tool_to_source(n) for n in tool_names if n))
+            sources = list({_map_tool_to_source(n) for n in tool_names if n})
             print(
                 f"[plan] {len(tool_names)} triage tools "
                 f"(of {len(all_tools)} total) "

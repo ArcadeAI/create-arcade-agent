@@ -84,9 +84,17 @@ jobs:
         working-directory: ci-test-${{ matrix.template }}
         run: npm run lint
 
-      - name: Syntax check (Python template)
+      - name: Lint (Python template)
         if: matrix.template == 'langchain'
         working-directory: ci-test-${{ matrix.template }}
         run: |
-          .venv/bin/python -m py_compile app/main.py
-          .venv/bin/python -m py_compile app/config.py
+          pip install ruff ty
+          ruff check .
+          ruff format --check .
+
+      - name: Type check (Python template)
+        if: matrix.template == 'langchain'
+        working-directory: ci-test-${{ matrix.template }}
+        run: |
+          pip install ty
+          ty check .

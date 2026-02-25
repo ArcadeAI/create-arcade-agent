@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import bcrypt
 from fastapi import Request, Response
@@ -23,7 +23,7 @@ def verify_password(password: str, hashed: str) -> bool:
 
 async def create_session(db: AsyncSession, user_id: int, response: Response) -> str:
     session_id = str(uuid.uuid4())
-    expires_at = datetime.now(timezone.utc) + SESSION_MAX_AGE
+    expires_at = datetime.now(UTC) + SESSION_MAX_AGE
 
     db.add(SessionModel(id=session_id, user_id=user_id, expires_at=expires_at))
     await db.commit()
@@ -48,7 +48,7 @@ async def get_current_user(request: Request, db: AsyncSession) -> User | None:
     session = result.scalar_one_or_none()
     if not session:
         return None
-    if session.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+    if session.expires_at.replace(tzinfo=UTC) < datetime.now(UTC):
         await db.delete(session)
         await db.commit()
         return None

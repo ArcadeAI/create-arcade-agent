@@ -48,7 +48,7 @@ async def connect(request: Request, db: AsyncSession = Depends(get_db)):
             mcp_client = get_mcp_client()
             await get_cached_tools(mcp_client)
             return {"connected": True}
-        except Exception:
+        except Exception:  # noqa: S110
             # Token may be expired/revoked; fall through and restart OAuth.
             pass
 

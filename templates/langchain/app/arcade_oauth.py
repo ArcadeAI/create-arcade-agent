@@ -12,6 +12,7 @@ the same Arcade gateway connection once authenticated.
 """
 
 import base64
+import contextlib
 import hashlib
 import json
 import logging
@@ -32,9 +33,7 @@ from app.config import settings
 class _McpTermination202Filter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         msg = record.getMessage()
-        if "session termination failed" in msg.lower() and "202" in msg:
-            return False
-        return True
+        return not ("session termination failed" in msg.lower() and "202" in msg)
 
 
 for _logger_name in (None, "mcp", "mcp.client", "mcp.client.streamable_http", "httpx"):
@@ -132,10 +131,8 @@ def clear_pending_auth_url():
     global _pending_auth_url, _pending_auth_url_time
     _pending_auth_url = None
     _pending_auth_url_time = 0
-    try:
+    with contextlib.suppress(OSError):
         PENDING_AUTH_URL_FILE.unlink(missing_ok=True)
-    except OSError:
-        pass
 
 
 def get_state() -> str | None:
@@ -328,8 +325,8 @@ async def exchange_code(code: str) -> dict:
 
     try:
         code_verifier = VERIFIER_FILE.read_text()
-    except FileNotFoundError:
-        raise RuntimeError("No PKCE verifier found — run connect first")
+    except FileNotFoundError as err:
+        raise RuntimeError("No PKCE verifier found — run connect first") from err
 
     # Get token endpoint from cached metadata
     oauth_meta = get_oauth_metadata()
