@@ -1,5 +1,6 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 
+// AI-EDIT-SAFE: application schema extension
 // --- CUSTOMIZATION POINT ---
 // Add more tables here for your domain.
 // See: https://orm.drizzle.team/docs/column-types/sqlite

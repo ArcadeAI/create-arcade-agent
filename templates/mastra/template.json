@@ -7,6 +7,7 @@
   "port": 8765,
   "sharedFiles": {
     "system-prompt.md": "src/mastra/agents/system-prompt.md",
+    "agent-playbook.md.hbs": "AGENT_PLAYBOOK.md",
     "nextjs-ui": ""
   },
   "dotfileRenames": {

@@ -185,6 +185,8 @@ async def discover_and_authorize() -> str:
     """
     global _pending_auth_url
     gateway_url = settings.arcade_gateway_url
+    if not gateway_url:
+        raise RuntimeError("ARCADE_GATEWAY_URL is missing. Add it to your .env and retry.")
 
     async with httpx.AsyncClient(timeout=30) as client:
         # Step 1: Probe gateway for 401 and WWW-Authenticate header
@@ -366,6 +368,9 @@ def create_mcp_client():
     Bearer token to authenticate with the Arcade MCP Gateway.
     """
     from langchain_mcp_adapters.client import MultiServerMCPClient
+
+    if not settings.arcade_gateway_url:
+        raise RuntimeError("ARCADE_GATEWAY_URL is missing. Add it to your .env and retry.")
 
     tokens = get_tokens()
     headers = {}

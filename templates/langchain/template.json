@@ -6,7 +6,8 @@
   "devCommand": "uvicorn app.main:app --host localhost --port 8765",
   "port": 8765,
   "sharedFiles": {
-    "system-prompt.md": "app/system-prompt.md"
+    "system-prompt.md": "app/system-prompt.md",
+    "agent-playbook.md.hbs": "AGENT_PLAYBOOK.md"
   },
   "dotfileRenames": {
     "_gitignore": ".gitignore",

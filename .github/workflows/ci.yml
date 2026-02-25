@@ -131,6 +131,16 @@ jobs:
         working-directory: ci-test-${{ matrix.template }}
         run: cp .env.example .env
 
+      - name: Doctor (TypeScript templates)
+        if: matrix.template != 'langchain'
+        working-directory: ci-test-${{ matrix.template }}
+        run: npm run doctor
+
+      - name: Doctor (Python template)
+        if: matrix.template == 'langchain'
+        working-directory: ci-test-${{ matrix.template }}
+        run: python -m app.doctor
+
       - name: Type check (TypeScript templates)
         if: matrix.template != 'langchain'
         working-directory: ci-test-${{ matrix.template }}

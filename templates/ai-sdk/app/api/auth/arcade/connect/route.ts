@@ -13,6 +13,17 @@ let connectPromise: Promise<{
 }> | null = null;
 
 export async function POST() {
+  if (!process.env.ARCADE_GATEWAY_URL?.trim()) {
+    return Response.json(
+      {
+        connected: false,
+        error:
+          "ARCADE_GATEWAY_URL is missing. Create one at https://app.arcade.dev/mcp-gateways, add only the minimum required tools from Slack, Google Calendar, Linear, GitHub, and Gmail, then set ARCADE_GATEWAY_URL in .env.",
+      },
+      { status: 400 }
+    );
+  }
+
   // Fast path: if tokens exist and still work, we're connected.
   const existingTokens = oauthProvider.tokens();
   if (existingTokens?.access_token && (await verifyExistingConnection())) {

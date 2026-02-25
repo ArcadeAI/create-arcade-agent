@@ -21,7 +21,9 @@ export async function POST(req: Request) {
 
     return createUIMessageStreamResponse({ stream });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Something went wrong";
+    const isMcpConnectionError =
+      error instanceof Error &&
+      (error.message.includes("MCP") || error.message.includes("connect"));
 
     // Check if this was an Arcade auth issue
     const authUrl = getPendingAuthUrl();
@@ -30,7 +32,7 @@ export async function POST(req: Request) {
     }
 
     // MCP connection errors
-    if (message.includes("MCP") || message.includes("connect")) {
+    if (isMcpConnectionError) {
       return Response.json(
         {
           error:
@@ -40,6 +42,9 @@ export async function POST(req: Request) {
       );
     }
 
-    return Response.json({ error: message }, { status: 500 });
+    return Response.json(
+      { error: "Failed to process chat request. Please try again." },
+      { status: 500 }
+    );
   }
 }

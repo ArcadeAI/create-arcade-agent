@@ -41,7 +41,9 @@ export async function POST(req: Request) {
       return Response.json({ error: "arcade_auth_required", authUrl }, { status: 401 });
     }
 
-    const message = error instanceof Error ? error.message : "Something went wrong";
-    return Response.json({ error: message }, { status: 500 });
+    return Response.json(
+      { error: "Failed to process chat request. Please try again." },
+      { status: 500 }
+    );
   }
 }

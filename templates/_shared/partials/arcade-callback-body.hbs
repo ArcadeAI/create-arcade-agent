@@ -1,7 +1,9 @@
-const gatewayUrl =
-  process.env.ARCADE_GATEWAY_URL || "https://mcp.arcade.dev/sse";
-
 export async function GET(req: Request) {
+  const gatewayUrl = process.env.ARCADE_GATEWAY_URL?.trim();
+  if (!gatewayUrl) {
+    return NextResponse.redirect(new URL("/dashboard?error=gateway_missing", req.url));
+  }
+
   const url = new URL(req.url);
   const code = url.searchParams.get("code");
 

@@ -15,6 +15,7 @@ from langchain_openai import ChatOpenAI
 
 from app.config import settings
 
+# AI-EDIT-SAFE: system prompt behavior
 # Load system prompt from file (single source of truth)
 SYSTEM_PROMPT = (Path(__file__).parent / "system-prompt.md").read_text()
 

@@ -4,6 +4,8 @@ A reference AI agent template that ships with a working Slack triage use case. B
 
 The agent connects to Arcade's MCP Gateway to call Slack tools (and any other tools you configure), with automatic OAuth handling and streaming responses.
 
+{{> what-is-mcp-gateway.md}}
+
 ## Prerequisites
 
 - Node.js 18+
@@ -23,20 +25,27 @@ The agent connects to Arcade's MCP Gateway to call Slack tools (and any other to
    ```
    Fill in your `ARCADE_GATEWAY_URL` and at least one LLM API key in `.env`.
 
-3. **Set up the database:**
+3. **Run setup doctor:**
+   ```bash
+   npm run doctor
+   ```
+
+4. **Set up the database:**
    ```bash
    npx drizzle-kit generate
    npx drizzle-kit migrate
    ```
 
-4. **Start the dev server:**
+5. **Start the dev server:**
    ```bash
    npm run dev
    ```
 
-5. **Open [http://localhost:3000](http://localhost:3000)**, register an account, and start chatting.
+6. **Open [http://localhost:3000](http://localhost:3000)**, register an account, and start chatting.
 
 When the agent first tries to use an Arcade tool, you'll be prompted to authenticate with Arcade via OAuth in your browser. After authorizing, click "Continue After Authorization" in the chat to retry.
+
+{{> gateway-setup.md}}
 
 {{> customization.md}}
 

@@ -3,6 +3,8 @@ from sqlalchemy.sql import func
 
 from app.database import Base
 
+# AI-EDIT-SAFE: application schema extension
+# Add domain tables/columns as needed for your project.
 
 class User(Base):
     __tablename__ = "users"

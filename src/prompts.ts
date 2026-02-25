@@ -1,11 +1,26 @@
 import * as p from "@clack/prompts";
 import { existsSync, readdirSync, readFileSync } from "fs";
 import { resolve, join } from "path";
+import { parseArgs } from "util";
 import type { TemplateMeta } from "./types.js";
 
+function parseCli(argv: string[]): { projectName?: string; template?: string } {
+  const parsed = parseArgs({
+    args: argv.slice(2),
+    options: {
+      template: { type: "string" },
+    },
+    allowPositionals: true,
+    strict: false,
+  });
+
+  const projectName = parsed.positionals.find((arg) => !arg.startsWith("-"));
+  const template = typeof parsed.values.template === "string" ? parsed.values.template : undefined;
+  return { projectName, template };
+}
+
 export async function getProjectName(argv: string[]): Promise<string> {
-  let projectName = argv[2];
-  if (projectName === "--template") projectName = "";
+  let projectName = parseCli(argv).projectName ?? "";
   if (!projectName) {
     const result = await p.text({
       message: "What is your project name?",
@@ -23,7 +38,7 @@ export async function getProjectName(argv: string[]): Promise<string> {
     }
     projectName = result;
   }
-  return projectName;
+  return projectName.trim();
 }
 
 function discoverTemplates(templatesDir: string): { meta: TemplateMeta; dir: string }[] {
@@ -52,10 +67,9 @@ export async function getTemplate(
     process.exit(1);
   }
 
-  // Check --template flag
-  const flagIdx = argv.indexOf("--template");
-  if (flagIdx !== -1 && argv[flagIdx + 1]) {
-    const val = argv[flagIdx + 1];
+  const cliTemplate = parseCli(argv).template;
+  if (cliTemplate) {
+    const val = cliTemplate;
     const match = templates.find((t) => t.meta.name === val);
     if (!match) {
       const names = templates.map((t) => `"${t.meta.name}"`).join(", ");

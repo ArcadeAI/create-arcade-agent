@@ -6,6 +6,7 @@ from fastapi import Request, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.models import Session as SessionModel
 from app.models import User
 
@@ -32,6 +33,7 @@ async def create_session(db: AsyncSession, user_id: int, response: Response) -> 
         SESSION_COOKIE,
         session_id,
         httponly=True,
+        secure=settings.app_url.startswith("https://"),
         samesite="lax",
         path="/",
         max_age=int(SESSION_MAX_AGE.total_seconds()),
@@ -66,4 +68,8 @@ async def destroy_session(request: Request, db: AsyncSession, response: Response
             await db.delete(session)
             await db.commit()
 
-    response.delete_cookie(SESSION_COOKIE, path="/")
+    response.delete_cookie(
+        SESSION_COOKIE,
+        path="/",
+        secure=settings.app_url.startswith("https://"),
+    )
