@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { InboxItem, PlanEvent, SourceStatus } from "@/types/inbox";
 import { Header } from "@/components/layout/header";
@@ -37,6 +37,14 @@ function parseArcadeResponse(data: {
 }
 
 export default function DashboardPage() {
+  return (
+    <Suspense>
+      <DashboardContent />
+    </Suspense>
+  );
+}
+
+function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlError = searchParams.get("error");
