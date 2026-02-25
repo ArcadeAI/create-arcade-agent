@@ -7,7 +7,7 @@ load_dotenv()
 
 class Settings(BaseSettings):
     # Arcade
-    arcade_gateway_url: str = "https://mcp.arcade.dev/sse"
+    arcade_gateway_url: str = ""
 
     # LLM
     openai_api_key: str = ""
@@ -24,7 +24,9 @@ class Settings(BaseSettings):
     arcade_custom_verifier: bool = False
     arcade_api_key: str = ""
 
-    @field_validator("openai_api_key", "anthropic_api_key", "arcade_api_key", mode="before")
+    @field_validator(
+        "arcade_gateway_url", "openai_api_key", "anthropic_api_key", "arcade_api_key", mode="before"
+    )
     @classmethod
     def strip_env_comments(cls, v: str) -> str:
         """Strip inline comments that python-dotenv may leave in values."""

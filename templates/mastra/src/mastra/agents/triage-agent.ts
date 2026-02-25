@@ -5,6 +5,7 @@ import { openai } from "@ai-sdk/openai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { mcpClient } from "../tools/arcade";
 
+// AI-EDIT-SAFE: model selection
 // --- CUSTOMIZATION POINT ---
 // The model is selected based on which API key you set in .env.
 // Set ANTHROPIC_API_KEY to use Claude, or OPENAI_API_KEY to use GPT.
@@ -26,6 +27,7 @@ const instructions = readFileSync(
   "utf-8"
 );
 
+// AI-EDIT-CAUTION: keep stable unless changing runtime wiring.
 export const systemPrompt = instructions;
 
 export const triageAgent = new Agent({

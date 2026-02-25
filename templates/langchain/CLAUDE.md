@@ -18,6 +18,7 @@ A Slack triage agent built with LangGraph (LangChain's agent framework), FastAPI
 ```bash
 source .venv/bin/activate
 uvicorn app.main:app --reload          # Dev server
+python -m app.doctor                   # Environment + gateway setup checks
 ruff check app/                        # Lint
 ruff format app/                       # Format
 ty check .                             # Type check

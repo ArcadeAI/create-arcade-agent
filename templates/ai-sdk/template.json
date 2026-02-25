@@ -7,6 +7,7 @@
   "port": 8765,
   "sharedFiles": {
     "system-prompt.md": "lib/system-prompt.md",
+    "agent-playbook.md.hbs": "AGENT_PLAYBOOK.md",
     "nextjs-ui": ""
   },
   "dotfileRenames": {

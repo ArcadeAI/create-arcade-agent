@@ -1,0 +1,56 @@
+# Agent Playbook
+
+This project is intentionally structured so coding agents can safely customize it.
+
+## Safe Edit Zones
+
+Look for these markers:
+
+- `CUSTOMIZATION POINT` — expected user customization area
+- `AI-EDIT-SAFE` — safe for automated edits
+- `AI-EDIT-CAUTION` — integration-sensitive; edit carefully
+
+## First Customization Steps
+
+{{#if (eq name "langchain")}}
+1. Edit `app/system-prompt.md` to change agent behavior.
+2. Change model choice in `app/agent.py`.
+3. Extend schema in `app/models.py` if you need app-specific data.
+4. Ensure `ARCADE_GATEWAY_URL` is set and the gateway has the expected tools.
+{{else if (eq name "mastra")}}
+1. Edit `src/mastra/agents/system-prompt.md` to change agent behavior.
+2. Change model choice in `src/mastra/agents/triage-agent.ts`.
+3. Extend schema in `lib/db/schema.ts` if you need app-specific data.
+4. Ensure `ARCADE_GATEWAY_URL` is set and the gateway has the expected tools.
+{{else}}
+1. Edit `lib/system-prompt.md` to change agent behavior.
+2. Change model choice in `lib/agent.ts`.
+3. Extend schema in `lib/db/schema.ts` if you need app-specific data.
+4. Ensure `ARCADE_GATEWAY_URL` is set and the gateway has the expected tools.
+{{/if}}
+
+## Gateway Checklist
+
+Create/configure your gateway at `https://app.arcade.dev/mcp-gateways` and add:
+
+- Slack
+- Google Calendar
+- Linear
+- GitHub
+- Gmail
+
+## Verification Commands
+
+{{#if (eq name "langchain")}}
+```bash
+python -m app.doctor
+ruff check app/
+ty check .
+```
+{{else}}
+```bash
+npm run doctor
+npm run typecheck
+npm run lint
+```
+{{/if}}

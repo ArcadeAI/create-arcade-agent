@@ -8,6 +8,7 @@ AI agent template: Mastra + Next.js + Arcade MCP Gateway.
 npm run dev                # Start development server
 npm run build              # Production build
 npm run lint               # ESLint
+npm run doctor             # Environment + gateway setup checks
 npm run format             # Prettier format
 npm run format:check       # Prettier check
 npx drizzle-kit generate   # Generate DB migrations after schema changes

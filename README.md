@@ -21,6 +21,18 @@ The generated agent is a daily planning and triage assistant that connects to Sl
 
 All three templates connect to Arcade's MCP Gateway for tool discovery and execution. The TypeScript templates (`ai-sdk` and `mastra`) share a common Next.js frontend. The Python template (`langchain`) uses server-rendered HTML with SSE streaming.
 
+## What Is an MCP Gateway?
+
+An MCP Gateway is a managed tool endpoint in Arcade that your agent connects to via one URL.
+
+Benefits:
+
+- **One connection point** -- use one `ARCADE_GATEWAY_URL` instead of wiring many tool servers
+- **Tool curation** -- choose exactly which tools your agent can see
+- **Faster iteration** -- update tool access in Arcade without changing integration code
+- **Cleaner model context** -- smaller, focused toolsets improve tool selection reliability
+- **Portable setup** -- same gateway pattern works across frameworks and MCP clients
+
 ## Usage
 
 ### Interactive mode
@@ -163,6 +175,15 @@ The default port is `8765` for the langchain template and `3000` for the Next.js
 ### `npm install` fails
 
 Make sure you are running Node.js >= 18. Check with `node --version`.
+
+### `ARCADE_GATEWAY_URL` is missing
+
+If the app says `ARCADE_GATEWAY_URL is missing`:
+
+1. Create a gateway at [app.arcade.dev/mcp-gateways](https://app.arcade.dev/mcp-gateways)
+2. Add these toolkits: Slack, Google Calendar, Linear, GitHub, Gmail
+3. Copy the gateway URL into `.env` as `ARCADE_GATEWAY_URL`
+4. Retry connection in the app
 
 ### Python virtual environment issues
 

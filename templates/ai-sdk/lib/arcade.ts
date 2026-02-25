@@ -18,7 +18,15 @@ import { join } from "path";
 // Create/modify your gateway at https://app.arcade.dev/mcp-gateways
 // to add tools like Gmail, GitHub, Google Calendar, etc.
 
-const gatewayUrl = process.env.ARCADE_GATEWAY_URL || "https://mcp.arcade.dev/sse";
+function getGatewayUrl(): string {
+  const value = process.env.ARCADE_GATEWAY_URL?.trim();
+  if (!value) {
+    throw new Error(
+      "ARCADE_GATEWAY_URL is missing. Create one at https://app.arcade.dev/mcp-gateways, add Slack, Google Calendar, Linear, GitHub, and Gmail, then set ARCADE_GATEWAY_URL in .env."
+    );
+  }
+  return value;
+}
 function ensureScheme(url: string): string {
   const trimmed = url.replace(/\/+$/, "");
   return /^https?:\/\//.test(trimmed) ? trimmed : `http://${trimmed}`;
@@ -150,7 +158,7 @@ export { auth };
  * Returns "REDIRECT" if the user needs to authorize, "AUTHORIZED" if tokens are already valid.
  */
 export async function initiateOAuth(): Promise<"AUTHORIZED" | "REDIRECT"> {
-  return auth(oauthProvider, { serverUrl: gatewayUrl });
+  return auth(oauthProvider, { serverUrl: getGatewayUrl() });
 }
 
 /**
@@ -158,6 +166,7 @@ export async function initiateOAuth(): Promise<"AUTHORIZED" | "REDIRECT"> {
  * Auto-detects transport: SSE for /sse URLs, Streamable HTTP otherwise.
  */
 export async function getArcadeMCPClient() {
+  const gatewayUrl = getGatewayUrl();
   const tokens = oauthProvider.tokens();
   const headers = tokens?.access_token
     ? { Authorization: `Bearer ${tokens.access_token}` }

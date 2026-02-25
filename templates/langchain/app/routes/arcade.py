@@ -40,6 +40,18 @@ async def connect(request: Request, db: AsyncSession = Depends(get_db)):
     user = await get_current_user(request, db)
     if not user:
         return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    if not settings.arcade_gateway_url:
+        return JSONResponse(
+            {
+                "connected": False,
+                "error": (
+                    "ARCADE_GATEWAY_URL is missing. Create one at "
+                    "https://app.arcade.dev/mcp-gateways, add Slack, Google Calendar, "
+                    "Linear, GitHub, and Gmail, then set ARCADE_GATEWAY_URL in .env."
+                ),
+            },
+            status_code=400,
+        )
 
     # Fast path: already have tokens
     tokens = get_tokens()
@@ -111,6 +123,18 @@ async def check_sources(request: Request, db: AsyncSession = Depends(get_db)):
     user = await get_current_user(request, db)
     if not user:
         return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    if not settings.arcade_gateway_url:
+        return JSONResponse(
+            {
+                "error": (
+                    "ARCADE_GATEWAY_URL is missing. Create one at "
+                    "https://app.arcade.dev/mcp-gateways, add Slack, Google Calendar, "
+                    "Linear, GitHub, and Gmail, then set ARCADE_GATEWAY_URL in .env."
+                ),
+                "sources": {},
+            },
+            status_code=400,
+        )
 
     try:
         mcp_client = get_mcp_client()

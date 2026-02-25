@@ -9,6 +9,7 @@ from sse_starlette.sse import EventSourceResponse
 from app.agent import SYSTEM_PROMPT, get_llm
 from app.arcade_oauth import get_cached_tools, get_mcp_client
 from app.auth import get_current_user
+from app.config import settings
 from app.database import get_db
 
 router = APIRouter(tags=["chat"])
@@ -59,6 +60,17 @@ async def chat(request: Request, db: AsyncSession = Depends(get_db)):
     user = await get_current_user(request, db)
     if not user:
         return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    if not settings.arcade_gateway_url:
+        return JSONResponse(
+            {
+                "error": (
+                    "ARCADE_GATEWAY_URL is missing. Create one at "
+                    "https://app.arcade.dev/mcp-gateways, add Slack, Google Calendar, "
+                    "Linear, GitHub, and Gmail, then set ARCADE_GATEWAY_URL in .env."
+                )
+            },
+            status_code=400,
+        )
 
     body = await request.json()
     messages = body.get("messages", [])
@@ -141,13 +153,18 @@ async def chat(request: Request, db: AsyncSession = Depends(get_db)):
 
             yield {"event": "done", "data": json.dumps({"type": "done"})}
 
-        except Exception as e:
+        except Exception:
             import traceback
 
             traceback.print_exc()
             yield {
                 "event": "error",
-                "data": json.dumps({"type": "error", "message": str(e)}),
+                "data": json.dumps(
+                    {
+                        "type": "error",
+                        "message": "Failed to process chat request. Please try again.",
+                    }
+                ),
             }
 
     return EventSourceResponse(event_stream())
