@@ -42,7 +42,7 @@ ruff format templates/langchain/    # Format
 
 GitHub Actions (`.github/workflows/ci.yml`) runs 3 jobs:
 
-1. **lint-and-build** -- lint + format + typecheck + build on Node 18 & 22
+1. **lint-and-build** -- lint + format + typecheck + build on Node 22
 2. **lint-python** -- Ruff on `templates/langchain/`
 3. **smoke-test-templates** -- scaffolds each template and verifies it builds
 
