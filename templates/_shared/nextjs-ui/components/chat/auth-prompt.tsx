@@ -21,7 +21,9 @@ export function AuthPrompt({ toolName, authUrl, onContinue }: AuthPromptProps) {
       </p>
       <div className="flex gap-2">
         <Button size="sm" asChild>
-          <a href={authUrl}>Authorize</a>
+          <a href={authUrl} target="_blank" rel="noopener noreferrer">
+            Authorize
+          </a>
         </Button>
         <Button size="sm" variant="outline" onClick={onContinue}>
           Continue

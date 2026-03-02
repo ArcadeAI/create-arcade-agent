@@ -8,7 +8,7 @@ The agent connects to Arcade's MCP Gateway to call Slack tools (and any other to
 
 ## Prerequisites
 
-- Node.js 18+
+- [Bun](https://bun.sh) (or Node.js 18+)
 - [Arcade account](https://app.arcade.dev) + MCP Gateway URL
 - [OpenAI API key](https://platform.openai.com) or [Anthropic API key](https://console.anthropic.com)
 
@@ -16,7 +16,7 @@ The agent connects to Arcade's MCP Gateway to call Slack tools (and any other to
 
 1. **Install dependencies:**
    ```bash
-   npm install
+   bun install
    ```
 
 2. **Configure environment:**
@@ -27,18 +27,18 @@ The agent connects to Arcade's MCP Gateway to call Slack tools (and any other to
 
 3. **Run setup doctor:**
    ```bash
-   npm run doctor
+   bun run doctor
    ```
 
 4. **Set up the database:**
    ```bash
-   npx drizzle-kit generate
-   npx drizzle-kit migrate
+   bunx drizzle-kit generate
+   bunx drizzle-kit migrate
    ```
 
 5. **Start the dev server:**
    ```bash
-   npm run dev
+   bun run dev
    ```
 
 6. **Open [http://localhost:3000](http://localhost:3000)**, register an account, and start chatting.

@@ -113,3 +113,57 @@ details[open] .tool-chevron {
   padding: 0.25rem 0.5rem;
   font-size: 0.875em;
 }
+
+/* Dark mode: dynamically generated task and stats cards */
+.dark .task-card,
+.dark .stats-card {
+  background-color: rgb(17 24 39); /* gray-900 */
+  border-color: rgb(31 41 55); /* gray-800 */
+  color: rgb(243 244 246); /* gray-100 */
+}
+.dark .task-card .text-gray-400,
+.dark .task-card .text-gray-500,
+.dark .stats-card .text-gray-500 {
+  color: rgb(107 114 128); /* gray-500 */
+}
+.dark .next-step-hint {
+  background-color: rgb(31 41 55); /* gray-800 */
+  color: rgb(156 163 175); /* gray-400 */
+}
+
+/* Dark mode: auth prompt cards */
+.dark .auth-prompt-card {
+  background-color: rgb(69 26 3 / 0.3);
+  border-color: rgb(120 53 15); /* amber-900 */
+  color: rgb(253 230 138); /* amber-200 */
+}
+.dark .auth-prompt-card .text-gray-500 {
+  color: rgb(180 160 100);
+}
+.dark .dismiss-auth-btn {
+  border-color: rgb(55 65 81); /* gray-700 */
+  color: rgb(156 163 175); /* gray-400 */
+  background: transparent;
+}
+.dark .dismiss-auth-btn:hover {
+  background-color: rgb(31 41 55); /* gray-800 */
+}
+
+/* Dark mode overrides for markdown content */
+.dark .markdown-content code {
+  background: #1f2937;
+}
+.dark .markdown-content pre {
+  background: #1f2937;
+}
+.dark .markdown-content a {
+  color: #60a5fa;
+}
+.dark .markdown-content blockquote {
+  border-left-color: #4b5563;
+  color: #9ca3af;
+}
+.dark .markdown-content th,
+.dark .markdown-content td {
+  border-color: #374151;
+}

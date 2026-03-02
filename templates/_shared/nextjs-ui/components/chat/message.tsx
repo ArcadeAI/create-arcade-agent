@@ -26,7 +26,18 @@ export function Message({ role, content }: MessageProps) {
           content
         ) : (
           <div className="prose prose-sm dark:prose-invert max-w-none">
-            <Markdown remarkPlugins={[remarkGfm]}>{content}</Markdown>
+            <Markdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                a: ({ children, ...props }) => (
+                  <a {...props} target="_blank" rel="noopener noreferrer">
+                    {children}
+                  </a>
+                ),
+              }}
+            >
+              {content}
+            </Markdown>
           </div>
         )}
       </div>

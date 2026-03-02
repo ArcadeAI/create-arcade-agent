@@ -103,14 +103,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Cache npm packages
+      - uses: oven-sh/setup-bun@v2
+        if: matrix.template != 'langchain'
+        with:
+          bun-version: latest
+      - name: Cache bun packages
+        if: matrix.template != 'langchain'
         uses: actions/cache@v4
         with:
-          path: ~/.npm
-          key: npm-smoke-${{ matrix.template }}-${{ hashFiles(format('templates/{0}/package.json', matrix.template), 'package-lock.json') }}
+          path: ~/.bun/install/cache
+          key: bun-smoke-${{ matrix.template }}-${{ hashFiles(format('templates/{0}/package.json', matrix.template)) }}
           restore-keys: |
-            npm-smoke-${{ matrix.template }}-
-            npm-smoke-
+            bun-smoke-${{ matrix.template }}-
+            bun-smoke-
       - uses: actions/setup-python@v5
         if: matrix.template == 'langchain'
         with:
@@ -134,7 +139,7 @@ jobs:
       - name: Doctor (Next.js + TypeScript templates)
         if: matrix.template != 'langchain'
         working-directory: ci-test-${{ matrix.template }}
-        run: npm run doctor
+        run: bun run doctor
 
       - name: Doctor (Python template)
         if: matrix.template == 'langchain'
@@ -144,17 +149,17 @@ jobs:
       - name: Type check (Next.js + TypeScript templates)
         if: matrix.template != 'langchain'
         working-directory: ci-test-${{ matrix.template }}
-        run: npm run typecheck
+        run: bun run typecheck
 
       - name: Build (Next.js + TypeScript templates)
         if: matrix.template != 'langchain'
         working-directory: ci-test-${{ matrix.template }}
-        run: npm run build
+        run: bun run build
 
       - name: Lint (Next.js + TypeScript templates)
         if: matrix.template != 'langchain'
         working-directory: ci-test-${{ matrix.template }}
-        run: npm run lint
+        run: bun run lint
 
       - name: Lint (Python template)
         if: matrix.template == 'langchain'

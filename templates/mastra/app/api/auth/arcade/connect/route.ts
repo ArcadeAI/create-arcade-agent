@@ -4,11 +4,17 @@ import {
   getPendingAuthUrl,
   clearPendingAuthUrl,
 } from "@/src/mastra/tools/arcade";
+import { getSession } from "@/lib/auth";
 
 // Serialize concurrent connect attempts to prevent PKCE verifier overwrites
 let connectPromise: Promise<{ data: Record<string, unknown>; status?: number }> | null = null;
 
 export async function POST() {
+  const session = await getSession();
+  if (!session) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   if (!process.env.ARCADE_GATEWAY_URL?.trim()) {
     return Response.json(
       {

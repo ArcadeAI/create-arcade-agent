@@ -23,7 +23,12 @@
  *   2. In the Arcade dashboard (app.arcade.dev/mcp-gateways), under
  *      Auth > Settings, set the custom verifier URL to:
  *        {your-app-url}/api/auth/arcade/verify
- *   3. Full guide: https://docs.arcade.dev/en/guides/user-facing-agents/secure-auth-production
+ *   3. Register custom OAuth apps for each auth provider (Slack, GitHub, etc.)
+ *      in the Arcade dashboard. Arcade's default shared OAuth apps cannot be
+ *      used when a custom verifier is enabled.
+ *   4. For local dev, use ngrok to expose your server (`ngrok http 3000`) and
+ *      set the ngrok URL as the verifier URL in the Arcade dashboard.
+ *   5. Full guide: https://docs.arcade.dev/en/guides/user-facing-agents/secure-auth-production
  *
  * This endpoint is disabled by default. It returns 404 unless
  * ARCADE_CUSTOM_VERIFIER=true is set in your environment.
@@ -33,6 +38,14 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 
 const ARCADE_API_URL = "https://cloud.arcade.dev/api/v1/oauth/confirm_user";
+
+/** Redirect using NEXT_PUBLIC_APP_URL when set (for ngrok/proxies), otherwise req.url. */
+function appRedirect(reqUrl: string, path: string): NextResponse {
+  const base = process.env.NEXT_PUBLIC_APP_URL
+    ? process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")
+    : new URL(reqUrl).origin;
+  return NextResponse.redirect(`${base}${path}`);
+}
 
 export async function GET(req: Request) {
   // Feature gate: only active when explicitly enabled
@@ -49,7 +62,7 @@ export async function GET(req: Request) {
   const apiKey = process.env.ARCADE_API_KEY;
   if (!apiKey) {
     console.error("ARCADE_CUSTOM_VERIFIER is enabled but ARCADE_API_KEY is not set.");
-    return NextResponse.redirect(new URL("/dashboard?error=verify_misconfigured", req.url));
+    return appRedirect(req.url, "/dashboard?error=verify_misconfigured");
   }
 
   const url = new URL(req.url);
@@ -62,7 +75,7 @@ export async function GET(req: Request) {
   // Verify the user is logged into this app
   const user = await getSession();
   if (!user) {
-    return NextResponse.redirect(new URL("/", req.url));
+    return appRedirect(req.url, "/");
   }
 
   try {
@@ -81,16 +94,19 @@ export async function GET(req: Request) {
     if (!response.ok) {
       const body = await response.text();
       console.error("Arcade confirm_user failed:", response.status, body);
-      return NextResponse.redirect(new URL("/dashboard?error=verify_failed", req.url));
+      return appRedirect(req.url, "/dashboard?error=verify_failed");
     }
 
     const data = await response.json();
 
-    // Redirect to Arcade's next_uri if provided, otherwise back to chat
-    const redirectTo = data.next_uri || new URL("/dashboard", req.url).toString();
+    // Redirect to Arcade's next_uri if provided, otherwise back to dashboard
+    const base = process.env.NEXT_PUBLIC_APP_URL
+      ? process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")
+      : new URL(req.url).origin;
+    const redirectTo = data.next_uri || `${base}/dashboard`;
     return NextResponse.redirect(redirectTo);
   } catch (error) {
     console.error("Arcade verify error:", error);
-    return NextResponse.redirect(new URL("/dashboard?error=verify_failed", req.url));
+    return appRedirect(req.url, "/dashboard?error=verify_failed");
   }
 }

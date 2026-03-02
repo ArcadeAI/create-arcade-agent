@@ -1,5 +1,5 @@
-// Dashboard client — vanilla JS for the triage dashboard + chat panel.
-// Handles: Arcade connection gate, plan streaming (NDJSON), task rendering, chat panel (SSE).
+// Dashboard client — vanilla JS for the triage dashboard.
+// Handles: Arcade connection gate, plan streaming (NDJSON), task rendering.
 
 // --- DOM refs ---
 const gate = document.getElementById("gate");
@@ -23,19 +23,9 @@ const errorBar = document.getElementById("error-bar");
 const planBtn = document.getElementById("plan-btn");
 const replanBtn = document.getElementById("replan-btn");
 const logoutBtn = document.getElementById("logout-btn");
-const chatToggleBtn = document.getElementById("chat-toggle-btn");
-const chatPanel = document.getElementById("chat-panel");
-const chatOverlay = document.getElementById("chat-overlay");
-const chatMessages = document.getElementById("chat-messages");
-const chatForm = document.getElementById("chat-form");
-const chatInput = document.getElementById("chat-input");
-const chatSendBtn = document.getElementById("chat-send-btn");
 
 // --- State ---
 let items = [];
-let chatOpen = false;
-let chatConversation = [];
-let isChatStreaming = false;
 let sourceStatuses = {}; // { github: 'checking' | 'connected' | 'auth_required', ... }
 let authUrlsBySource = {}; // { github: 'https://...', ... }
 
@@ -251,7 +241,7 @@ function createTaskCard(task, index) {
   const source = SOURCE_CONFIG[task.source] || SOURCE_CONFIG.other;
 
   card.className =
-    "bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow";
+    "task-card bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow";
   card.style.animation = `fadeSlideIn 0.3s ease-out ${index * 0.05}s both`;
 
   const subtitle =
@@ -277,7 +267,7 @@ function createTaskCard(task, index) {
     </div>
     ${summaryHtml}
     ${subtitle ? `<p class="text-xs text-gray-400 mb-2">${escapeHtml(subtitle)}</p>` : ""}
-    ${task.suggestedNextStep ? `<p class="text-xs text-gray-500 bg-gray-50 rounded px-2 py-1"><span class="font-medium">Next:</span> ${escapeHtml(task.suggestedNextStep)}</p>` : ""}
+    ${task.suggestedNextStep ? `<p class="next-step-hint text-xs text-gray-500 bg-gray-50 rounded px-2 py-1"><span class="font-medium">Next:</span> ${escapeHtml(task.suggestedNextStep)}</p>` : ""}
   `;
 
   return card;
@@ -296,7 +286,7 @@ function renderStats(data) {
 
   // Total card
   const totalCard = document.createElement("div");
-  totalCard.className = "bg-white rounded-xl border border-gray-200 p-4";
+  totalCard.className = "stats-card bg-white rounded-xl border border-gray-200 p-4";
   totalCard.innerHTML = `
     <div class="flex items-center gap-2 text-gray-500 text-sm mb-1">📊 Total</div>
     <div class="text-2xl font-semibold">${data.total || 0}</div>
@@ -309,7 +299,7 @@ function renderStats(data) {
     if (count <= 0) continue;
     const config = SOURCE_CONFIG[source] || SOURCE_CONFIG.other;
     const card = document.createElement("div");
-    card.className = "bg-white rounded-xl border border-gray-200 p-4";
+    card.className = "stats-card bg-white rounded-xl border border-gray-200 p-4";
     card.innerHTML = `
       <div class="flex items-center gap-2 text-gray-500 text-sm mb-1">${config.icon} ${escapeHtml(config.label)}</div>
       <div class="text-2xl font-semibold">${count}</div>
@@ -339,7 +329,7 @@ function addAuthPrompt(url, toolName) {
 
   const label = toolName || "Service";
   const card = document.createElement("div");
-  card.className = "bg-amber-50 border border-amber-200 rounded-lg p-4";
+  card.className = "auth-prompt-card bg-amber-50 border border-amber-200 rounded-lg p-4";
   card.dataset.url = url;
   card.innerHTML = `
     <div class="flex items-center gap-2 mb-2">
@@ -348,13 +338,13 @@ function addAuthPrompt(url, toolName) {
     </div>
     <p class="text-gray-500 text-xs mb-3">${escapeHtml(label)} needs permission to continue.</p>
     <div class="flex gap-2">
-      <a href="${sanitizeUrl(url)}"
-         class="px-3 py-1.5 bg-red-500 text-white text-sm rounded-md hover:bg-red-600">Authorize</a>
-      <button class="dismiss-auth px-3 py-1.5 border border-gray-300 text-sm rounded-md hover:bg-gray-50">Continue</button>
+      <a href="${sanitizeUrl(url)}" target="_blank" rel="noopener noreferrer"
+         class="px-3 py-1.5 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 transition-colors">Authorize</a>
+      <button class="dismiss-auth-btn px-3 py-1.5 border border-gray-300 text-sm rounded-md hover:bg-gray-50 transition-colors">Continue</button>
     </div>
   `;
 
-  card.querySelector(".dismiss-auth").addEventListener("click", () => {
+  card.querySelector(".dismiss-auth-btn").addEventListener("click", () => {
     card.remove();
     if (!authPrompts.children.length) authPrompts.classList.add("hidden");
     showState();
@@ -459,123 +449,5 @@ async function handlePlan() {
     }
     renderToolStatus();
     showState();
-  }
-}
-
-// --- Chat panel ---
-chatToggleBtn.addEventListener("click", toggleChat);
-
-function toggleChat() {
-  chatOpen = !chatOpen;
-  chatPanel.classList.toggle("translate-x-full", !chatOpen);
-  chatOverlay.classList.toggle("hidden", !chatOpen);
-  if (chatOpen) chatInput.focus();
-}
-
-chatForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const text = chatInput.value.trim();
-  if (!text || isChatStreaming) return;
-  chatInput.value = "";
-  sendChatMessage(text);
-});
-
-function addChatBubble(role, html) {
-  // Remove empty state text
-  const empty = chatMessages.querySelector("p.text-center");
-  if (empty) empty.remove();
-
-  const wrapper = document.createElement("div");
-  wrapper.className = `flex ${role === "user" ? "justify-end" : "justify-start"}`;
-
-  const bubble = document.createElement("div");
-  bubble.className = `max-w-[80%] px-4 py-3 rounded-lg text-sm ${
-    role === "user"
-      ? "whitespace-pre-wrap bg-red-500 text-white"
-      : "bg-white border border-gray-200 markdown-content"
-  }`;
-  bubble.innerHTML = html;
-
-  wrapper.appendChild(bubble);
-  chatMessages.appendChild(wrapper);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-  return bubble;
-}
-
-async function sendChatMessage(text) {
-  isChatStreaming = true;
-  chatSendBtn.disabled = true;
-
-  addChatBubble("user", escapeHtml(text));
-  chatConversation.push({ role: "user", content: text });
-
-  let assistantBubble = null;
-  let assistantText = "";
-
-  try {
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: chatConversation }),
-    });
-
-    if (res.status === 401) {
-      window.location.href = "/";
-      return;
-    }
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      addChatBubble(
-        "assistant",
-        `<span class="text-red-600">Error: ${escapeHtml(err.error || res.statusText)}</span>`
-      );
-      return;
-    }
-
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buf = "";
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buf += decoder.decode(value, { stream: true });
-      const lines = buf.split("\n");
-      buf = lines.pop();
-
-      for (const line of lines) {
-        if (!line.startsWith("data: ")) continue;
-        try {
-          const data = JSON.parse(line.slice(6));
-          if (data.type === "text") {
-            if (!assistantBubble) assistantBubble = addChatBubble("assistant", "");
-            assistantText += data.content;
-            assistantBubble.innerHTML =
-              typeof marked !== "undefined"
-                ? marked.parse(assistantText)
-                : escapeHtml(assistantText);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-          } else if (data.type === "auth_required") {
-            addAuthPrompt(data.authorization_url, data.toolName);
-          }
-        } catch {
-          /* skip */
-        }
-      }
-    }
-
-    if (assistantText) {
-      chatConversation.push({ role: "assistant", content: assistantText });
-    }
-  } catch (err) {
-    addChatBubble(
-      "assistant",
-      `<span class="text-red-600">Error: ${escapeHtml(err.message)}</span>`
-    );
-  } finally {
-    isChatStreaming = false;
-    chatSendBtn.disabled = false;
   }
 }

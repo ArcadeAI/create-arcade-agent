@@ -47,7 +47,7 @@ Three layers:
 1. **App auth** — email/password with bcrypt, session cookies, SQLite storage
 2. **Arcade Gateway OAuth** — MCP OAuth flow with file-based token persistence in `.arcade-auth/` (discovery → registration → PKCE → token exchange)
 3. **Tool-level OAuth** — Arcade handles per-tool auth (Slack, GitHub, etc.); auth URLs surfaced in chat UI
-4. **Custom verifier** (optional) — `/api/arcade/verify` confirms user identity for COAT protection
+4. **Custom verifier** (optional) — `/api/arcade/verify` confirms user identity for COAT protection. Enabling the custom verifier also requires: (a) setting up custom OAuth applications with each auth provider (Slack, GitHub, etc.) in the Arcade dashboard — Arcade's default shared OAuth apps cannot be used with a custom verifier, and (b) exposing the local dev server via ngrok (`ngrok http 8000`) so Arcade can reach the verifier endpoint, then configuring the ngrok URL in the Arcade dashboard
 
 ## Constraints
 

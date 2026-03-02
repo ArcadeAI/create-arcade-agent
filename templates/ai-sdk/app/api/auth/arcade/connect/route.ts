@@ -5,6 +5,7 @@ import {
   clearPendingAuthUrl,
   initiateOAuth,
 } from "@/lib/arcade";
+import { getSession } from "@/lib/auth";
 
 // Serialize concurrent connect attempts to prevent PKCE verifier overwrites
 let connectPromise: Promise<{
@@ -13,6 +14,11 @@ let connectPromise: Promise<{
 }> | null = null;
 
 export async function POST() {
+  const session = await getSession();
+  if (!session) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   if (!process.env.ARCADE_GATEWAY_URL?.trim()) {
     return Response.json(
       {

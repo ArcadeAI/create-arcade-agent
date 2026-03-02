@@ -83,15 +83,16 @@ async def connect(request: Request, db: AsyncSession = Depends(get_db)):
 def _map_tool_to_source(tool_name: str | None) -> str:
     if not tool_name:
         return "other"
-    if tool_name.startswith("Slack_"):
+    low = tool_name.lower()
+    if re.match(r"^slack[._]", low):
         return "slack"
-    if tool_name.startswith("Google") or tool_name.startswith("Calendar"):
+    if re.match(r"^(google|calendar)[._]", low):
         return "google_calendar"
-    if tool_name.startswith("Linear_"):
+    if re.match(r"^linear[._]", low):
         return "linear"
-    if tool_name.startswith("Github_") or tool_name.startswith("GitHub_"):
+    if re.match(r"^git(hub)?[._]", low):
         return "github"
-    if tool_name.startswith("Gmail_"):
+    if re.match(r"^gmail[._]", low):
         return "gmail"
     return "other"
 
@@ -141,7 +142,7 @@ async def check_sources(request: Request, db: AsyncSession = Depends(get_db)):
     try:
         mcp_client = get_mcp_client()
         all_tools = await get_cached_tools(mcp_client)
-        whoami_tools = [t for t in all_tools if t.name.endswith("_WhoAmI")]
+        whoami_tools = [t for t in all_tools if re.search(r"[._]WhoAmI$", t.name, re.IGNORECASE)]
 
         async def _call_whoami(tool):
             try:
@@ -205,6 +206,12 @@ async def verify(request: Request, db: AsyncSession = Depends(get_db)):
     When enabled (ARCADE_CUSTOM_VERIFIER=true), Arcade redirects users here
     with a flow_id. This endpoint confirms the user's identity with Arcade,
     preventing attackers from completing auth flows on behalf of victims.
+
+    IMPORTANT: Enabling the custom verifier also requires registering custom
+    OAuth applications for each auth provider (Slack, GitHub, etc.) in the
+    Arcade dashboard — the default shared OAuth apps cannot be used with a
+    custom verifier. For local dev, use ngrok (`ngrok http 8000`) and set the
+    ngrok URL as the verifier URL in the dashboard.
 
     See: https://docs.arcade.dev/en/guides/user-facing-agents/secure-auth-production
     """

@@ -2,11 +2,11 @@
 
 function mapToolToSource(toolName?: string): string {
   if (!toolName) return "other";
-  if (/^Slack_/i.test(toolName)) return "slack";
-  if (/^(Google|Calendar)/i.test(toolName)) return "google_calendar";
-  if (/^Linear_/i.test(toolName)) return "linear";
-  if (/^GitHub_/i.test(toolName)) return "github";
-  if (/^Gmail_/i.test(toolName)) return "gmail";
+  if (/^slack[._]/i.test(toolName)) return "slack";
+  if (/^(google|calendar)[._]/i.test(toolName)) return "google_calendar";
+  if (/^linear[._]/i.test(toolName)) return "linear";
+  if (/^git(hub)?[._]/i.test(toolName)) return "github";
+  if (/^gmail[._]/i.test(toolName)) return "gmail";
   return "other";
 }
 
@@ -60,7 +60,7 @@ export async function POST() {
 
     // Find all WhoAmI tools — lightweight identity checks
     const whoAmITools = Object.entries(allTools).filter(([name]) =>
-      name.endsWith("_WhoAmI")
+      /[._]WhoAmI$/i.test(name)
     );
 
     // Call them all in parallel
