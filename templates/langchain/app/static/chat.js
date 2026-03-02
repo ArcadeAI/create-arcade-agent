@@ -16,6 +16,16 @@ const chatInput = document.getElementById("chat-input");
 const sendBtn = document.getElementById("send-btn");
 const logoutBtn = document.getElementById("logout-btn");
 
+// Configure marked.js to open links in new tabs
+if (typeof marked !== "undefined") {
+  const renderer = new marked.Renderer();
+  renderer.link = function ({ href, title, text }) {
+    const titleAttr = title ? ` title="${title}"` : "";
+    return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer">${text}</a>`;
+  };
+  marked.setOptions({ renderer });
+}
+
 let conversationMessages = []; // {role, content} history sent to the backend
 let isStreaming = false;
 let lastUserMessage = "";
@@ -117,7 +127,7 @@ function addMessageBubble(role, html) {
   const bubble = document.createElement("div");
   bubble.className = `max-w-2xl px-4 py-3 rounded-lg text-sm ${
     role === "user"
-      ? "whitespace-pre-wrap bg-gray-900 text-white"
+      ? "whitespace-pre-wrap bg-red-500 text-white"
       : "bg-white border border-gray-200 markdown-content"
   }`;
   bubble.innerHTML = html;
@@ -196,7 +206,7 @@ function addAuthCard(toolName, authUrl) {
   card.innerHTML = `
     <p class="text-sm font-medium mb-2">Authorization required</p>
     <a href="${sanitizeUrl(authUrl)}" target="_blank" rel="noopener noreferrer"
-       class="inline-block px-3 py-1 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 mr-2 mb-1">
+       class="inline-block px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 mr-2 mb-1">
       Authorize ${escapeHtml(toolName)}
     </a>
     <button class="continue-auth-btn block mt-2 w-full px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700">

@@ -3,7 +3,7 @@
   "displayName": "Mastra (Next.js + TypeScript)",
   "hint": "Next.js + Mastra + React",
   "language": "typescript",
-  "devCommand": "npm run dev",
+  "devCommand": "bun run dev",
   "port": 8765,
   "sharedFiles": {
     "system-prompt.md": "src/mastra/agents/system-prompt.md",
@@ -22,19 +22,19 @@
   },
   "install": [
     {
-      "cmd": "npm",
+      "cmd": "bun",
       "args": ["install"],
       "label": "Installing dependencies"
     }
   ],
   "migrate": [
     {
-      "cmd": "npx",
+      "cmd": "bunx",
       "args": ["drizzle-kit", "generate"],
       "label": "Generating migrations"
     },
     {
-      "cmd": "npx",
+      "cmd": "bunx",
       "args": ["drizzle-kit", "migrate"],
       "label": "Running migrations"
     }

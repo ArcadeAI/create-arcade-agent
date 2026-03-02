@@ -1,7 +1,15 @@
+/** Redirect using NEXT_PUBLIC_APP_URL when set (for ngrok/proxies), otherwise req.url. */
+function appRedirect(reqUrl: string, path: string): NextResponse {
+  const base = process.env.NEXT_PUBLIC_APP_URL
+    ? process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")
+    : new URL(reqUrl).origin;
+  return NextResponse.redirect(`${base}${path}`);
+}
+
 export async function GET(req: Request) {
   const gatewayUrl = process.env.ARCADE_GATEWAY_URL?.trim();
   if (!gatewayUrl) {
-    return NextResponse.redirect(new URL("/dashboard?error=gateway_missing", req.url));
+    return appRedirect(req.url, "/dashboard?error=gateway_missing");
   }
 
   const url = new URL(req.url);
@@ -21,12 +29,12 @@ export async function GET(req: Request) {
     });
 
     if (result === "AUTHORIZED") {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
+      return appRedirect(req.url, "/dashboard");
     }
 
-    return NextResponse.redirect(new URL("/dashboard?error=auth_incomplete", req.url));
+    return appRedirect(req.url, "/dashboard?error=auth_incomplete");
   } catch (error) {
     console.error("Arcade OAuth callback error:", error);
-    return NextResponse.redirect(new URL("/dashboard?error=auth_failed", req.url));
+    return appRedirect(req.url, "/dashboard?error=auth_failed");
   }
 }

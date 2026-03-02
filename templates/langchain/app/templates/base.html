@@ -4,11 +4,45 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}Arcade Agent{% endblock %}</title>
+    <link rel="icon" href="/static/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: { extend: { fontFamily: { sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"] } } },
+      };
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="/static/styles.css" />
+    <script>
+      // Apply saved theme before paint to prevent flash
+      (function () {
+        const saved = localStorage.getItem("theme");
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        if (saved === "dark" || (!saved && prefersDark)) {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
   </head>
-  <body class="bg-gray-50 text-gray-900 antialiased font-sans">
+  <body class="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 antialiased font-sans">
     {% block content %}{% endblock %} {% block scripts %}{% endblock %}
+    <script>
+      function toggleTheme() {
+        const isDark = document.documentElement.classList.toggle("dark");
+        localStorage.setItem("theme", isDark ? "dark" : "light");
+        document.getElementById("theme-icon-sun")?.classList.toggle("hidden", !isDark);
+        document.getElementById("theme-icon-moon")?.classList.toggle("hidden", isDark);
+      }
+      // Sync icon visibility on load
+      document.addEventListener("DOMContentLoaded", function () {
+        const isDark = document.documentElement.classList.contains("dark");
+        document.getElementById("theme-icon-sun")?.classList.toggle("hidden", !isDark);
+        document.getElementById("theme-icon-moon")?.classList.toggle("hidden", isDark);
+      });
+    </script>
   </body>
 </html>

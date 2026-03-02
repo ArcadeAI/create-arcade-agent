@@ -27,15 +27,16 @@ router = APIRouter(tags=["plan"])
 def _map_tool_to_source(tool_name: str | None) -> str:
     if not tool_name:
         return "other"
-    if tool_name.startswith("Slack_"):
+    low = tool_name.lower()
+    if re.match(r"^slack[._]", low):
         return "slack"
-    if tool_name.startswith("Google") or tool_name.startswith("Calendar"):
+    if re.match(r"^(google|calendar)[._]", low):
         return "google_calendar"
-    if tool_name.startswith("Linear_"):
+    if re.match(r"^linear[._]", low):
         return "linear"
-    if tool_name.startswith("GitHub_"):
+    if re.match(r"^git(hub)?[._]", low):
         return "github"
-    if tool_name.startswith("Gmail_"):
+    if re.match(r"^gmail[._]", low):
         return "gmail"
     return "other"
 
@@ -78,11 +79,11 @@ def _build_plan_prompt():
         "- effort: XS (<5min) | S (5-15min) | M (15-30min) | L (>30min)\n"
         "- confidence: 0.0 to 1.0\n\n"
         "SOURCE MAPPING:\n"
-        '- Tools starting with "Slack_" -> source: "slack"\n'
+        '- Tools starting with "Slack" -> source: "slack"\n'
         '- Tools starting with "Google" or "Calendar" -> source: "google_calendar"\n'
-        '- Tools starting with "Linear_" -> source: "linear"\n'
-        '- Tools starting with "GitHub_" -> source: "github"\n'
-        '- Tools starting with "Gmail_" -> source: "gmail"\n'
+        '- Tools starting with "Linear" -> source: "linear"\n'
+        '- Tools starting with "Git" or "GitHub" -> source: "github"\n'
+        '- Tools starting with "Gmail" -> source: "gmail"\n'
         '- Anything else -> source: "other"\n\n'
         "OUTPUT: For EACH item, output EXACTLY this on its own line:\n\n"
         "```json:task\n"
@@ -199,50 +200,31 @@ async def plan(request: Request, db: AsyncSession = Depends(get_db)):
             all_tools = await get_cached_tools(mcp_client)
             all_tools = _patch_tool_schemas(all_tools)
 
-            # Only keep tools useful for triage — no mutations, no obscure read endpoints.
-            TRIAGE_TOOLS = {
-                # GitHub
-                "Github_ListNotifications",
-                "Github_GetNotificationSummary",
-                "Github_ListPullRequests",
-                "Github_GetPullRequest",
-                "Github_GetUserOpenItems",
-                "Github_GetUserRecentActivity",
-                "Github_GetReviewWorkload",
-                "Github_GetIssue",
-                "Github_WhoAmI",
-                # Gmail
-                "Gmail_ListEmails",
-                "Gmail_ListThreads",
-                "Gmail_GetThread",
-                "Gmail_SearchThreads",
-                "Gmail_WhoAmI",
-                # Google Calendar
-                "GoogleCalendar_ListEvents",
-                "GoogleCalendar_ListCalendars",
-                "GoogleCalendar_WhoAmI",
-                # Linear
-                "Linear_GetNotifications",
-                "Linear_GetRecentActivity",
-                "Linear_ListIssues",
-                "Linear_GetIssue",
-                "Linear_ListProjects",
-                "Linear_GetProject",
-                "Linear_WhoAmI",
-                # Slack
-                "Slack_ListConversations",
-                "Slack_GetMessages",
-                "Slack_GetConversationMetadata",
-                "Slack_WhoAmI",
-            }
+            # Only keep tools useful for triage — tools from known services, no mutations.
+            # Uses pattern matching so it works regardless of Arcade's exact naming
+            # convention (underscores, dots, or mixed casing are all handled).
+            _KNOWN_SERVICE = re.compile(
+                r"^(github|gmail|google|calendar|linear|slack)", re.IGNORECASE,
+            )
+            _MUTATION = re.compile(
+                r"create|update|delete|send|reply|post|archive|remove"
+                r"|add|invite|merge|close|assign|edit|publish|comment",
+                re.IGNORECASE,
+            )
+
+            def _is_triage_tool(name: str) -> bool:
+                if not _KNOWN_SERVICE.search(name):
+                    return False
+                return not _MUTATION.search(name)
             MAX_TOOL_RESULT_CHARS = 4000
 
             def _wrap_tool(tool):
                 """Wrap a tool to truncate large results and prevent context overflow."""
-                original_invoke = tool.invoke
+                original_coroutine = tool.coroutine
+                original_func = tool.func
 
-                async def _truncated_ainvoke(input, config=None, **kwargs):
-                    result = await tool.ainvoke(input, config=config, **kwargs)
+                async def _truncated_ainvoke(*args, **kwargs):
+                    result = await original_coroutine(*args, **kwargs)
                     if isinstance(result, str) and len(result) > MAX_TOOL_RESULT_CHARS:
                         return (
                             result[:MAX_TOOL_RESULT_CHARS]
@@ -250,24 +232,25 @@ async def plan(request: Request, db: AsyncSession = Depends(get_db)):
                         )
                     return result
 
-                def _truncated_invoke(input, config=None, **kwargs):
-                    result = original_invoke(input, config=config, **kwargs)
-                    s = result if isinstance(result, str) else json.dumps(result) if result else ""
-                    if len(s) > MAX_TOOL_RESULT_CHARS:
-                        return (
-                            s[:MAX_TOOL_RESULT_CHARS]
-                            + f"\n...[truncated {len(s) - MAX_TOOL_RESULT_CHARS} chars]"
-                        )
-                    return result
+                updates = {"coroutine": _truncated_ainvoke}
+                if original_func is not None:
+                    def _truncated_invoke(*args, **kwargs):
+                        result = original_func(*args, **kwargs)
+                        s = result if isinstance(result, str) else json.dumps(result) if result else ""
+                        if len(s) > MAX_TOOL_RESULT_CHARS:
+                            return (
+                                s[:MAX_TOOL_RESULT_CHARS]
+                                + f"\n...[truncated {len(s) - MAX_TOOL_RESULT_CHARS} chars]"
+                            )
+                        return result
+                    updates["func"] = _truncated_invoke
 
-                tool.invoke = _truncated_invoke
-                tool.ainvoke = _truncated_ainvoke
-                return tool
+                return tool.model_copy(update=updates)
 
             tools = [
                 _wrap_tool(t)
                 for t in all_tools
-                if t.name in TRIAGE_TOOLS and not t.name.endswith("_WhoAmI")
+                if _is_triage_tool(t.name) and not re.search(r"[._]WhoAmI$", t.name, re.IGNORECASE)
             ]
 
             tool_names = [t.name for t in tools]

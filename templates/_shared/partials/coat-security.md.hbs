@@ -22,8 +22,34 @@ The **custom user verifier** solves this by confirming that the person completin
      {your-app-url}/api/arcade/verify
 {{/if}}
      ```
-     For local development: `http://localhost:{{port}}{{#if (eq language "typescript")}}/api/auth/arcade/verify{{else}}/api/arcade/verify{{/if}}`
 
-3. **Test it:** When a tool requires authorization, Arcade will redirect the user through your verifier endpoint. The endpoint checks the user's session, confirms their identity with Arcade, and redirects them back.
+3. **Set up custom OAuth apps for each auth provider:**
+   When you enable a custom user verifier, Arcade's default shared OAuth applications can no longer be used. You must register your own OAuth application with each provider you want to use (e.g., Slack, GitHub, Google) and configure them in the Arcade dashboard under your gateway's auth provider settings. See the [Arcade Custom Auth Provider docs](https://docs.arcade.dev/en/guides/user-facing-agents/secure-auth-production) for details.
+
+4. **Expose your local server for development (ngrok):**
+   Arcade must be able to reach your verifier endpoint over the internet, so `localhost` URLs won't work in the dashboard. Use [ngrok](https://ngrok.com/) to create a public tunnel:
+   ```bash
+   # Install ngrok: https://ngrok.com/download
+   ngrok http {{port}}
+   ```
+   ngrok will print a forwarding URL like `https://abc123.ngrok-free.app`. Use that as your verifier URL in the Arcade dashboard:
+   ```
+{{#if (eq language "typescript")}}
+   https://abc123.ngrok-free.app/api/auth/arcade/verify
+{{else}}
+   https://abc123.ngrok-free.app/api/arcade/verify
+{{/if}}
+   ```
+   > **Tip:** The free ngrok URL changes every time you restart it. Use `ngrok http {{port}} --url=your-static-domain.ngrok-free.app` if you have a static domain configured in your ngrok account, so the dashboard URL stays stable.
+{{#if (eq language "typescript")}}
+
+   After starting ngrok, update your `.env`:
+   ```
+   NEXT_PUBLIC_APP_URL=https://abc123.ngrok-free.app
+   ```
+   Then delete `.arcade-auth/` (the cached OAuth registration contains the old callback URL) and restart the dev server.
+{{/if}}
+
+5. **Test it:** When a tool requires authorization, Arcade will redirect the user through your verifier endpoint. The endpoint checks the user's session, confirms their identity with Arcade, and redirects them back.
 
 For full details, see the [Arcade Secure Auth Guide](https://docs.arcade.dev/en/guides/user-facing-agents/secure-auth-production).

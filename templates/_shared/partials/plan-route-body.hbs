@@ -17,11 +17,11 @@ function encodeEvent(event: PlanEvent): Uint8Array {
 
 function mapToolToSource(toolName?: string): string {
   if (!toolName) return "other";
-  if (/^Slack_/i.test(toolName)) return "slack";
-  if (/^(Google|Calendar)/i.test(toolName)) return "google_calendar";
-  if (/^Linear_/i.test(toolName)) return "linear";
-  if (/^GitHub_/i.test(toolName)) return "github";
-  if (/^Gmail_/i.test(toolName)) return "gmail";
+  if (/^slack[._]/i.test(toolName)) return "slack";
+  if (/^(google|calendar)[._]/i.test(toolName)) return "google_calendar";
+  if (/^linear[._]/i.test(toolName)) return "linear";
+  if (/^git(hub)?[._]/i.test(toolName)) return "github";
+  if (/^gmail[._]/i.test(toolName)) return "gmail";
   return "other";
 }
 
@@ -86,11 +86,11 @@ CLASSIFICATION:
 - confidence: 0.0 to 1.0
 
 SOURCE MAPPING:
-- Tools starting with "Slack_" → source: "slack"
+- Tools starting with "Slack" → source: "slack"
 - Tools starting with "Google" or "Calendar" → source: "google_calendar"
-- Tools starting with "Linear_" → source: "linear"
-- Tools starting with "GitHub_" → source: "github"
-- Tools starting with "Gmail_" → source: "gmail"
+- Tools starting with "Linear" → source: "linear"
+- Tools starting with "Git" or "GitHub" → source: "github"
+- Tools starting with "Gmail" → source: "gmail"
 - Anything else → source: "other"
 
 OUTPUT: For EACH item, output EXACTLY this on its own line:
@@ -208,28 +208,17 @@ export async function POST() {
       mcpClient = await getArcadeMCPClient();
       const allTools = await mcpClient.tools();
 
-      // Only keep tools useful for triage — no mutations, no obscure read endpoints.
-      // The agent just needs to list recent items and get details.
-      const TRIAGE_TOOLS = new Set([
-        // GitHub — notifications, PRs, review requests
-        "Github_ListNotifications", "Github_GetNotificationSummary",
-        "Github_ListPullRequests", "Github_GetPullRequest",
-        "Github_GetUserOpenItems", "Github_GetUserRecentActivity",
-        "Github_GetReviewWorkload", "Github_GetIssue", "Github_WhoAmI",
-        // Gmail — recent emails and threads
-        "Gmail_ListEmails", "Gmail_ListThreads", "Gmail_GetThread",
-        "Gmail_SearchThreads", "Gmail_WhoAmI",
-        // Google Calendar — today's events
-        "GoogleCalendar_ListEvents", "GoogleCalendar_ListCalendars",
-        "GoogleCalendar_WhoAmI",
-        // Linear — notifications, issues, projects
-        "Linear_GetNotifications", "Linear_GetRecentActivity",
-        "Linear_ListIssues", "Linear_GetIssue",
-        "Linear_ListProjects", "Linear_GetProject", "Linear_WhoAmI",
-        // Slack — conversations and messages
-        "Slack_ListConversations", "Slack_GetMessages",
-        "Slack_GetConversationMetadata", "Slack_WhoAmI",
-      ]);
+      // Only keep tools useful for triage — tools from known services, no mutations.
+      // Uses pattern matching so it works regardless of Arcade's exact naming convention
+      // (underscores, dots, or mixed casing are all handled).
+      const KNOWN_SERVICE = /^(github|gmail|google|calendar|linear|slack)/i;
+      const MUTATION = /create|update|delete|send|reply|post|archive|remove|add|invite|merge|close|assign|edit|publish|comment/i;
+
+      function isTriageTool(name: string): boolean {
+        if (!KNOWN_SERVICE.test(name)) return false;
+        if (MUTATION.test(name)) return false;
+        return true;
+      }
       // Cap individual tool results so they don't blow the model's context window.
       // Gmail threads, GitHub notifications, etc. can return 50k+ chars each.
       // MCP tools return { content: [{ type: "text", text: "..." }] } — we must
@@ -262,9 +251,9 @@ export async function POST() {
 
       const tools: typeof allTools = {};
       for (const [name, tool] of Object.entries(allTools)) {
-        if (!TRIAGE_TOOLS.has(name)) continue;
+        if (!isTriageTool(name)) continue;
         // Don't give WhoAmI tools to the model — they're for auth checks, not data
-        if (name.endsWith("_WhoAmI")) continue;
+        if (/[._]WhoAmI$/i.test(name)) continue;
         const orig = tool.execute;
         tools[name] = {
           ...tool,

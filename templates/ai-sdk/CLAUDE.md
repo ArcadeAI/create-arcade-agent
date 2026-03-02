@@ -17,14 +17,14 @@ A Slack triage agent built with the Vercel AI SDK, Next.js, and Arcade's MCP Gat
 ## Key Commands
 
 ```bash
-npm run dev                    # Dev server
-npm run build                  # Production build
-npm run lint                   # ESLint
-npm run doctor                 # Environment + gateway setup checks
-npm run format                 # Prettier format
-npm run format:check           # Prettier check
-npx drizzle-kit generate       # Generate migrations
-npx drizzle-kit migrate        # Run migrations
+bun run dev                    # Dev server
+bun run build                  # Production build
+bun run lint                   # ESLint
+bun run doctor                 # Environment + gateway setup checks
+bun run format                 # Prettier format
+bun run format:check           # Prettier check
+bunx drizzle-kit generate       # Generate migrations
+bunx drizzle-kit migrate        # Run migrations
 ```
 
 ## Key Files
@@ -49,7 +49,7 @@ Three layers:
 1. **App auth** — email/password with bcrypt, session cookies (7-day), SQLite storage
 2. **Arcade Gateway OAuth** — MCP OAuth flow with file-based token persistence in `.arcade-auth/` (discovery → registration → PKCE → token exchange)
 3. **Tool-level OAuth** — Arcade handles per-tool auth (Slack, GitHub, etc.); auth URLs surfaced in chat UI
-4. **Custom verifier** (optional) — `/api/auth/arcade/verify` confirms user identity for COAT protection
+4. **Custom verifier** (optional) — `/api/auth/arcade/verify` confirms user identity for COAT protection. Enabling the custom verifier also requires: (a) setting up custom OAuth applications with each auth provider (Slack, GitHub, etc.) in the Arcade dashboard — Arcade's default shared OAuth apps cannot be used with a custom verifier, and (b) exposing the local dev server via ngrok (`ngrok http 3000`) so Arcade can reach the verifier endpoint, then configuring the ngrok URL in the Arcade dashboard. When using ngrok: set `NEXT_PUBLIC_APP_URL` to the ngrok URL, delete `.arcade-auth/` (cached OAuth registration has the old callback URL), and restart the dev server
 
 ## Constraints
 

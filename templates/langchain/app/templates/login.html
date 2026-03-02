@@ -1,40 +1,49 @@
 {% extends "base.html" %} {% block title %}Login - Arcade Agent{% endblock %} {% block content %}
 <div class="min-h-screen flex items-center justify-center">
   <div class="w-full max-w-sm">
-    <h1 class="text-2xl font-bold text-center mb-2">Arcade Agent Template</h1>
-    <p class="text-sm text-gray-500 text-center mb-8">Slack triage powered by LangGraph + Arcade</p>
+    <div class="flex flex-col items-center gap-3 mb-8">
+      <svg width="40" height="41" viewBox="0 0 309 315" fill="currentColor" aria-hidden="true">
+        <path d="M267.074 293.931L266.955 0L231.402 15.9321L45.0407 294.83L9.86791 299.653L0 314.989H98.1906L109.035 299.653L72.3429 293.963L109.535 234.191L171.521 206.478C177.611 203.757 184.212 202.348 190.877 202.348H221.339L221.306 212.98V213.024L221.089 293.974L191.843 298.266L180.705 315H296.993L308.25 298.212M171.293 187.977L125.145 209.176L221.86 60L221.881 86.3042L221.382 158.996L221.339 183.685L190.063 183.652C183.202 183.652 177.514 185.116 171.293 187.977Z" />
+      </svg>
+      <span class="text-xl font-semibold tracking-tight">Arcade Agent</span>
+    </div>
 
-    <form id="auth-form" class="space-y-4">
-      <input
-        type="email"
-        id="email"
-        placeholder="Email"
-        required
-        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900"
-      />
-      <input
-        type="password"
-        id="password"
-        placeholder="Password"
-        required
-        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900"
-      />
+    <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 shadow-sm">
+      <h1 class="text-lg font-semibold mb-1" id="form-title">Sign in</h1>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-5" id="form-subtitle">Welcome back to Arcade Agent</p>
 
-      <p id="error-msg" class="text-sm text-red-600 hidden"></p>
+      <form id="auth-form" class="space-y-4">
+        <input
+          type="email"
+          id="email"
+          placeholder="you@example.com"
+          required
+          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
+        />
+        <input
+          type="password"
+          id="password"
+          placeholder="Your password"
+          required
+          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
+        />
 
-      <button
-        type="submit"
-        id="submit-btn"
-        class="w-full py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 disabled:bg-gray-400 transition-colors"
-      >
-        Login
-      </button>
-    </form>
+        <p id="error-msg" class="text-sm text-red-600 dark:text-red-400 hidden"></p>
 
-    <p class="text-sm text-center mt-4 text-gray-500">
-      <span id="toggle-text">No account yet?</span>
-      <button id="toggle-mode" class="underline text-gray-900">Register</button>
-    </p>
+        <button
+          type="submit"
+          id="submit-btn"
+          class="w-full py-2 bg-red-500 text-white rounded-md hover:bg-red-600 disabled:bg-gray-400 transition-colors"
+        >
+          Sign in
+        </button>
+      </form>
+
+      <p class="text-sm text-center mt-4 text-gray-500 dark:text-gray-400">
+        <span id="toggle-text">No account yet?</span>
+        <button id="toggle-mode" class="underline text-gray-900 dark:text-gray-100 ml-1">Create account</button>
+      </p>
+    </div>
   </div>
 </div>
 {% endblock %} {% block scripts %}
@@ -44,13 +53,17 @@
   const submitBtn = document.getElementById("submit-btn");
   const toggleBtn = document.getElementById("toggle-mode");
   const toggleText = document.getElementById("toggle-text");
+  const formTitle = document.getElementById("form-title");
+  const formSubtitle = document.getElementById("form-subtitle");
   const errorMsg = document.getElementById("error-msg");
 
   toggleBtn.addEventListener("click", () => {
     isRegister = !isRegister;
-    submitBtn.textContent = isRegister ? "Register" : "Login";
+    formTitle.textContent = isRegister ? "Create account" : "Sign in";
+    formSubtitle.textContent = isRegister ? "Get started with Arcade Agent" : "Welcome back to Arcade Agent";
+    submitBtn.textContent = isRegister ? "Create account" : "Sign in";
     toggleText.textContent = isRegister ? "Already have an account?" : "No account yet?";
-    toggleBtn.textContent = isRegister ? "Login" : "Register";
+    toggleBtn.textContent = isRegister ? "Sign in" : "Create account";
     errorMsg.classList.add("hidden");
   });
 
@@ -58,7 +71,7 @@
     e.preventDefault();
     errorMsg.classList.add("hidden");
     submitBtn.disabled = true;
-    submitBtn.textContent = "...";
+    submitBtn.textContent = "Loading...";
 
     const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
     try {
@@ -82,7 +95,7 @@
       errorMsg.classList.remove("hidden");
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = isRegister ? "Register" : "Login";
+      submitBtn.textContent = isRegister ? "Create account" : "Sign in";
     }
   });
 </script>
