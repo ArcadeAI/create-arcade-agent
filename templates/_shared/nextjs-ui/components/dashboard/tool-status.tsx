@@ -39,6 +39,9 @@ function StatusDot({ status }: { status: SourceStatus }) {
   if (status === "auth_required") {
     return <span className="size-2.5 rounded-full bg-amber-500" />;
   }
+  if (status === "skipped") {
+    return <span className="size-2.5 rounded-full bg-gray-300 opacity-50" />;
+  }
   return <span className="size-2.5 rounded-full bg-gray-300" />;
 }
 
@@ -61,12 +64,13 @@ export function ToolStatusBar({ statuses, authUrls }: ToolStatusBarProps) {
         const pill = (
           <span
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 transition-colors",
+              "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-foreground transition-colors",
               status === "connected" &&
                 "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950",
               status === "auth_required" &&
                 "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950",
-              (status === "checking" || status === "unknown") && "border-border bg-muted"
+              (status === "checking" || status === "unknown") && "border-border bg-muted",
+              status === "skipped" && "border-border bg-muted opacity-50"
             )}
           >
             <Icon className="size-3" />
