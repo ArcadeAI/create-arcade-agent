@@ -8,7 +8,6 @@ import { Header } from "@/components/layout/header";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { StatsBar } from "@/components/dashboard/stats-bar";
 import { TaskList } from "@/components/dashboard/task-list";
-import { ToolStatusBar } from "@/components/dashboard/tool-status";
 import { SourceAuthGate } from "@/components/dashboard/source-auth-gate";
 import { AuthPrompt } from "@/components/chat/auth-prompt";
 import {
@@ -312,13 +311,6 @@ function DashboardContent() {
                   bySource: event.data.bySource,
                 });
                 break;
-              case "sources":
-                setSourceStatuses(
-                  Object.fromEntries(
-                    event.sources.map((s: string) => [s, "checking" as SourceStatus])
-                  )
-                );
-                break;
               case "auth_required":
                 setAuthUrls((prev) =>
                   prev.some((a) => a.url === event.authUrl)
@@ -476,10 +468,6 @@ function DashboardContent() {
             <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
               {error}
             </div>
-          )}
-
-          {Object.keys(sourceStatuses).length > 0 && (
-            <ToolStatusBar statuses={sourceStatuses} authUrls={authUrls} />
           )}
 
           {/* Mid-run auth prompts (fallback for tools not covered by pre-flight) */}
