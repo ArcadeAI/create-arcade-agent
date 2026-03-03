@@ -6,7 +6,8 @@ The generated agent is a daily planning and triage assistant that connects to Sl
 
 ## Prerequisites
 
-- **Node.js >= 18** -- required for all templates (used to run the CLI itself and the Next.js + TypeScript templates)
+- **Node.js >= 18** -- required for the CLI itself and the `langchain` template
+- **Bun >= 1.x** -- required for the `ai-sdk` and `mastra` templates (install from [bun.sh](https://bun.sh))
 - **Python >= 3.10** -- required only for the `langchain` template
 - **An Arcade account** -- sign up at [arcade.dev](https://arcade.dev) and create an MCP Gateway at [app.arcade.dev/mcp-gateways](https://app.arcade.dev/mcp-gateways)
 - **An LLM API key** -- either an [OpenAI API key](https://platform.openai.com) or an [Anthropic API key](https://console.anthropic.com) (if both are set, Anthropic takes priority)
@@ -66,12 +67,15 @@ npx create-arcade-agent my-agent --template langchain
 ```
 my-agent/
   app/                  # Next.js App Router pages and API routes
+    dashboard/          # Daily triage dashboard (main UI)
     api/
-      chat/             # Streaming chat endpoint
+      chat/             # Streaming chat endpoint (backend only)
       auth/             # Login, register, session management
       auth/arcade/      # Arcade OAuth connect, callback, verify
       plan/             # Daily plan generation endpoint
-  components/           # React UI components (chat, dashboard)
+      sources/          # Tool auth status check
+      health/           # Startup env-var validation
+  components/           # React UI components (dashboard, chat panel)
   lib/
     agent.ts            # Model selection (Claude / GPT)
     arcade.ts           # MCP client + OAuth provider
@@ -126,7 +130,7 @@ cp .env.example .env
 | `ARCADE_CUSTOM_VERIFIER` | Set to `true` to enable per-user token binding (COAT protection)                                              |
 | `ARCADE_API_KEY`         | Required when custom verifier is enabled; get from [app.arcade.dev/settings](https://app.arcade.dev/settings) |
 | `DATABASE_URL`           | SQLite file path (defaults to `local.db`)                                                                     |
-| `PORT`                   | Server port (defaults to `8765` for all templates)                                                              |
+| `PORT`                   | Server port (defaults to `8765` for all templates)                                                            |
 
 ### Arcade Gateway setup
 
@@ -148,7 +152,7 @@ For best agent performance, create a dedicated gateway for this starter and keep
 ```bash
 cd my-agent
 cp .env.example .env   # fill in your env vars
-npm run dev
+bun run dev
 ```
 
 ### Python template
@@ -278,8 +282,8 @@ node dist/index.js test-project --template ai-sdk
 # Verify the generated project
 cd test-project
 cp .env.example .env
-npm run build
-npm run lint
+bun run build
+bun run lint
 ```
 
 ## License

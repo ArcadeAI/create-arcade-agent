@@ -6,7 +6,7 @@
 | `OPENAI_API_KEY` | One of these | OpenAI API key |
 | `ANTHROPIC_API_KEY` | One of these | Anthropic API key |
 {{#if (eq language "typescript")}}
-| `NEXT_PUBLIC_APP_URL` | No | App URL for OAuth callback (default: `http://localhost:{{port}}`) |
+| `NEXT_PUBLIC_APP_URL` | No | App URL for OAuth redirects (default: `http://localhost:{{port}}`). When using `ARCADE_CUSTOM_VERIFIER`, set this to your public URL (e.g. ngrok URL) and access the app from that URL — session cookies are scoped to this host. |
 | `DATABASE_URL` | No | SQLite file path (default: `local.db`) |
 {{else}}
 | `APP_URL` | No | App URL for verifier callback (default: `http://localhost:{{port}}`) |

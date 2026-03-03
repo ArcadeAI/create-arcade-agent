@@ -153,16 +153,42 @@ function sanitizeUrl(url) {
 
 // --- Source config ---
 const SOURCE_CONFIG = {
-  slack: { label: "Slack", color: "bg-purple-100 text-purple-700 border-purple-200", icon: "💬" },
+  slack: {
+    label: "Slack",
+    color:
+      "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800",
+    icon: "💬",
+  },
   google_calendar: {
     label: "Calendar",
-    color: "bg-blue-100 text-blue-700 border-blue-200",
+    color:
+      "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
     icon: "📅",
   },
-  linear: { label: "Linear", color: "bg-indigo-100 text-indigo-700 border-indigo-200", icon: "✅" },
-  github: { label: "GitHub", color: "bg-gray-100 text-gray-700 border-gray-300", icon: "🔀" },
-  gmail: { label: "Gmail", color: "bg-red-100 text-red-700 border-red-200", icon: "📧" },
-  other: { label: "Other", color: "bg-gray-100 text-gray-600 border-gray-200", icon: "🌐" },
+  linear: {
+    label: "Linear",
+    color:
+      "bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800",
+    icon: "✅",
+  },
+  github: {
+    label: "GitHub",
+    color:
+      "bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600",
+    icon: "🔀",
+  },
+  gmail: {
+    label: "Gmail",
+    color:
+      "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800",
+    icon: "📧",
+  },
+  other: {
+    label: "Other",
+    color:
+      "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700",
+    icon: "🌐",
+  },
 };
 
 // --- Tool status bar ---
@@ -198,10 +224,10 @@ function renderToolStatus() {
                 : "bg-gray-300";
         const borderClass =
           status === "connected"
-            ? "border-green-200 bg-green-50"
+            ? "border-green-200 bg-green-50 dark:bg-green-950/40 dark:border-green-800"
             : status === "auth_required"
-              ? "border-amber-200 bg-amber-50"
-              : "border-gray-200 bg-gray-50";
+              ? "border-amber-200 bg-amber-50 dark:bg-amber-950/40 dark:border-amber-800"
+              : "border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-700";
         const authUrl = status === "auth_required" ? authUrlsBySource[source] : null;
         const inner =
           `<span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 ${borderClass}">` +
@@ -218,10 +244,10 @@ function renderToolStatus() {
 
 // --- Priority / Category badges ---
 const PRIORITY_COLORS = {
-  P0: "bg-red-100 text-red-700 border-red-200",
-  P1: "bg-amber-100 text-amber-700 border-amber-200",
-  P2: "bg-blue-100 text-blue-700 border-blue-200",
-  FYI: "bg-gray-100 text-gray-600 border-gray-200",
+  P0: "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800",
+  P1: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800",
+  P2: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
+  FYI: "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700",
 };
 
 const CATEGORY_LABELS = {
@@ -260,14 +286,14 @@ function createTaskCard(task, index) {
       <div class="flex items-center gap-2 flex-wrap">
         <span class="px-2 py-0.5 rounded-full text-xs font-medium border ${source.color}">${source.icon} ${escapeHtml(source.label)}</span>
         <span class="px-2 py-0.5 rounded-full text-xs font-medium border ${priorityClass}">${escapeHtml(task.priority)}</span>
-        <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">${escapeHtml(categoryLabel)}</span>
-        ${task.effort ? `<span class="text-xs text-gray-400">${escapeHtml(task.effort)}</span>` : ""}
+        <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">${escapeHtml(categoryLabel)}</span>
+        ${task.effort ? `<span class="text-xs text-gray-500 dark:text-gray-400">${escapeHtml(task.effort)}</span>` : ""}
         ${timeHtml}
       </div>
     </div>
     ${summaryHtml}
-    ${subtitle ? `<p class="text-xs text-gray-400 mb-2">${escapeHtml(subtitle)}</p>` : ""}
-    ${task.suggestedNextStep ? `<p class="next-step-hint text-xs text-gray-500 bg-gray-50 rounded px-2 py-1"><span class="font-medium">Next:</span> ${escapeHtml(task.suggestedNextStep)}</p>` : ""}
+    ${subtitle ? `<p class="text-xs text-gray-500 dark:text-gray-400 mb-2">${escapeHtml(subtitle)}</p>` : ""}
+    ${task.suggestedNextStep ? `<p class="next-step-hint text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded px-2 py-1"><span class="font-medium">Next:</span> ${escapeHtml(task.suggestedNextStep)}</p>` : ""}
   `;
 
   return card;
@@ -288,8 +314,8 @@ function renderStats(data) {
   const totalCard = document.createElement("div");
   totalCard.className = "stats-card bg-white rounded-xl border border-gray-200 p-4";
   totalCard.innerHTML = `
-    <div class="flex items-center gap-2 text-gray-500 text-sm mb-1">📊 Total</div>
-    <div class="text-2xl font-semibold">${data.total || 0}</div>
+    <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-1">📊 Total</div>
+    <div class="text-2xl font-semibold text-gray-900 dark:text-gray-100">${data.total || 0}</div>
   `;
   container.appendChild(totalCard);
 
@@ -301,8 +327,8 @@ function renderStats(data) {
     const card = document.createElement("div");
     card.className = "stats-card bg-white rounded-xl border border-gray-200 p-4";
     card.innerHTML = `
-      <div class="flex items-center gap-2 text-gray-500 text-sm mb-1">${config.icon} ${escapeHtml(config.label)}</div>
-      <div class="text-2xl font-semibold">${count}</div>
+      <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-1">${config.icon} ${escapeHtml(config.label)}</div>
+      <div class="text-2xl font-semibold text-gray-900 dark:text-gray-100">${count}</div>
     `;
     container.appendChild(card);
   }
@@ -329,14 +355,15 @@ function addAuthPrompt(url, toolName) {
 
   const label = toolName || "Service";
   const card = document.createElement("div");
-  card.className = "auth-prompt-card bg-amber-50 border border-amber-200 rounded-lg p-4";
+  card.className =
+    "auth-prompt-card bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4";
   card.dataset.url = url;
   card.innerHTML = `
     <div class="flex items-center gap-2 mb-2">
-      <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
       <h3 class="font-semibold text-sm">${escapeHtml(label)} authorization required</h3>
     </div>
-    <p class="text-gray-500 text-xs mb-3">${escapeHtml(label)} needs permission to continue.</p>
+    <p class="text-gray-500 dark:text-gray-400 text-xs mb-3">${escapeHtml(label)} needs permission to continue.</p>
     <div class="flex gap-2">
       <a href="${sanitizeUrl(url)}" target="_blank" rel="noopener noreferrer"
          class="px-3 py-1.5 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 transition-colors">Authorize</a>

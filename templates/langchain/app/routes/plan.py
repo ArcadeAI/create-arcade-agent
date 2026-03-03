@@ -27,18 +27,18 @@ router = APIRouter(tags=["plan"])
 def _map_tool_to_source(tool_name: str | None) -> str:
     if not tool_name:
         return "other"
-    low = tool_name.lower()
-    if re.match(r"^slack[._]", low):
+    service = tool_name.split(".")[0].lower()
+    if service == "slack":
         return "slack"
-    if re.match(r"^(google|calendar)[._]", low):
+    if service in ("google", "googlecalendar", "calendar"):
         return "google_calendar"
-    if re.match(r"^linear[._]", low):
+    if service == "linear":
         return "linear"
-    if re.match(r"^git(hub)?[._]", low):
+    if service in ("git", "github"):
         return "github"
-    if re.match(r"^gmail[._]", low):
+    if service == "gmail":
         return "gmail"
-    return "other"
+    return service or "other"
 
 
 def _build_plan_prompt():
@@ -80,11 +80,11 @@ def _build_plan_prompt():
         "- confidence: 0.0 to 1.0\n\n"
         "SOURCE MAPPING:\n"
         '- Tools starting with "Slack" -> source: "slack"\n'
-        '- Tools starting with "Google" or "Calendar" -> source: "google_calendar"\n'
+        '- Tools starting with "Google", "GoogleCalendar", or "Calendar" -> source: "google_calendar"\n'
         '- Tools starting with "Linear" -> source: "linear"\n'
         '- Tools starting with "Git" or "GitHub" -> source: "github"\n'
         '- Tools starting with "Gmail" -> source: "gmail"\n'
-        '- Anything else -> source: "other"\n\n'
+        '- Anything else -> source: lowercase service name (e.g. "notion", "dropbox")\n\n'
         "OUTPUT: For EACH item, output EXACTLY this on its own line:\n\n"
         "```json:task\n"
         "{\n"

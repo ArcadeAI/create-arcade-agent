@@ -1,50 +1,58 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import type { InboxItem, ItemSource } from "@/types/inbox";
+import type { ComponentType, SVGProps } from "react";
+import { Card, CardContent, Badge } from "@arcadeai/design-system";
 import {
-  MessageSquare,
-  Calendar,
-  GitPullRequest,
-  CheckSquare,
-  Mail,
-  Globe,
-  type LucideIcon,
-} from "lucide-react";
+  Slack,
+  Github,
+  GoogleCalendar,
+  Linear,
+  Gmail,
+} from "@arcadeai/design-system/components/ui/atoms/icons";
+import { Globe } from "lucide-react";
+import type { InboxItem, ItemSource } from "@/types/inbox";
 
-const sourceConfig: Record<ItemSource, { icon: LucideIcon; label: string; className: string }> = {
-  slack: {
-    icon: MessageSquare,
-    label: "Slack",
-    className: "bg-purple-100 text-purple-700 border-purple-200",
-  },
-  google_calendar: {
-    icon: Calendar,
-    label: "Calendar",
-    className: "bg-blue-100 text-blue-700 border-blue-200",
-  },
-  linear: {
-    icon: CheckSquare,
-    label: "Linear",
-    className: "bg-indigo-100 text-indigo-700 border-indigo-200",
-  },
-  github: {
-    icon: GitPullRequest,
-    label: "GitHub",
-    className: "bg-gray-100 text-gray-700 border-gray-300",
-  },
-  gmail: {
-    icon: Mail,
-    label: "Gmail",
-    className: "bg-red-100 text-red-700 border-red-200",
-  },
-  other: {
-    icon: Globe,
-    label: "Other",
-    className: "bg-gray-100 text-gray-600 border-gray-200",
-  },
-};
+type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
+
+const sourceConfig: Record<ItemSource, { icon: IconComponent; label: string; className: string }> =
+  {
+    slack: {
+      icon: Slack,
+      label: "Slack",
+      className:
+        "bg-purple-100 border-purple-200 text-purple-900 dark:bg-purple-950 dark:border-purple-900 dark:text-purple-200",
+    },
+    google_calendar: {
+      icon: GoogleCalendar,
+      label: "Calendar",
+      className:
+        "bg-blue-100 border-blue-200 text-blue-900 dark:bg-blue-950 dark:border-blue-900 dark:text-blue-200",
+    },
+    linear: {
+      icon: Linear,
+      label: "Linear",
+      className:
+        "bg-indigo-100 border-indigo-200 text-indigo-900 dark:bg-indigo-950 dark:border-indigo-900 dark:text-indigo-200",
+    },
+    github: {
+      icon: Github,
+      label: "GitHub",
+      className:
+        "bg-gray-100 border-gray-300 text-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200",
+    },
+    gmail: {
+      icon: Gmail,
+      label: "Gmail",
+      className:
+        "bg-red-100 border-red-200 text-red-900 dark:bg-red-950 dark:border-red-900 dark:text-red-200",
+    },
+    other: {
+      icon: Globe,
+      label: "Other",
+      className:
+        "bg-gray-100 border-gray-200 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300",
+    },
+  };
 
 const priorityConfig: Record<
   InboxItem["priority"],
@@ -54,7 +62,8 @@ const priorityConfig: Record<
   P1: {
     label: "P1",
     variant: "secondary",
-    className: "bg-amber-100 text-amber-800 hover:bg-amber-100",
+    className:
+      "bg-amber-100 text-amber-800 hover:bg-amber-100 dark:bg-amber-950 dark:text-amber-200 dark:hover:bg-amber-950",
   },
   P2: { label: "P2", variant: "secondary" },
   FYI: { label: "FYI", variant: "outline" },
@@ -97,7 +106,9 @@ export function TaskCard({ item }: TaskCardProps) {
           </Badge>
           <Badge variant="outline">{categoryLabels[item.category] || item.category}</Badge>
           {formattedTime && (
-            <span className="text-xs font-medium text-blue-600">{formattedTime}</span>
+            <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+              {formattedTime}
+            </span>
           )}
           <span className="ml-auto text-xs text-muted-foreground">{item.effort}</span>
         </div>

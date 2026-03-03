@@ -1,7 +1,7 @@
 "use client";
 
 import { Inbox, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@arcadeai/design-system";
 
 interface EmptyStateProps {
   onPlan: () => void;
