@@ -10,9 +10,9 @@ import {
   SheetHeader,
   SheetTitle,
   SheetDescription,
-} from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+  Input,
+  Button,
+} from "@arcadeai/design-system";
 import { Message } from "@/components/chat/message";
 
 interface ChatPanelProps {

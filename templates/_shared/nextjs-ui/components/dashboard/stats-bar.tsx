@@ -8,7 +8,7 @@ import {
   LayoutDashboard,
   type LucideIcon,
 } from "lucide-react";
-import { Card, CardAction, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardHeader, CardTitle } from "@arcadeai/design-system";
 import { cn } from "@/lib/utils";
 
 interface StatsBarProps {

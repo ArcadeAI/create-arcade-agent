@@ -10,9 +10,7 @@ import { TaskList } from "@/components/dashboard/task-list";
 import { ToolStatusBar } from "@/components/dashboard/tool-status";
 import { ChatPanel } from "@/components/chat/chat-panel";
 import { AuthPrompt } from "@/components/chat/auth-prompt";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@arcadeai/design-system";
 import { Loader2, ShieldAlert, AlertTriangle, RotateCcw } from "lucide-react";
 
 // --- Arcade connection state machine ---

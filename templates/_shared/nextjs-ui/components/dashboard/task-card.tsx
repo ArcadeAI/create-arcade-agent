@@ -1,7 +1,6 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, Badge } from "@arcadeai/design-system";
 import type { InboxItem, ItemSource } from "@/types/inbox";
 import {
   MessageSquare,

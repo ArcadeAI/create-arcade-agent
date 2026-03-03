@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { LogOut, MessageSquare, Moon, Sun } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@arcadeai/design-system";
 import { cn } from "@/lib/utils";
 
 interface HeaderProps {
