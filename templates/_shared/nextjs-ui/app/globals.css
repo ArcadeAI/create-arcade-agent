@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "@arcadeai/design-system/index.css";
+@source "../node_modules/@arcadeai/design-system";
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
