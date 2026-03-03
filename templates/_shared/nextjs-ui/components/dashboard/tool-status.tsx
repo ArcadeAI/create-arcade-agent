@@ -1,28 +1,28 @@
+import type { ComponentType, SVGProps } from "react";
+import { Globe, Check, Loader2 } from "lucide-react";
 import {
-  MessageSquare,
-  Calendar,
-  GitPullRequest,
-  CheckSquare,
-  Mail,
-  Globe,
-  Check,
-  Loader2,
-  type LucideIcon,
-} from "lucide-react";
+  Slack,
+  Github,
+  GoogleCalendar,
+  Linear,
+  Gmail,
+} from "@arcadeai/design-system/components/ui/atoms/icons";
 import { cn } from "@/lib/utils";
 import type { SourceStatus } from "@/types/inbox";
+
+type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
 
 interface ToolStatusBarProps {
   statuses: Record<string, SourceStatus>;
   authUrls: { url: string; toolName?: string }[];
 }
 
-const sourceConfig: Record<string, { icon: LucideIcon; label: string }> = {
-  slack: { icon: MessageSquare, label: "Slack" },
-  google_calendar: { icon: Calendar, label: "Calendar" },
-  linear: { icon: CheckSquare, label: "Linear" },
-  github: { icon: GitPullRequest, label: "GitHub" },
-  gmail: { icon: Mail, label: "Gmail" },
+const sourceConfig: Record<string, { icon: IconComponent; label: string }> = {
+  slack: { icon: Slack, label: "Slack" },
+  google_calendar: { icon: GoogleCalendar, label: "Calendar" },
+  linear: { icon: Linear, label: "Linear" },
+  github: { icon: Github, label: "GitHub" },
+  gmail: { icon: Gmail, label: "Gmail" },
   other: { icon: Globe, label: "Other" },
 };
 
