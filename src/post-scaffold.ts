@@ -1,7 +1,18 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
+import { copyFileSync, existsSync } from "fs";
+import { resolve } from "path";
 import { runAsync } from "./utils.js";
 import type { TemplateMeta } from "./types.js";
+
+
+export function copyEnvIfMissing(targetDir: string) {
+  const example = resolve(targetDir, ".env.example");
+  const env = resolve(targetDir, ".env");
+  if (existsSync(example) && !existsSync(env)) {
+    copyFileSync(example, env);
+  }
+}
 
 export async function installDeps(targetDir: string, meta: TemplateMeta) {
   const s = p.spinner();
@@ -46,9 +57,9 @@ export function printSuccess(projectName: string, meta: TemplateMeta) {
   const lines = [`cd ${projectName}`];
 
   if (meta.language === "python") {
-    lines.push(`${copyCmd}  ${pc.dim("# then fill in your env vars")}`, activateCmd);
+    lines.push(`${pc.dim("# fill in .env with your API keys")}`, activateCmd);
     if (meta.migrate.length > 0) {
-      lines.push(`alembic upgrade head  ${pc.dim("# set up database")}`);
+      lines.push(`alembic upgrade head  ${pc.dim("# if database setup failed above")}`);
     }
     lines.push(meta.devCommand);
   } else {
