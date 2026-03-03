@@ -7,7 +7,9 @@ function mapToolToSource(toolName?: string): string {
   if (/^linear[._]/i.test(toolName)) return "linear";
   if (/^git(hub)?[._]/i.test(toolName)) return "github";
   if (/^gmail[._]/i.test(toolName)) return "gmail";
-  return "other";
+  // Extract namespace from "Namespace.ToolName" pattern
+  const namespace = toolName.split(/[._]/)[0];
+  return namespace ? namespace.toLowerCase() : "other";
 }
 
 function extractAuthUrlFromToolOutput(output: unknown): string | null {
