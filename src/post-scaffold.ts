@@ -57,9 +57,6 @@ export function printSuccess(projectName: string, meta: TemplateMeta) {
 
   if (meta.language === "python") {
     lines.push(`${pc.dim("# fill in .env with your API keys")}`, activateCmd);
-    if (meta.migrate.length > 0) {
-      lines.push(`alembic upgrade head  ${pc.dim("# if database setup failed above")}`);
-    }
     lines.push(meta.devCommand);
   } else {
     lines.push(`${pc.dim("# fill in .env with your API keys")}`, meta.devCommand);
