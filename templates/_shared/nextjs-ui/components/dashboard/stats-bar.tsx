@@ -7,7 +7,7 @@ import {
   Linear,
   Gmail,
 } from "@arcadeai/design-system/components/ui/atoms/icons";
-import { Card, CardAction, CardHeader, CardTitle } from "@arcadeai/design-system";
+import { Card, CardHeader, CardTitle } from "@arcadeai/design-system";
 import { cn } from "@/lib/utils";
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
@@ -17,6 +17,8 @@ interface StatsBarProps {
     total: number;
     bySource: Record<string, number>;
   };
+  activeSource: string | null;
+  onSourceClick: (source: string | null) => void;
 }
 
 const sourceIcons: Record<string, { icon: IconComponent; label: string }> = {
@@ -37,40 +39,63 @@ const gridColsClass: Record<number, string> = {
   6: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6",
 };
 
-export function StatsBar({ stats }: StatsBarProps) {
+function StatCard({
+  label,
+  count,
+  icon: Icon,
+  active,
+  onClick,
+}: {
+  label: string;
+  count: number;
+  icon: IconComponent;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <Card
+      className={cn(
+        "cursor-pointer transition-all hover:shadow-md",
+        active && "ring-2 ring-primary"
+      )}
+      onClick={onClick}
+    >
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
+          <Icon className="size-5 text-muted-foreground" />
+        </div>
+        <p className={cn("text-3xl font-bold", count === 0 && "text-muted-foreground")}>{count}</p>
+      </CardHeader>
+    </Card>
+  );
+}
+
+export function StatsBar({ stats, activeSource, onSourceClick }: StatsBarProps) {
   const activeSources = Object.entries(stats.bySource).filter(([, count]) => count > 0);
-  const cardCount = 1 + activeSources.length; // "Total" + per-source
+  const cardCount = 1 + activeSources.length;
   const gridClass = gridColsClass[Math.min(cardCount, 6)] || gridColsClass[6];
 
   return (
     <div className={cn("grid gap-4", gridClass)}>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
-          <CardAction>
-            <LayoutDashboard className="size-5 text-muted-foreground" />
-          </CardAction>
-          <p className={cn("text-3xl font-bold", stats.total === 0 && "text-muted-foreground")}>
-            {stats.total}
-          </p>
-        </CardHeader>
-      </Card>
-
+      <StatCard
+        label="Total"
+        count={stats.total}
+        icon={LayoutDashboard}
+        active={activeSource === null}
+        onClick={() => onSourceClick(null)}
+      />
       {activeSources.map(([source, count]) => {
         const config = sourceIcons[source] || sourceIcons.other;
-        const Icon = config.icon;
         return (
-          <Card key={source}>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {config.label}
-              </CardTitle>
-              <CardAction>
-                <Icon className="size-5" />
-              </CardAction>
-              <p className="text-3xl font-bold">{count}</p>
-            </CardHeader>
-          </Card>
+          <StatCard
+            key={source}
+            label={config.label}
+            count={count}
+            icon={config.icon}
+            active={activeSource === source}
+            onClick={() => onSourceClick(activeSource === source ? null : source)}
+          />
         );
       })}
     </div>

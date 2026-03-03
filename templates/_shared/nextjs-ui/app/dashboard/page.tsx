@@ -8,7 +8,6 @@ import { EmptyState } from "@/components/dashboard/empty-state";
 import { StatsBar } from "@/components/dashboard/stats-bar";
 import { TaskList } from "@/components/dashboard/task-list";
 import { ToolStatusBar } from "@/components/dashboard/tool-status";
-import { ChatPanel } from "@/components/chat/chat-panel";
 import { AuthPrompt } from "@/components/chat/auth-prompt";
 import {
   Skeleton,
@@ -186,7 +185,7 @@ function DashboardContent() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [chatOpen, setChatOpen] = useState(false);
+  const [activeSource, setActiveSource] = useState<string | null>(null);
   const [authUrls, setAuthUrls] = useState<{ url: string; toolName?: string }[]>([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -337,6 +336,8 @@ function DashboardContent() {
   };
 
   const hasItems = items.length > 0;
+  const filteredItems =
+    activeSource !== null ? items.filter((i) => i.source === activeSource) : items;
   const showEmpty = !hasItems && !loading && !planRan && authUrls.length === 0;
   const showNoResults = !hasItems && !loading && planRan && authUrls.length === 0 && !error;
 
@@ -344,7 +345,7 @@ function DashboardContent() {
   if (arcadeStatus.state !== "connected") {
     return (
       <div className="flex min-h-screen flex-col bg-background">
-        <Header onChatToggle={() => {}} chatOpen={false} onLogout={handleLogout} />
+        <Header onLogout={handleLogout} />
         <ConfigWarningBanner warnings={configWarnings} />
         <main className="flex flex-1 items-center justify-center px-4">
           {arcadeStatus.state === "checking" && (
@@ -403,11 +404,7 @@ function DashboardContent() {
   // --- Connected: show dashboard ---
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <Header
-        onChatToggle={() => setChatOpen((o) => !o)}
-        chatOpen={chatOpen}
-        onLogout={handleLogout}
-      />
+      <Header onLogout={handleLogout} />
       <ConfigWarningBanner warnings={configWarnings} />
 
       <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-6 py-8">
@@ -497,13 +494,11 @@ function DashboardContent() {
                 )}
               </Button>
             </div>
-            <StatsBar stats={stats} />
-            <TaskList items={items} />
+            <StatsBar stats={stats} activeSource={activeSource} onSourceClick={setActiveSource} />
+            <TaskList items={filteredItems} />
           </>
         )}
       </main>
-
-      <ChatPanel open={chatOpen} onClose={() => setChatOpen(false)} />
     </div>
   );
 }
