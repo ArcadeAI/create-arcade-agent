@@ -13,6 +13,42 @@ import { AuthPrompt } from "@/components/chat/auth-prompt";
 import { Skeleton, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@arcadeai/design-system";
 import { Loader2, ShieldAlert, AlertTriangle, RotateCcw } from "lucide-react";
 
+// --- Config health warnings ---
+
+type ConfigWarning = {
+  id: string;
+  title: string;
+  message: string;
+  docsUrl: string;
+};
+
+function ConfigWarningBanner({ warnings }: { warnings: ConfigWarning[] }) {
+  if (warnings.length === 0) return null;
+  return (
+    <div className="border-b border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30">
+      <div className="mx-auto max-w-4xl space-y-2 px-6 py-3">
+        {warnings.map((w) => (
+          <div key={w.id} className="flex items-start gap-3 text-sm">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <div>
+              <span className="font-semibold text-amber-900 dark:text-amber-200">{w.title}:</span>{" "}
+              <span className="text-amber-800 dark:text-amber-300">{w.message}</span>{" "}
+              <a
+                href={w.docsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium underline text-amber-900 hover:text-amber-700 dark:text-amber-200"
+              >
+                Docs →
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // --- Arcade connection state machine ---
 
 type ArcadeStatus =
@@ -148,6 +184,14 @@ function DashboardContent() {
   const abortRef = useRef<AbortController | null>(null);
   const [planRan, setPlanRan] = useState(false);
   const [sourceStatuses, setSourceStatuses] = useState<Record<string, SourceStatus>>({});
+  const [configWarnings, setConfigWarnings] = useState<ConfigWarning[]>([]);
+
+  useEffect(() => {
+    fetch("/api/health")
+      .then((r) => r.json())
+      .then((data) => setConfigWarnings(data.warnings ?? []))
+      .catch(() => {});
+  }, []);
 
   // --- Check source auth status via WhoAmI tools ---
   const checkSources = useCallback(async () => {
@@ -293,6 +337,7 @@ function DashboardContent() {
     return (
       <div className="flex min-h-screen flex-col bg-background">
         <Header onChatToggle={() => {}} chatOpen={false} onLogout={handleLogout} />
+        <ConfigWarningBanner warnings={configWarnings} />
         <main className="flex flex-1 items-center justify-center px-4">
           {arcadeStatus.state === "checking" && (
             <div className="text-center">
@@ -355,6 +400,7 @@ function DashboardContent() {
         chatOpen={chatOpen}
         onLogout={handleLogout}
       />
+      <ConfigWarningBanner warnings={configWarnings} />
 
       <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-6 py-8">
         {error && (
