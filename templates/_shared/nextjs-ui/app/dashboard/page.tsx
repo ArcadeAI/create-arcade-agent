@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/dashboard/empty-state";
 import { StatsBar } from "@/components/dashboard/stats-bar";
 import { TaskList } from "@/components/dashboard/task-list";
 import { ToolStatusBar } from "@/components/dashboard/tool-status";
+import { SourceAuthGate } from "@/components/dashboard/source-auth-gate";
 import { AuthPrompt } from "@/components/chat/auth-prompt";
 import {
   Skeleton,
@@ -171,6 +172,8 @@ function DashboardContent() {
         gateway_missing:
           "ARCADE_GATEWAY_URL is missing. Create one at https://app.arcade.dev/mcp-gateways, add only the minimum required tools from Slack, Google Calendar, Linear, GitHub, and Gmail, then set ARCADE_GATEWAY_URL in .env.",
         verify_failed: "User verification failed. Please try again.",
+        verify_session_required:
+          "Verification failed: no session found. If using ngrok, log in through the ngrok URL (not localhost) so the session cookie matches the verifier host.",
       };
       setError(messages[urlError] || `Authentication error: ${urlError}`);
       window.history.replaceState({}, "", window.location.pathname);
@@ -193,6 +196,14 @@ function DashboardContent() {
   const [sourceStatuses, setSourceStatuses] = useState<Record<string, SourceStatus>>({});
   const [configWarnings, setConfigWarnings] = useState<ConfigWarning[]>([]);
 
+  // --- Pre-flight source auth gate ---
+  type SourceCheckPhase = "idle" | "checking" | "done";
+  const [sourceCheckPhase, setSourceCheckPhase] = useState<SourceCheckPhase>("idle");
+  const [authGateActive, setAuthGateActive] = useState(false);
+  const [skippedSources, setSkippedSources] = useState<Set<string>>(new Set());
+  const sourceCheckInFlight = useRef(false);
+  const initialCheckDone = useRef(false);
+
   useEffect(() => {
     fetch("/api/health")
       .then((r) => r.json())
@@ -202,9 +213,17 @@ function DashboardContent() {
 
   // --- Check source auth status via WhoAmI tools ---
   const checkSources = useCallback(async () => {
+    if (sourceCheckInFlight.current) return;
+    sourceCheckInFlight.current = true;
+    const isInitial = !initialCheckDone.current;
+    initialCheckDone.current = true; // mark immediately so re-checks don't re-enter initial path
+    if (isInitial) setSourceCheckPhase("checking");
     try {
       const res = await fetch("/api/sources", { method: "POST" });
-      if (!res.ok) return;
+      if (!res.ok) {
+        if (isInitial) setSourceCheckPhase("done");
+        return;
+      }
       const data = await res.json();
       const statuses: Record<string, SourceStatus> = {};
       const urls: { url: string; toolName?: string }[] = [];
@@ -216,8 +235,15 @@ function DashboardContent() {
       }
       setSourceStatuses(statuses);
       setAuthUrls(urls);
+      if (isInitial) {
+        const hasAuthRequired = Object.values(statuses).some((s) => s === "auth_required");
+        if (hasAuthRequired) setAuthGateActive(true);
+        setSourceCheckPhase("done");
+      }
     } catch {
-      // Silent — sources will still be checked when plan runs
+      if (isInitial) setSourceCheckPhase("done");
+    } finally {
+      sourceCheckInFlight.current = false;
     }
   }, []);
 
@@ -225,6 +251,16 @@ function DashboardContent() {
     if (arcadeStatus.state !== "connected") return;
     checkSources();
   }, [arcadeStatus.state, checkSources]);
+
+  // Re-check sources when user returns from an auth tab (while gate is active)
+  useEffect(() => {
+    if (!authGateActive) return;
+    const onFocus = () => {
+      checkSources();
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [authGateActive, checkSources]);
 
   const handlePlan = useCallback(async () => {
     setLoading(true);
@@ -331,15 +367,17 @@ function DashboardContent() {
 
   const dismissAuthUrl = (url: string) => {
     setAuthUrls((prev) => prev.filter((a) => a.url !== url));
-    // Re-check sources — user may have just authorized
-    checkSources();
+  };
+
+  const skipSource = (source: string) => {
+    setSkippedSources((prev) => new Set([...prev, source]));
   };
 
   const hasItems = items.length > 0;
   const filteredItems =
     activeSource !== null ? items.filter((i) => i.source === activeSource) : items;
-  const showEmpty = !hasItems && !loading && !planRan && authUrls.length === 0;
-  const showNoResults = !hasItems && !loading && planRan && authUrls.length === 0 && !error;
+  const showEmpty = !hasItems && !loading && !planRan;
+  const showNoResults = !hasItems && !loading && planRan && !error;
 
   // --- Arcade connection gate ---
   if (arcadeStatus.state !== "connected") {
@@ -407,98 +445,125 @@ function DashboardContent() {
       <Header onLogout={handleLogout} />
       <ConfigWarningBanner warnings={configWarnings} />
 
-      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-6 py-8">
-        {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
-            {error}
+      {/* Source check loading */}
+      {sourceCheckPhase !== "done" && (
+        <main className="flex flex-1 items-center justify-center px-4">
+          <div className="text-center">
+            <Loader2 className="mx-auto mb-4 size-8 animate-spin text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Checking tool permissions...</p>
           </div>
-        )}
+        </main>
+      )}
 
-        {Object.keys(sourceStatuses).length > 0 && (
-          <ToolStatusBar statuses={sourceStatuses} authUrls={authUrls} />
-        )}
+      {/* Pre-flight auth gate */}
+      {sourceCheckPhase === "done" && authGateActive && (
+        <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center px-6 py-8">
+          <SourceAuthGate
+            sourceStatuses={sourceStatuses}
+            authUrls={authUrls}
+            skippedSources={skippedSources}
+            onSkip={skipSource}
+            onContinue={() => setAuthGateActive(false)}
+          />
+        </main>
+      )}
 
-        {authUrls.length > 0 && (
-          <div className="space-y-3">
-            {authUrls.map((auth) => (
-              <AuthPrompt
-                key={auth.url}
-                toolName={auth.toolName || "Service"}
-                authUrl={auth.url}
-                onContinue={() => dismissAuthUrl(auth.url)}
-              />
-            ))}
-          </div>
-        )}
-
-        {loading && statusMessage && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" />
-            {statusMessage}
-          </div>
-        )}
-
-        {showEmpty && <EmptyState onPlan={handlePlan} loading={loading} />}
-
-        {showNoResults && (
-          <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8">
-            <AlertTriangle size={48} className="text-muted-foreground/50" />
-            <div className="flex flex-col items-center gap-2">
-              <h2 className="text-2xl font-semibold">No items found</h2>
-              <p className="max-w-md text-center text-muted-foreground">
-                The agent finished scanning but didn&apos;t find any items to triage. This can
-                happen if tools need authorization or if there&apos;s no recent activity.
-              </p>
+      {/* Normal dashboard (source check done, gate dismissed) */}
+      {sourceCheckPhase === "done" && !authGateActive && (
+        <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-6 py-8">
+          {error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
+              {error}
             </div>
-            <Button
-              size="lg"
-              onClick={() => {
-                setPlanRan(false);
-                handlePlan();
-              }}
-            >
-              Try again
-            </Button>
-          </div>
-        )}
+          )}
 
-        {loading && !hasItems && authUrls.length === 0 && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-24 rounded-xl" />
-              ))}
-            </div>
+          {Object.keys(sourceStatuses).length > 0 && (
+            <ToolStatusBar statuses={sourceStatuses} authUrls={authUrls} />
+          )}
+
+          {/* Mid-run auth prompts (fallback for tools not covered by pre-flight) */}
+          {authUrls.length > 0 && (
             <div className="space-y-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-28 rounded-xl" />
+              {authUrls.map((auth) => (
+                <AuthPrompt
+                  key={auth.url}
+                  toolName={auth.toolName || "Service"}
+                  authUrl={auth.url}
+                  onContinue={() => dismissAuthUrl(auth.url)}
+                />
               ))}
             </div>
-          </div>
-        )}
+          )}
 
-        {hasItems && (
-          <>
-            <div className="flex justify-end">
-              <Button variant="outline" onClick={handlePlan} disabled={loading}>
-                {loading ? (
-                  <>
-                    <Loader2 className="size-4 animate-spin" />
-                    Replanning...
-                  </>
-                ) : (
-                  <>
-                    <RotateCcw className="size-4" />
-                    Replan my day
-                  </>
-                )}
+          {loading && statusMessage && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" />
+              {statusMessage}
+            </div>
+          )}
+
+          {showEmpty && <EmptyState onPlan={handlePlan} loading={loading} />}
+
+          {showNoResults && (
+            <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8">
+              <AlertTriangle size={48} className="text-muted-foreground/50" />
+              <div className="flex flex-col items-center gap-2">
+                <h2 className="text-2xl font-semibold">No items found</h2>
+                <p className="max-w-md text-center text-muted-foreground">
+                  The agent finished scanning but didn&apos;t find any items to triage. This can
+                  happen if tools need authorization or if there&apos;s no recent activity.
+                </p>
+              </div>
+              <Button
+                size="lg"
+                onClick={() => {
+                  setPlanRan(false);
+                  handlePlan();
+                }}
+              >
+                Try again
               </Button>
             </div>
-            <StatsBar stats={stats} activeSource={activeSource} onSourceClick={setActiveSource} />
-            <TaskList items={filteredItems} />
-          </>
-        )}
-      </main>
+          )}
+
+          {loading && !hasItems && authUrls.length === 0 && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-24 rounded-xl" />
+                ))}
+              </div>
+              <div className="space-y-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-28 rounded-xl" />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {hasItems && (
+            <>
+              <div className="flex justify-end">
+                <Button variant="outline" onClick={handlePlan} disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      Replanning...
+                    </>
+                  ) : (
+                    <>
+                      <RotateCcw className="size-4" />
+                      Replan my day
+                    </>
+                  )}
+                </Button>
+              </div>
+              <StatsBar stats={stats} activeSource={activeSource} onSourceClick={setActiveSource} />
+              <TaskList items={filteredItems} />
+            </>
+          )}
+        </main>
+      )}
     </div>
   );
 }

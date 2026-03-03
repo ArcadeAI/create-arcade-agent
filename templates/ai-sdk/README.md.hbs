@@ -92,7 +92,7 @@ When the agent scans your tools it will prompt you to authorize each one (Slack,
 4. **Dashboard** (`app/dashboard/page.tsx`) displays the triage results; a slide-over `ChatPanel` uses `useChat` from `@ai-sdk/react` for follow-up questions
 5. **Auth layer** (`lib/auth.ts`) provides bcrypt password hashing + httpOnly cookie sessions backed by SQLite
 
-When Arcade tools require OAuth authorization (e.g., Slack access), the gateway returns an authorization URL. The agent relays it to the user, who authorizes in a new tab, then clicks "Continue After Authorization" to retry.
+On first load the dashboard checks all tool permissions upfront. Any tools needing OAuth authorization are shown in a pre-flight gate — you can authorize each one (opens a new tab) or skip it. The dashboard only opens once every tool has been authorized or skipped. Returning to the tab after authorizing automatically re-checks the tool's status.
 
 {{> coat-security.md}}
 

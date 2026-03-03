@@ -106,7 +106,9 @@ export function TaskCard({ item }: TaskCardProps) {
           </Badge>
           <Badge variant="outline">{categoryLabels[item.category] || item.category}</Badge>
           {formattedTime && (
-            <span className="text-xs font-medium text-blue-600 dark:text-blue-400">{formattedTime}</span>
+            <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+              {formattedTime}
+            </span>
           )}
           <span className="ml-auto text-xs text-muted-foreground">{item.effort}</span>
         </div>

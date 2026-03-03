@@ -48,8 +48,18 @@ The **custom user verifier** solves this by confirming that the person completin
    NEXT_PUBLIC_APP_URL=https://abc123.ngrok-free.app
    ```
    Then delete `.arcade-auth/` (the cached OAuth registration contains the old callback URL) and restart the dev server.
+
+   > **Important:** You must also **open and log in to the app via the ngrok URL** (not `localhost`). Session cookies are scoped to the host that sets them. If you log in at `localhost` but Arcade redirects you to the ngrok verify URL, the browser won't send the `localhost` cookie — verification will silently fail and redirect you back to the dashboard with an error.
 {{/if}}
 
 5. **Test it:** When a tool requires authorization, Arcade will redirect the user through your verifier endpoint. The endpoint checks the user's session, confirms their identity with Arcade, and redirects them back.
+
+### Troubleshooting
+
+**`verify_session_required` error or redirect loop back to login:**
+The session cookie doesn't match the host the verify request came in on. Make sure you logged in via `NEXT_PUBLIC_APP_URL` (the ngrok URL), not `localhost`.
+
+**Repeated `400 Bad Request` from Arcade even after fixing the above:**
+Arcade caches a pending auth flow server-side. After too many failed verify attempts, the same `flow_id` keeps being returned by WhoAmI but it's no longer valid. To get a fresh `flow_id`: delete `.arcade-auth/`, restart the dev server, re-authenticate the gateway, then try authorizing the tool again from the dashboard.
 
 For full details, see the [Arcade Secure Auth Guide](https://docs.arcade.dev/en/guides/user-facing-agents/secure-auth-production).
