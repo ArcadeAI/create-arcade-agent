@@ -1,42 +1,38 @@
 "use client";
 
+import type { ComponentType, SVGProps } from "react";
 import { Card, CardContent, Badge } from "@arcadeai/design-system";
+import { Slack, Github, GoogleCalendar, Linear, Gmail } from "@arcadeai/design-system/components/ui/atoms/icons";
+import { Globe } from "lucide-react";
 import type { InboxItem, ItemSource } from "@/types/inbox";
-import {
-  MessageSquare,
-  Calendar,
-  GitPullRequest,
-  CheckSquare,
-  Mail,
-  Globe,
-  type LucideIcon,
-} from "lucide-react";
 
-const sourceConfig: Record<ItemSource, { icon: LucideIcon; label: string; className: string }> = {
+type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
+
+const sourceConfig: Record<ItemSource, { icon: IconComponent; label: string; className: string }> = {
   slack: {
-    icon: MessageSquare,
+    icon: Slack,
     label: "Slack",
-    className: "bg-purple-100 text-purple-700 border-purple-200",
+    className: "bg-purple-100 border-purple-200",
   },
   google_calendar: {
-    icon: Calendar,
+    icon: GoogleCalendar,
     label: "Calendar",
-    className: "bg-blue-100 text-blue-700 border-blue-200",
+    className: "bg-blue-100 border-blue-200",
   },
   linear: {
-    icon: CheckSquare,
+    icon: Linear,
     label: "Linear",
-    className: "bg-indigo-100 text-indigo-700 border-indigo-200",
+    className: "bg-indigo-100 border-indigo-200",
   },
   github: {
-    icon: GitPullRequest,
+    icon: Github,
     label: "GitHub",
-    className: "bg-gray-100 text-gray-700 border-gray-300",
+    className: "bg-gray-100 border-gray-300",
   },
   gmail: {
-    icon: Mail,
+    icon: Gmail,
     label: "Gmail",
-    className: "bg-red-100 text-red-700 border-red-200",
+    className: "bg-red-100 border-red-200",
   },
   other: {
     icon: Globe,

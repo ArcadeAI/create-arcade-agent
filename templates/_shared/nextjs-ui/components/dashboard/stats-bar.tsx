@@ -1,15 +1,10 @@
-import {
-  MessageSquare,
-  Calendar,
-  GitPullRequest,
-  CheckSquare,
-  Mail,
-  Globe,
-  LayoutDashboard,
-  type LucideIcon,
-} from "lucide-react";
+import type { ComponentType, SVGProps } from "react";
+import { LayoutDashboard, Globe } from "lucide-react";
+import { Slack, Github, GoogleCalendar, Linear, Gmail } from "@arcadeai/design-system/components/ui/atoms/icons";
 import { Card, CardAction, CardHeader, CardTitle } from "@arcadeai/design-system";
 import { cn } from "@/lib/utils";
+
+type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
 
 interface StatsBarProps {
   stats: {
@@ -18,12 +13,12 @@ interface StatsBarProps {
   };
 }
 
-const sourceIcons: Record<string, { icon: LucideIcon; label: string }> = {
-  slack: { icon: MessageSquare, label: "Slack" },
-  google_calendar: { icon: Calendar, label: "Calendar" },
-  linear: { icon: CheckSquare, label: "Linear" },
-  github: { icon: GitPullRequest, label: "GitHub" },
-  gmail: { icon: Mail, label: "Gmail" },
+const sourceIcons: Record<string, { icon: IconComponent; label: string }> = {
+  slack: { icon: Slack, label: "Slack" },
+  google_calendar: { icon: GoogleCalendar, label: "Calendar" },
+  linear: { icon: Linear, label: "Linear" },
+  github: { icon: Github, label: "GitHub" },
+  gmail: { icon: Gmail, label: "Gmail" },
   other: { icon: Globe, label: "Other" },
 };
 
@@ -47,7 +42,7 @@ export function StatsBar({ stats }: StatsBarProps) {
         <CardHeader>
           <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
           <CardAction>
-            <LayoutDashboard size={20} className="text-muted-foreground" />
+            <LayoutDashboard className="size-5 text-muted-foreground" />
           </CardAction>
           <p className={cn("text-3xl font-bold", stats.total === 0 && "text-muted-foreground")}>
             {stats.total}
@@ -65,7 +60,7 @@ export function StatsBar({ stats }: StatsBarProps) {
                 {config.label}
               </CardTitle>
               <CardAction>
-                <Icon size={20} className="text-muted-foreground" />
+                <Icon className="size-5" />
               </CardAction>
               <p className="text-3xl font-bold">{count}</p>
             </CardHeader>
