@@ -6,8 +6,8 @@ import {
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
-} from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
+  Badge,
+} from "@arcadeai/design-system";
 
 interface ToolCallProps {
   toolName: string;

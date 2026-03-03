@@ -11,18 +11,30 @@ This is app-level auth (not per-user) — all users of this app share
 the same Arcade gateway connection once authenticated.
 """
 
-import base64
 import contextlib
-import hashlib
 import json
 import logging
 import secrets
-import string
 import time
 from pathlib import Path
 from urllib.parse import urlencode, urlparse
 
 import httpx
+from mcp.client.auth.oauth2 import PKCEParameters
+from mcp.client.auth.utils import (
+    build_oauth_authorization_server_metadata_discovery_urls,
+    build_protected_resource_metadata_discovery_urls,
+    create_client_registration_request,
+    create_oauth_metadata_request,
+    extract_resource_metadata_from_www_auth,
+    extract_scope_from_www_auth,
+    get_client_metadata_scopes,
+    handle_auth_metadata_response,
+    handle_protected_resource_response,
+    handle_registration_response,
+    handle_token_response_scopes,
+)
+from mcp.shared.auth import OAuthClientMetadata
 
 from app.config import settings
 
@@ -145,19 +157,6 @@ def get_state() -> str | None:
         return None
 
 
-# --- PKCE ---
-
-
-def _generate_pkce() -> tuple[str, str]:
-    """Generate PKCE code_verifier and code_challenge."""
-    code_verifier = "".join(
-        secrets.choice(string.ascii_letters + string.digits + "-._~") for _ in range(128)
-    )
-    digest = hashlib.sha256(code_verifier.encode()).digest()
-    code_challenge = base64.urlsafe_b64encode(digest).decode().rstrip("=")
-    return code_verifier, code_challenge
-
-
 def _callback_url() -> str:
     """Build the OAuth callback URL."""
     return f"{settings.app_url}/api/auth/arcade/callback"
@@ -175,6 +174,9 @@ def _base_url(url: str) -> str:
 async def discover_and_authorize() -> str:
     """Run full OAuth discovery + registration + PKCE. Returns the authorization URL.
 
+    Uses MCP SDK utilities for spec-compliant discovery (SEP-985, RFC 8414),
+    PKCE generation, dynamic client registration, and scope selection.
+
     Flow:
     1. Hit gateway → get 401 → extract PRM hint from WWW-Authenticate
     2. Discover Protected Resource Metadata → auth server URL
@@ -188,125 +190,116 @@ async def discover_and_authorize() -> str:
     if not gateway_url:
         raise RuntimeError("ARCADE_GATEWAY_URL is missing. Add it to your .env and retry.")
 
-    async with httpx.AsyncClient(timeout=30) as client:
+    async with httpx.AsyncClient(timeout=30) as http:
         # Step 1: Probe gateway for 401 and WWW-Authenticate header
-        probe_resp = await client.get(gateway_url)
-        www_auth = probe_resp.headers.get("www-authenticate", "")
+        probe_resp = await http.get(gateway_url)
 
-        # Extract resource_metadata URL from WWW-Authenticate if present
-        resource_metadata_url = None
-        auth_params = www_auth
-        if auth_params.lower().startswith("bearer "):
-            auth_params = auth_params[7:]  # Strip "Bearer " prefix
-        if "resource_metadata=" in auth_params:
-            for part in auth_params.split(","):
-                part = part.strip()
-                if part.startswith("resource_metadata="):
-                    resource_metadata_url = part.split("=", 1)[1].strip().strip('"')
-
-        base = _base_url(gateway_url)
-
-        # Step 2: Discover Protected Resource Metadata
-        auth_server_url = base
+        # Step 2: Discover Protected Resource Metadata (SEP-985 with fallback)
+        # SDK builds ordered fallback list: WWW-Auth hint → path-based → root
+        www_auth_url = extract_resource_metadata_from_www_auth(probe_resp)
         prm = None
-        if resource_metadata_url:
-            prm_resp = await client.get(resource_metadata_url)
-            if prm_resp.status_code == 200:
-                prm = prm_resp.json()
-                if prm.get("authorization_servers"):
-                    auth_server_url = prm["authorization_servers"][0]
+        auth_server_url = _base_url(gateway_url)
+        for url in build_protected_resource_metadata_discovery_urls(www_auth_url, gateway_url):
+            resp = await http.send(create_oauth_metadata_request(url))
+            prm = await handle_protected_resource_response(resp)
+            if prm:
+                if prm.authorization_servers:
+                    auth_server_url = str(prm.authorization_servers[0])
+                break
 
-        if not resource_metadata_url:
-            # Fallback: try well-known endpoint
-            prm_url = f"{base}/.well-known/oauth-protected-resource"
-            prm_resp = await client.get(prm_url)
-            if prm_resp.status_code == 200:
-                prm = prm_resp.json()
-                if prm.get("authorization_servers"):
-                    auth_server_url = prm["authorization_servers"][0]
+        # Step 3: Discover OAuth Authorization Server Metadata (RFC 8414)
+        # SDK handles path-aware discovery + OIDC fallback
+        oauth_meta = None
+        cached_meta = get_oauth_metadata()
+        if cached_meta:
+            try:
+                from mcp.shared.auth import OAuthMetadata
 
-        # Step 3: Discover OAuth Authorization Server Metadata
-        oauth_meta = get_oauth_metadata()
+                oauth_meta = OAuthMetadata.model_validate(cached_meta)
+            except Exception:
+                oauth_meta = None
+
         if not oauth_meta:
-            # Try well-known endpoint on auth server
-            meta_url = f"{auth_server_url}/.well-known/oauth-authorization-server"
-            meta_resp = await client.get(meta_url)
-            if meta_resp.status_code == 200:
-                oauth_meta = meta_resp.json()
-                save_oauth_metadata(oauth_meta)
-
-            if not oauth_meta:
-                # Fallback: try openid-configuration
-                meta_url = f"{auth_server_url}/.well-known/openid-configuration"
-                meta_resp = await client.get(meta_url)
-                if meta_resp.status_code == 200:
-                    oauth_meta = meta_resp.json()
-                    save_oauth_metadata(oauth_meta)
+            for url in build_oauth_authorization_server_metadata_discovery_urls(
+                auth_server_url, gateway_url
+            ):
+                resp = await http.send(create_oauth_metadata_request(url))
+                ok, asm = await handle_auth_metadata_response(resp)
+                if not ok:
+                    break  # Non-4xx error, stop trying
+                if asm:
+                    oauth_meta = asm
+                    save_oauth_metadata(
+                        asm.model_dump(mode="json", by_alias=True, exclude_none=True)
+                    )
+                    break
 
         # Extract endpoints (with fallbacks)
         auth_endpoint = (
-            oauth_meta.get("authorization_endpoint", f"{auth_server_url}/authorize")
-            if oauth_meta
+            str(oauth_meta.authorization_endpoint)
+            if oauth_meta and oauth_meta.authorization_endpoint
             else f"{auth_server_url}/authorize"
         )
         token_endpoint = (
-            oauth_meta.get("token_endpoint", f"{auth_server_url}/token")
-            if oauth_meta
+            str(oauth_meta.token_endpoint)
+            if oauth_meta and oauth_meta.token_endpoint
             else f"{auth_server_url}/token"
-        )
-        registration_endpoint = (
-            oauth_meta.get("registration_endpoint", f"{auth_server_url}/register")
-            if oauth_meta
-            else f"{auth_server_url}/register"
         )
 
         # Step 4: Dynamic Client Registration (if no stored client)
         client_info = get_client_info()
         if not client_info:
-            reg_resp = await client.post(
-                registration_endpoint,
-                json={
-                    "redirect_uris": [_callback_url()],
-                    "client_name": "Arcade Agent",
-                    "grant_types": ["authorization_code", "refresh_token"],
-                    "response_types": ["code"],
-                    "token_endpoint_auth_method": "none",
-                },
+            client_metadata = OAuthClientMetadata(
+                redirect_uris=[_callback_url()],
+                client_name="Arcade Agent",
+                grant_types=["authorization_code", "refresh_token"],
+                response_types=["code"],
+                token_endpoint_auth_method="none",
             )
-            reg_resp.raise_for_status()
-            client_info = reg_resp.json()
+            reg_req = create_client_registration_request(
+                oauth_meta, client_metadata, _base_url(auth_server_url)
+            )
+            reg_resp = await http.send(reg_req)
+            client_info_model = await handle_registration_response(reg_resp)
+            client_info = client_info_model.model_dump(
+                mode="json", by_alias=True, exclude_none=True
+            )
             save_client_info(client_info)
 
         # Step 5: Generate PKCE + state
-        code_verifier, code_challenge = _generate_pkce()
+        pkce = PKCEParameters.generate()
         state = secrets.token_urlsafe(32)
 
         _ensure_dir()
-        VERIFIER_FILE.write_text(code_verifier)
+        VERIFIER_FILE.write_text(pkce.code_verifier)
         STATE_FILE.write_text(state)
 
-        # Persist token endpoint for exchange_code()
-        _write_json(METADATA_FILE, oauth_meta or {"token_endpoint": token_endpoint})
+        # Persist metadata for exchange_code()
+        if oauth_meta:
+            save_oauth_metadata(
+                oauth_meta.model_dump(mode="json", by_alias=True, exclude_none=True)
+            )
+        else:
+            _write_json(METADATA_FILE, {"token_endpoint": token_endpoint})
 
         # Step 6: Build authorization URL
-        params = {
+        params: dict[str, str] = {
             "response_type": "code",
             "client_id": client_info["client_id"],
             "redirect_uri": _callback_url(),
             "state": state,
-            "code_challenge": code_challenge,
+            "code_challenge": pkce.code_challenge,
             "code_challenge_method": "S256",
         }
 
         # Add resource from PRM (required to scope token to specific gateway)
-        if prm and prm.get("resource"):
-            params["resource"] = prm["resource"]
+        if prm and prm.resource:
+            params["resource"] = str(prm.resource)
 
-        # Add scope from PRM or auth server metadata
-        if prm and prm.get("scopes_supported"):
-            params["scope"] = " ".join(prm["scopes_supported"])
-        elif oauth_meta and oauth_meta.get("scopes_supported"):
-            params["scope"] = " ".join(oauth_meta["scopes_supported"])
+        # Scope selection using MCP spec priority order
+        scope = get_client_metadata_scopes(extract_scope_from_www_auth(probe_resp), prm, oauth_meta)
+        if scope:
+            params["scope"] = scope
 
         auth_url = f"{auth_endpoint}?{urlencode(params)}"
         _pending_auth_url = auth_url
@@ -352,7 +345,8 @@ async def exchange_code(code: str) -> dict:
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
         resp.raise_for_status()
-        tokens = resp.json()
+        token_model = await handle_token_response_scopes(resp)
+        tokens = token_model.model_dump(mode="json", exclude_none=True)
         save_tokens(tokens)
         invalidate_tools_cache()
         return tokens

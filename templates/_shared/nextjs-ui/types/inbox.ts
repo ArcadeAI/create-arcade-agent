@@ -1,6 +1,6 @@
 export type ItemSource = "slack" | "google_calendar" | "linear" | "github" | "gmail" | "other";
 
-export type SourceStatus = "unknown" | "checking" | "connected" | "auth_required";
+export type SourceStatus = "unknown" | "checking" | "connected" | "auth_required" | "skipped";
 
 export interface InboxItem {
   id: string;

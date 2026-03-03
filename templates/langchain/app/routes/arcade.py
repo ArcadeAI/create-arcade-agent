@@ -83,18 +83,18 @@ async def connect(request: Request, db: AsyncSession = Depends(get_db)):
 def _map_tool_to_source(tool_name: str | None) -> str:
     if not tool_name:
         return "other"
-    low = tool_name.lower()
-    if re.match(r"^slack[._]", low):
+    service = tool_name.split(".")[0].lower()
+    if service == "slack":
         return "slack"
-    if re.match(r"^(google|calendar)[._]", low):
+    if service in ("google", "googlecalendar", "calendar"):
         return "google_calendar"
-    if re.match(r"^linear[._]", low):
+    if service == "linear":
         return "linear"
-    if re.match(r"^git(hub)?[._]", low):
+    if service in ("git", "github"):
         return "github"
-    if re.match(r"^gmail[._]", low):
+    if service == "gmail":
         return "gmail"
-    return "other"
+    return service or "other"
 
 
 def _extract_auth_url_from_result(content: str) -> str | None:

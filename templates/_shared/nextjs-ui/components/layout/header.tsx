@@ -2,13 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
-import { LogOut, MessageSquare, Moon, Sun } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { LogOut, Moon, Sun } from "lucide-react";
+import { Button } from "@arcadeai/design-system";
 
 interface HeaderProps {
-  onChatToggle: () => void;
-  chatOpen: boolean;
   onLogout?: () => void;
 }
 
@@ -49,7 +46,7 @@ function ThemeToggle() {
   );
 }
 
-export function Header({ onChatToggle, chatOpen, onLogout }: HeaderProps) {
+export function Header({ onLogout }: HeaderProps) {
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     month: "short",
@@ -64,15 +61,6 @@ export function Header({ onChatToggle, chatOpen, onLogout }: HeaderProps) {
       </div>
       <div className="flex items-center gap-1">
         <ThemeToggle />
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onChatToggle}
-          aria-label="Toggle chat"
-          className={cn(chatOpen && "bg-accent")}
-        >
-          <MessageSquare />
-        </Button>
         {onLogout && (
           <Button variant="ghost" size="icon" onClick={onLogout} aria-label="Logout">
             <LogOut />

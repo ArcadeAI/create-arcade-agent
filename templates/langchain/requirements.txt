@@ -1,6 +1,7 @@
 langchain-openai>=0.3
 langchain-anthropic>=0.3
 langchain-mcp-adapters>=0.2
+mcp>=1.26
 langgraph>=0.3
 fastapi>=0.115
 fastapi-users[sqlalchemy]>=14.0

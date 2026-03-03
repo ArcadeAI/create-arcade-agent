@@ -1,7 +1,10 @@
 {{> env-vars-shared}}
 
 # --- App ---
-NEXT_PUBLIC_APP_URL=http://localhost:{{port}}  # Used for OAuth callback URL; keep this aligned with PORT
+# If using ARCADE_CUSTOM_VERIFIER, set this to your public URL (e.g. your ngrok URL).
+# The verify route redirects users back here after authorization — it must match the host
+# you're accessing the app from, or the session cookie won't be found.
+NEXT_PUBLIC_APP_URL=http://localhost:{{port}}
 
 # --- Database ---
 DATABASE_URL=local.db       # SQLite file path (default: local.db)

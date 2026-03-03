@@ -26,8 +26,12 @@
  *   3. Register custom OAuth apps for each auth provider (Slack, GitHub, etc.)
  *      in the Arcade dashboard. Arcade's default shared OAuth apps cannot be
  *      used when a custom verifier is enabled.
- *   4. For local dev, use ngrok to expose your server (`ngrok http 3000`) and
+ *   4. For local dev, use ngrok to expose your server (`ngrok http 8765`) and
  *      set the ngrok URL as the verifier URL in the Arcade dashboard.
+ *      IMPORTANT: You must also access your app via the ngrok URL (not localhost).
+ *      Session cookies are scoped to the host that set them — if you log in through
+ *      localhost, the ngrok-fronted verify request won't carry the cookie, causing
+ *      a silent redirect loop. Login at https://<your-ngrok>.ngrok-free.app instead.
  *   5. Full guide: https://docs.arcade.dev/en/guides/user-facing-agents/secure-auth-production
  *
  * This endpoint is disabled by default. It returns 404 unless
@@ -72,11 +76,20 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Missing flow_id parameter" }, { status: 400 });
   }
 
-  // Verify the user is logged into this app
+  // Verify the user is logged into this app.
+  // NOTE: In local dev, you must access the app via NEXT_PUBLIC_APP_URL (the ngrok URL),
+  // NOT localhost. The session cookie is scoped to the host that set it — if you log in
+  // through localhost, your ngrok-proxied verify request won't carry the cookie.
   const user = await getSession();
   if (!user) {
-    return appRedirect(req.url, "/");
+    console.warn(
+      "[verify] No session found. If you're using ngrok, make sure you logged in through " +
+        "the ngrok URL (not localhost) so the session cookie is scoped to the same host."
+    );
+    return appRedirect(req.url, "/dashboard?error=verify_session_required");
   }
+
+  const requestBody = { flow_id: flowId, user_id: user.email };
 
   try {
     const response = await fetch(ARCADE_API_URL, {
@@ -85,15 +98,22 @@ export async function GET(req: Request) {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        flow_id: flowId,
-        user_id: user.email,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
       const body = await response.text();
-      console.error("Arcade confirm_user failed:", response.status, body);
+      console.error(
+        "Arcade confirm_user failed:",
+        response.status,
+        body,
+        "\n  flow_id:",
+        flowId,
+        "\n  user_id:",
+        user.email,
+        "\n  endpoint:",
+        ARCADE_API_URL
+      );
       return appRedirect(req.url, "/dashboard?error=verify_failed");
     }
 

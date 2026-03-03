@@ -3,14 +3,20 @@
   <div class="w-full max-w-sm">
     <div class="flex flex-col items-center gap-3 mb-8">
       <svg width="40" height="41" viewBox="0 0 309 315" fill="currentColor" aria-hidden="true">
-        <path d="M267.074 293.931L266.955 0L231.402 15.9321L45.0407 294.83L9.86791 299.653L0 314.989H98.1906L109.035 299.653L72.3429 293.963L109.535 234.191L171.521 206.478C177.611 203.757 184.212 202.348 190.877 202.348H221.339L221.306 212.98V213.024L221.089 293.974L191.843 298.266L180.705 315H296.993L308.25 298.212M171.293 187.977L125.145 209.176L221.86 60L221.881 86.3042L221.382 158.996L221.339 183.685L190.063 183.652C183.202 183.652 177.514 185.116 171.293 187.977Z" />
+        <path
+          d="M267.074 293.931L266.955 0L231.402 15.9321L45.0407 294.83L9.86791 299.653L0 314.989H98.1906L109.035 299.653L72.3429 293.963L109.535 234.191L171.521 206.478C177.611 203.757 184.212 202.348 190.877 202.348H221.339L221.306 212.98V213.024L221.089 293.974L191.843 298.266L180.705 315H296.993L308.25 298.212M171.293 187.977L125.145 209.176L221.86 60L221.881 86.3042L221.382 158.996L221.339 183.685L190.063 183.652C183.202 183.652 177.514 185.116 171.293 187.977Z"
+        />
       </svg>
       <span class="text-xl font-semibold tracking-tight">Arcade Agent</span>
     </div>
 
-    <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 shadow-sm">
+    <div
+      class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 shadow-sm"
+    >
       <h1 class="text-lg font-semibold mb-1" id="form-title">Sign in</h1>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mb-5" id="form-subtitle">Welcome back to Arcade Agent</p>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-5" id="form-subtitle">
+        Welcome back to Arcade Agent
+      </p>
 
       <form id="auth-form" class="space-y-4">
         <input
@@ -41,7 +47,9 @@
 
       <p class="text-sm text-center mt-4 text-gray-500 dark:text-gray-400">
         <span id="toggle-text">No account yet?</span>
-        <button id="toggle-mode" class="underline text-gray-900 dark:text-gray-100 ml-1">Create account</button>
+        <button id="toggle-mode" class="underline text-gray-900 dark:text-gray-100 ml-1">
+          Create account
+        </button>
       </p>
     </div>
   </div>
@@ -60,7 +68,9 @@
   toggleBtn.addEventListener("click", () => {
     isRegister = !isRegister;
     formTitle.textContent = isRegister ? "Create account" : "Sign in";
-    formSubtitle.textContent = isRegister ? "Get started with Arcade Agent" : "Welcome back to Arcade Agent";
+    formSubtitle.textContent = isRegister
+      ? "Get started with Arcade Agent"
+      : "Welcome back to Arcade Agent";
     submitBtn.textContent = isRegister ? "Create account" : "Sign in";
     toggleText.textContent = isRegister ? "Already have an account?" : "No account yet?";
     toggleBtn.textContent = isRegister ? "Sign in" : "Create account";
