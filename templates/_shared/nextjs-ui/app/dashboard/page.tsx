@@ -2,6 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 import type { InboxItem, PlanEvent, SourceStatus } from "@/types/inbox";
 import { Header } from "@/components/layout/header";
 import { EmptyState } from "@/components/dashboard/empty-state";
@@ -276,7 +277,7 @@ function DashboardContent() {
   }, []);
 
   const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
+    await authClient.signOut();
     router.push("/");
   };
 

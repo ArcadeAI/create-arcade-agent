@@ -23,7 +23,10 @@ The agent connects to Arcade's MCP Gateway to call Slack tools (and any other to
    ```bash
    cp .env.example .env
    ```
-   Fill in your `ARCADE_GATEWAY_URL` and at least one LLM API key in `.env`.
+   Fill in your `ARCADE_GATEWAY_URL`, at least one LLM API key, and generate a `BETTER_AUTH_SECRET` in `.env`:
+   ```bash
+   echo "BETTER_AUTH_SECRET=$(openssl rand -hex 32)" >> .env
+   ```
 
 3. **Run setup doctor:**
    ```bash
@@ -65,9 +68,7 @@ When the agent first tries to use an Arcade tool, you'll be prompted to authenti
 │           │   ├── callback/route.ts  # Arcade OAuth callback
 │           │   ├── connect/route.ts   # Pre-flight connection check
 │           │   └── verify/route.ts    # Custom user verifier (optional)
-│           ├── login/route.ts      # Login endpoint
-│           ├── register/route.ts   # Registration endpoint
-│           └── logout/route.ts     # Logout endpoint
+│           └── [...all]/route.ts   # Better Auth catch-all handler
 ├── src/mastra/
 │   ├── index.ts                    # Mastra instance
 │   ├── agents/
@@ -76,7 +77,8 @@ When the agent first tries to use an Arcade tool, you'll be prompted to authenti
 │   └── tools/
 │       └── arcade.ts               # MCP Gateway connection + OAuth provider
 ├── lib/
-│   ├── auth.ts                     # Session + password helpers
+│   ├── auth.ts                     # Better Auth server config + getSession helper
+│   ├── auth-client.ts              # Better Auth React client (signIn, signUp, signOut)
 │   └── db/
 │       ├── index.ts                # Drizzle client
 │       └── schema.ts               # Database schema
@@ -91,7 +93,7 @@ When the agent first tries to use an Arcade tool, you'll be prompted to authenti
 2. **MCPClient** (`src/mastra/tools/arcade.ts`) connects to Arcade's MCP Gateway using OAuth authentication — no API keys needed
 3. **Chat API route** (`app/api/chat/route.ts`) streams agent responses using `handleChatStream` from `@mastra/ai-sdk`
 4. **Frontend** (`app/chat/page.tsx`) renders the chat with `useChat` from `@ai-sdk/react`, including OAuth authorization URL handling
-5. **Auth layer** (`lib/auth.ts`) provides bcrypt password hashing + httpOnly cookie sessions backed by SQLite
+5. **Auth layer** (`lib/auth.ts`) uses [Better Auth](https://www.better-auth.com) for email/password authentication with httpOnly cookie sessions backed by SQLite
 
 When Arcade tools require OAuth authorization (e.g., Slack access), the gateway returns an authorization URL. The agent relays it to the user, who authorizes in a new tab, then clicks "Continue After Authorization" to retry.
 

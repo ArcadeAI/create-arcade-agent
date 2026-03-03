@@ -57,11 +57,12 @@ When the agent first tries to use an Arcade tool that requires OAuth (e.g., Slac
 │   ├── agent.py                # LangGraph agent + model selection (customization point)
 │   ├── system-prompt.md        # System prompt (customization point)
 │   ├── arcade_oauth.py         # MCP Gateway OAuth connection
-│   ├── auth.py                 # Session + password helpers
+│   ├── auth.py                 # get_current_user helper (FastAPI Users-backed)
+│   ├── auth_manager.py         # FastAPI Users setup (UserManager, JWT strategy)
 │   ├── database.py             # SQLAlchemy async engine
-│   ├── models.py               # User, Session models
+│   ├── models.py               # User model (extends FastAPI Users base)
 │   ├── routes/
-│   │   ├── auth.py             # Login, register, logout endpoints
+│   │   ├── auth.py             # Login, register, logout endpoints (FastAPI Users)
 │   │   ├── chat.py             # Streaming chat endpoint (SSE)
 │   │   └── arcade.py           # Connection check + OAuth callback + custom verifier
 │   ├── static/
@@ -74,7 +75,7 @@ When the agent first tries to use an Arcade tool that requires OAuth (e.g., Slac
 ├── alembic/
 │   ├── env.py                  # Async migration config
 │   └── versions/
-│       └── 001_initial.py      # Users + sessions tables
+│       └── 001_initial.py      # Users table (FastAPI Users schema)
 ├── .env.example                # Environment variable template
 ├── alembic.ini                 # Alembic configuration
 └── pyproject.toml              # Python project metadata
@@ -86,7 +87,7 @@ When the agent first tries to use an Arcade tool that requires OAuth (e.g., Slac
 2. **OAuth client** (`app/arcade_oauth.py`) connects to Arcade's MCP Gateway using OAuth authentication with file-based token persistence
 3. **Chat endpoint** (`app/routes/chat.py`) streams agent responses as SSE events
 4. **Frontend** (`app/templates/chat.html` + `app/static/chat.js`) renders the chat with streaming, tool calls, and auth URL handling
-5. **Auth layer** (`app/auth.py`) provides bcrypt password hashing + httpOnly cookie sessions backed by SQLite
+5. **Auth layer** (`app/auth_manager.py`) uses [FastAPI Users](https://fastapi-users.github.io/fastapi-users/) for email/password authentication with stateless JWT sessions stored in httpOnly cookies
 
 When Arcade tools require OAuth authorization (e.g., Slack access), the tool response includes an authorization URL. The chat UI displays it as a clickable link. After the user authorizes in a new tab, they click "Continue After Authorization" to retry.
 

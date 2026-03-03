@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -30,19 +31,19 @@ export function LoginForm() {
     }
 
     try {
-      const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Something went wrong");
-        return;
+      if (isRegister) {
+        const { error: err } = await authClient.signUp.email({ email, password, name: "" });
+        if (err) {
+          setError(err.message ?? "Something went wrong");
+          return;
+        }
+      } else {
+        const { error: err } = await authClient.signIn.email({ email, password });
+        if (err) {
+          setError(err.message ?? "Invalid credentials");
+          return;
+        }
       }
-
       router.push("/dashboard");
     } catch {
       setError("Network error. Please try again.");
