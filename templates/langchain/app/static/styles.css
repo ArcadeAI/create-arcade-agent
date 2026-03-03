@@ -124,7 +124,7 @@ details[open] .tool-chevron {
 .dark .task-card .text-gray-400,
 .dark .task-card .text-gray-500,
 .dark .stats-card .text-gray-500 {
-  color: rgb(107 114 128); /* gray-500 */
+  color: rgb(156 163 175); /* gray-400 — sufficient contrast on dark bg */
 }
 .dark .next-step-hint {
   background-color: rgb(31 41 55); /* gray-800 */
