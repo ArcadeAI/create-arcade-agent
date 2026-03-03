@@ -46,11 +46,11 @@ export function printSuccess(projectName: string, meta: TemplateMeta) {
   const lines = [`cd ${projectName}`];
 
   if (meta.language === "python") {
-    lines.push(
-      `${copyCmd}  ${pc.dim("# then fill in your env vars")}`,
-      activateCmd,
-      meta.devCommand
-    );
+    lines.push(`${copyCmd}  ${pc.dim("# then fill in your env vars")}`, activateCmd);
+    if (meta.migrate.length > 0) {
+      lines.push(`alembic upgrade head  ${pc.dim("# set up database")}`);
+    }
+    lines.push(meta.devCommand);
   } else {
     lines.push(`${copyCmd}  ${pc.dim("# then fill in your env vars")}`, meta.devCommand);
   }

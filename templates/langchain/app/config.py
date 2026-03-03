@@ -35,6 +35,13 @@ class Settings(BaseSettings):
             return ""
         return v
 
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def coerce_database_url(cls, v: str) -> str:
+        """Fall back to default SQLite URL if env var is unset or blank."""
+        v = (v or "").strip()
+        return v if v else "sqlite+aiosqlite:///local.db"
+
     @field_validator("app_url")
     @classmethod
     def ensure_app_url_has_scheme(cls, v: str) -> str:
