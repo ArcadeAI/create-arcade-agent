@@ -17,12 +17,13 @@ function encodeEvent(event: PlanEvent): Uint8Array {
 
 function mapToolToSource(toolName?: string): string {
   if (!toolName) return "other";
-  if (/^slack[._]/i.test(toolName)) return "slack";
-  if (/^(google|calendar)[._]/i.test(toolName)) return "google_calendar";
-  if (/^linear[._]/i.test(toolName)) return "linear";
-  if (/^git(hub)?[._]/i.test(toolName)) return "github";
-  if (/^gmail[._]/i.test(toolName)) return "gmail";
-  return "other";
+  const service = toolName.split(".")[0].toLowerCase();
+  if (service === "slack") return "slack";
+  if (service === "google" || service === "googlecalendar" || service === "calendar") return "google_calendar";
+  if (service === "linear") return "linear";
+  if (service === "git" || service === "github") return "github";
+  if (service === "gmail") return "gmail";
+  return service || "other";
 }
 
 function extractAuthUrlFromToolOutput(output: unknown): string | null {
@@ -87,11 +88,11 @@ CLASSIFICATION:
 
 SOURCE MAPPING:
 - Tools starting with "Slack" → source: "slack"
-- Tools starting with "Google" or "Calendar" → source: "google_calendar"
+- Tools starting with "Google", "GoogleCalendar", or "Calendar" → source: "google_calendar"
 - Tools starting with "Linear" → source: "linear"
 - Tools starting with "Git" or "GitHub" → source: "github"
 - Tools starting with "Gmail" → source: "gmail"
-- Anything else → source: "other"
+- Anything else → source: lowercase service name (e.g. "notion", "dropbox")
 
 OUTPUT: For EACH item, output EXACTLY this on its own line:
 
