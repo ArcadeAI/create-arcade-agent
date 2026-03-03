@@ -29,6 +29,7 @@ def get_llm():
         return ChatAnthropic(
             model="claude-sonnet-4-20250514",
             api_key=settings.anthropic_api_key,
+            max_tokens=16384,
         )
     if settings.openai_api_key:
         return ChatOpenAI(

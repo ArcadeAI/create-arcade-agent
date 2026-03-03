@@ -20,8 +20,8 @@ bunx drizzle-kit migrate   # Apply migrations to SQLite
 - **Mastra** (`@mastra/core`) — agent framework. Agent defined in `src/mastra/agents/triage-agent.ts`.
 - **MCPClient** (`@mastra/mcp`) — connects to Arcade MCP Gateway for tool discovery + execution. Uses Arcade OAuth (not header auth). Defined in `src/mastra/tools/arcade.ts`.
 - **`@mastra/ai-sdk`** — bridges Mastra streams to Vercel AI SDK format. `handleChatStream` is used in the API route.
-- **Drizzle ORM** + `better-sqlite3` — SQLite for auth only (users + sessions tables).
-- **bcrypt** — password hashing in `lib/auth.ts`.
+- **Drizzle ORM** + `better-sqlite3` — SQLite for auth storage (Better Auth tables).
+- **[Better Auth](https://www.better-auth.com)** — email/password auth with session cookies (`lib/auth.ts`, `lib/auth-client.ts`).
 - **`useChat`** from `@ai-sdk/react` — frontend streaming chat hook.
 
 ## Key Files
@@ -35,8 +35,9 @@ bunx drizzle-kit migrate   # Apply migrations to SQLite
 | `app/api/auth/arcade/callback/route.ts` | OAuth callback for Arcade MCP authentication                       |
 | `app/api/auth/arcade/connect/route.ts`  | Pre-flight connection check (surfaces auth URL to frontend)        |
 | `app/api/auth/arcade/verify/route.ts`   | Custom user verifier for COAT protection (opt-in via env var)      |
-| `lib/auth.ts`                           | Password hashing, session management                               |
-| `lib/db/schema.ts`                      | Drizzle schema (users, sessions)                                   |
+| `lib/auth.ts`                           | Better Auth server config + `getSession()` helper                  |
+| `lib/auth-client.ts`                    | Better Auth React client (signIn, signUp, signOut)                 |
+| `lib/db/schema.ts`                      | Drizzle schema (Better Auth tables + custom tables)                |
 | `app/dashboard/page.tsx`                | Daily triage dashboard (main UI entry point)                       |
 | `app/page.tsx`                          | Login/register form                                                |
 
@@ -44,7 +45,7 @@ bunx drizzle-kit migrate   # Apply migrations to SQLite
 
 Three auth layers:
 
-1. **App auth** — bcrypt + SQLite sessions (`lib/auth.ts`). Protects the chat endpoint so only registered users can access it.
+1. **App auth** — [Better Auth](https://www.better-auth.com) email/password authentication with SQLite sessions via Drizzle adapter (`lib/auth.ts`). Configure `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` in `.env`. Protects the chat endpoint so only registered users can access it.
 2. **Arcade OAuth** — custom `OAuthClientProvider` implementation (`src/mastra/tools/arcade.ts`). Authenticates the MCP connection to Arcade Gateway. No API keys needed — the user authenticates via browser. Tokens persist in `.arcade-auth/` (gitignored). The OAuth callback is at `/api/auth/arcade/callback`.
 3. **Custom user verifier** (optional) — `/api/auth/arcade/verify`. When `ARCADE_CUSTOM_VERIFIER=true`, binds Arcade tool authorizations to the app's user session, preventing COAT attacks. Requires `ARCADE_API_KEY`. Enabling the custom verifier also requires: (a) setting up custom OAuth applications with each auth provider (Slack, GitHub, etc.) in the Arcade dashboard — Arcade's default shared OAuth apps cannot be used with a custom verifier, and (b) exposing the local dev server via ngrok (`ngrok http 3000`) so Arcade can reach the verifier endpoint, then configuring the ngrok URL in the Arcade dashboard. When using ngrok: set `NEXT_PUBLIC_APP_URL` to the ngrok URL, delete `.arcade-auth/` (cached OAuth registration has the old callback URL), and restart the dev server.
 

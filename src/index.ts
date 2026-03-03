@@ -7,7 +7,7 @@ import pc from "picocolors";
 
 import { getProjectName, getTemplate } from "./prompts.js";
 import { scaffoldTemplate } from "./scaffold.js";
-import { installDeps, runMigrations, printSuccess } from "./post-scaffold.js";
+import { installDeps, copyEnvIfMissing, runMigrations, printSuccess } from "./post-scaffold.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const templatesDir = resolve(__dirname, "../templates");
@@ -36,6 +36,7 @@ async function main() {
   s.stop("Template copied");
 
   await installDeps(targetDir, meta);
+  copyEnvIfMissing(targetDir);
   await runMigrations(targetDir, meta);
   printSuccess(projectName, meta);
 

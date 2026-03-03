@@ -1,7 +1,18 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
+import { copyFileSync, existsSync } from "fs";
+import { resolve } from "path";
 import { runAsync } from "./utils.js";
 import type { TemplateMeta } from "./types.js";
+
+
+export function copyEnvIfMissing(targetDir: string) {
+  const example = resolve(targetDir, ".env.example");
+  const env = resolve(targetDir, ".env");
+  if (existsSync(example) && !existsSync(env)) {
+    copyFileSync(example, env);
+  }
+}
 
 export async function installDeps(targetDir: string, meta: TemplateMeta) {
   const s = p.spinner();
@@ -40,19 +51,15 @@ export async function runMigrations(targetDir: string, meta: TemplateMeta) {
 
 export function printSuccess(projectName: string, meta: TemplateMeta) {
   const isWin = process.platform === "win32";
-  const copyCmd = isWin ? "copy .env.example .env" : "cp .env.example .env";
   const activateCmd = isWin ? ".venv\\Scripts\\activate" : "source .venv/bin/activate";
 
   const lines = [`cd ${projectName}`];
 
   if (meta.language === "python") {
-    lines.push(
-      `${copyCmd}  ${pc.dim("# then fill in your env vars")}`,
-      activateCmd,
-      meta.devCommand
-    );
+    lines.push(`${pc.dim("# fill in .env with your API keys")}`, activateCmd);
+    lines.push(meta.devCommand);
   } else {
-    lines.push(`${copyCmd}  ${pc.dim("# then fill in your env vars")}`, meta.devCommand);
+    lines.push(`${pc.dim("# fill in .env with your API keys")}`, meta.devCommand);
   }
 
   lines.push(

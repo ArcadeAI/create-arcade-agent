@@ -14,9 +14,18 @@ import type { SourceStatus } from "@/types/inbox";
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
 
+function GoogleServicesIcon(_props: SVGProps<SVGSVGElement>) {
+  return (
+    <span className="relative inline-flex size-4 shrink-0">
+      <Gmail className="absolute left-0 top-0 size-3" />
+      <GoogleCalendar className="absolute bottom-0 right-0 size-3" />
+    </span>
+  );
+}
+
 const sourceConfig: Record<string, { icon: IconComponent; label: string }> = {
   slack: { icon: Slack, label: "Slack" },
-  google_calendar: { icon: GoogleCalendar, label: "Calendar" },
+  google_calendar: { icon: GoogleServicesIcon as IconComponent, label: "Google" },
   linear: { icon: Linear, label: "Linear" },
   github: { icon: Github, label: "GitHub" },
   gmail: { icon: Gmail, label: "Gmail" },

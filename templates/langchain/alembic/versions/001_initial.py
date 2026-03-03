@@ -1,4 +1,4 @@
-"""Initial migration: users and sessions tables.
+"""Initial migration: users table (FastAPI Users schema).
 
 Revision ID: 001
 Revises:
@@ -18,27 +18,21 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
+    # FastAPI Users schema: id is a UUID string, no separate sessions table
+    # (sessions are encoded in stateless JWTs stored in httpOnly cookies).
     op.create_table(
         "users",
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
+        sa.Column("id", sa.String(), nullable=False),
         sa.Column("email", sa.String(), nullable=False),
-        sa.Column("password_hash", sa.String(), nullable=False),
+        sa.Column("hashed_password", sa.String(), nullable=False),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="1"),
+        sa.Column("is_superuser", sa.Boolean(), nullable=False, server_default="0"),
+        sa.Column("is_verified", sa.Boolean(), nullable=False, server_default="0"),
         sa.Column("name", sa.String(), nullable=True),
-        sa.Column("created_at", sa.DateTime(), server_default=sa.text("CURRENT_TIMESTAMP")),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("email"),
     )
 
-    op.create_table(
-        "sessions",
-        sa.Column("id", sa.String(), nullable=False),
-        sa.Column("user_id", sa.Integer(), sa.ForeignKey("users.id"), nullable=False),
-        sa.Column("expires_at", sa.DateTime(), nullable=False),
-        sa.Column("created_at", sa.DateTime(), server_default=sa.text("CURRENT_TIMESTAMP")),
-        sa.PrimaryKeyConstraint("id"),
-    )
-
 
 def downgrade() -> None:
-    op.drop_table("sessions")
     op.drop_table("users")

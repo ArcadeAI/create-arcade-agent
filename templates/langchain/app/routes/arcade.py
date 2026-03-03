@@ -83,7 +83,7 @@ async def connect(request: Request, db: AsyncSession = Depends(get_db)):
 def _map_tool_to_source(tool_name: str | None) -> str:
     if not tool_name:
         return "other"
-    service = tool_name.split(".")[0].lower()
+    service = re.split(r"[._]", tool_name)[0].lower()
     if service == "slack":
         return "slack"
     if service in ("google", "googlecalendar", "calendar"):

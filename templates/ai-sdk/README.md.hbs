@@ -23,7 +23,10 @@ The agent connects to Arcade's MCP Gateway to call Slack tools (and any other to
    ```bash
    cp .env.example .env
    ```
-   Fill in your `ARCADE_GATEWAY_URL` and at least one LLM API key in `.env`.
+   Fill in your `ARCADE_GATEWAY_URL`, at least one LLM API key, and generate a `BETTER_AUTH_SECRET` in `.env`:
+   ```bash
+   echo "BETTER_AUTH_SECRET=$(openssl rand -hex 32)" >> .env
+   ```
 
 3. **Run setup doctor:**
    ```bash
@@ -68,13 +71,12 @@ When the agent scans your tools it will prompt you to authorize each one (Slack,
 │           │   ├── callback/route.ts  # Arcade OAuth callback
 │           │   ├── connect/route.ts   # Pre-flight connection check
 │           │   └── verify/route.ts    # Custom user verifier (optional)
-│           ├── login/route.ts      # Login endpoint
-│           ├── register/route.ts   # Registration endpoint
-│           └── logout/route.ts     # Logout endpoint
+│           └── [...all]/route.ts   # Better Auth catch-all handler
 ├── lib/
 │   ├── agent.ts                    # Model selection + system prompt loader
 │   ├── arcade.ts                   # MCP Gateway connection + OAuth provider
-│   ├── auth.ts                     # Session + password helpers
+│   ├── auth.ts                     # Better Auth server config + getSession helper
+│   ├── auth-client.ts              # Better Auth React client (signIn, signUp, signOut)
 │   ├── system-prompt.md            # System prompt (customization point)
 │   └── db/
 │       ├── index.ts                # Drizzle client
@@ -90,7 +92,7 @@ When the agent scans your tools it will prompt you to authorize each one (Slack,
 2. **MCP client** (`lib/arcade.ts`) connects to Arcade's MCP Gateway using OAuth authentication via `@ai-sdk/mcp`
 3. **Chat API route** (`app/api/chat/route.ts`) streams agent responses using `streamText` with MCP tools and multi-step tool execution
 4. **Dashboard** (`app/dashboard/page.tsx`) displays the triage results; a slide-over `ChatPanel` uses `useChat` from `@ai-sdk/react` for follow-up questions
-5. **Auth layer** (`lib/auth.ts`) provides bcrypt password hashing + httpOnly cookie sessions backed by SQLite
+5. **Auth layer** (`lib/auth.ts`) uses [Better Auth](https://www.better-auth.com) for email/password authentication with httpOnly cookie sessions backed by SQLite
 
 On first load the dashboard checks all tool permissions upfront. Any tools needing OAuth authorization are shown in a pre-flight gate — you can authorize each one (opens a new tab) or skip it. The dashboard only opens once every tool has been authorized or skipped. Returning to the tab after authorizing automatically re-checks the tool's status.
 

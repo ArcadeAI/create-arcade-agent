@@ -9,6 +9,10 @@ NEXT_PUBLIC_APP_URL=http://localhost:{{port}}
 # --- Database ---
 DATABASE_URL=local.db       # SQLite file path (default: local.db)
 
+# --- Auth (Better Auth) ---
+BETTER_AUTH_SECRET=          # Random secret for session signing; generate with: openssl rand -hex 32
+BETTER_AUTH_URL=http://localhost:{{port}}  # Must match NEXT_PUBLIC_APP_URL
+
 # --- Custom User Verification (optional, recommended for production) ---
 # ARCADE_CUSTOM_VERIFIER=true
 # ARCADE_API_KEY=             # Get from https://app.arcade.dev/settings

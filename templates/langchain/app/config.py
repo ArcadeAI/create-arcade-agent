@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
-load_dotenv()
+load_dotenv(dotenv_path=".env", override=False)
 
 
 class Settings(BaseSettings):
@@ -33,6 +33,15 @@ class Settings(BaseSettings):
         v = v.strip()
         if v.startswith("#"):
             return ""
+        return v
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def coerce_database_url(cls, v: str) -> str:
+        """Fall back to default SQLite URL if env var is unset, blank, or not a valid URL."""
+        v = (v or "").strip()
+        if not v or "://" not in v:
+            return "sqlite+aiosqlite:///local.db"
         return v
 
     @field_validator("app_url")
