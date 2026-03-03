@@ -51,7 +51,6 @@ export async function runMigrations(targetDir: string, meta: TemplateMeta) {
 
 export function printSuccess(projectName: string, meta: TemplateMeta) {
   const isWin = process.platform === "win32";
-  const copyCmd = isWin ? "copy .env.example .env" : "cp .env.example .env";
   const activateCmd = isWin ? ".venv\\Scripts\\activate" : "source .venv/bin/activate";
 
   const lines = [`cd ${projectName}`];
@@ -63,7 +62,7 @@ export function printSuccess(projectName: string, meta: TemplateMeta) {
     }
     lines.push(meta.devCommand);
   } else {
-    lines.push(`${copyCmd}  ${pc.dim("# then fill in your env vars")}`, meta.devCommand);
+    lines.push(`${pc.dim("# fill in .env with your API keys")}`, meta.devCommand);
   }
 
   lines.push(
