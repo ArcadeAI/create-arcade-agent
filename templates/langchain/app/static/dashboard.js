@@ -153,16 +153,42 @@ function sanitizeUrl(url) {
 
 // --- Source config ---
 const SOURCE_CONFIG = {
-  slack: { label: "Slack", color: "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800", icon: "💬" },
+  slack: {
+    label: "Slack",
+    color:
+      "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800",
+    icon: "💬",
+  },
   google_calendar: {
     label: "Calendar",
-    color: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
+    color:
+      "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
     icon: "📅",
   },
-  linear: { label: "Linear", color: "bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800", icon: "✅" },
-  github: { label: "GitHub", color: "bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600", icon: "🔀" },
-  gmail: { label: "Gmail", color: "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800", icon: "📧" },
-  other: { label: "Other", color: "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700", icon: "🌐" },
+  linear: {
+    label: "Linear",
+    color:
+      "bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800",
+    icon: "✅",
+  },
+  github: {
+    label: "GitHub",
+    color:
+      "bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600",
+    icon: "🔀",
+  },
+  gmail: {
+    label: "Gmail",
+    color:
+      "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800",
+    icon: "📧",
+  },
+  other: {
+    label: "Other",
+    color:
+      "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700",
+    icon: "🌐",
+  },
 };
 
 // --- Tool status bar ---
@@ -329,7 +355,8 @@ function addAuthPrompt(url, toolName) {
 
   const label = toolName || "Service";
   const card = document.createElement("div");
-  card.className = "auth-prompt-card bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4";
+  card.className =
+    "auth-prompt-card bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4";
   card.dataset.url = url;
   card.innerHTML = `
     <div class="flex items-center gap-2 mb-2">

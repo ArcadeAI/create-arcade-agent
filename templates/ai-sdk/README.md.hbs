@@ -41,9 +41,9 @@ The agent connects to Arcade's MCP Gateway to call Slack tools (and any other to
    bun run dev
    ```
 
-6. **Open [http://localhost:3000](http://localhost:3000)**, register an account, and start chatting.
+6. **Open [http://localhost:8765](http://localhost:8765)**, register an account, and run your first plan from the dashboard.
 
-When the agent first tries to use an Arcade tool, you'll be prompted to authenticate with Arcade via OAuth in your browser. After authorizing, click "Continue After Authorization" in the chat to retry.
+When the agent scans your tools it will prompt you to authorize each one (Slack, GitHub, etc.) via OAuth in your browser. After authorizing each service, re-run the plan.
 
 {{> gateway-setup.md}}
 
@@ -56,10 +56,13 @@ When the agent first tries to use an Arcade tool, you'll be prompted to authenti
 │   ├── page.tsx                    # Login/register page
 │   ├── layout.tsx                  # Root layout
 │   ├── globals.css                 # Tailwind + CSS vars
-│   ├── chat/
-│   │   └── page.tsx                # Chat interface
+│   ├── dashboard/
+│   │   └── page.tsx                # Daily triage dashboard (main UI)
 │   └── api/
 │       ├── chat/route.ts           # Agent streaming endpoint (streamText + MCP tools)
+│       ├── plan/route.ts           # Daily plan generation (SSE stream)
+│       ├── sources/route.ts        # Tool auth status check
+│       ├── health/route.ts         # Startup env-var validation
 │       └── auth/
 │           ├── arcade/
 │           │   ├── callback/route.ts  # Arcade OAuth callback
@@ -86,7 +89,7 @@ When the agent first tries to use an Arcade tool, you'll be prompted to authenti
 1. **AI SDK** (`lib/agent.ts`) selects the model (Claude or GPT-4o) based on which API key is set
 2. **MCP client** (`lib/arcade.ts`) connects to Arcade's MCP Gateway using OAuth authentication via `@ai-sdk/mcp`
 3. **Chat API route** (`app/api/chat/route.ts`) streams agent responses using `streamText` with MCP tools and multi-step tool execution
-4. **Frontend** (`app/chat/page.tsx`) renders the chat with `useChat` from `@ai-sdk/react`, including OAuth authorization URL handling
+4. **Dashboard** (`app/dashboard/page.tsx`) displays the triage results; a slide-over `ChatPanel` uses `useChat` from `@ai-sdk/react` for follow-up questions
 5. **Auth layer** (`lib/auth.ts`) provides bcrypt password hashing + httpOnly cookie sessions backed by SQLite
 
 When Arcade tools require OAuth authorization (e.g., Slack access), the gateway returns an authorization URL. The agent relays it to the user, who authorizes in a new tab, then clicks "Continue After Authorization" to retry.

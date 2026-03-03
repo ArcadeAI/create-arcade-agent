@@ -37,7 +37,7 @@ bunx drizzle-kit migrate   # Apply migrations to SQLite
 | `app/api/auth/arcade/verify/route.ts`   | Custom user verifier for COAT protection (opt-in via env var)      |
 | `lib/auth.ts`                           | Password hashing, session management                               |
 | `lib/db/schema.ts`                      | Drizzle schema (users, sessions)                                   |
-| `app/chat/page.tsx`                     | Chat UI with OAuth URL handling                                    |
+| `app/dashboard/page.tsx`                | Daily triage dashboard (main UI entry point)                       |
 | `app/page.tsx`                          | Login/register form                                                |
 
 ## Auth
@@ -61,3 +61,12 @@ Files with `// --- CUSTOMIZATION POINT ---` comments:
 - `src/mastra/agents/triage-agent.ts` — agent purpose, model, system prompt
 - `src/mastra/tools/arcade.ts` — gateway URL, OAuth config
 - `src/mastra/index.ts` — agent registration
+
+## Claude Code Notes
+
+- **Main UI**: `app/dashboard/page.tsx` — layout, plan-run flow, and ChatPanel toggle. This is the primary entry point after login.
+- **Agent logic**: `src/mastra/agents/triage-agent.ts` — system prompt, model, and tool list.
+- **Component library**: import UI components from `@arcadeai/design-system`; import brand icons (Slack, GitHub, Gmail, etc.) from `@arcadeai/design-system/components/ui/atoms/icons`.
+- **Startup checks**: add new env-var warnings in `app/api/health/route.ts` — push a new `ConfigWarning` object to the `warnings` array.
+- **Safe to edit**: `src/mastra/agents/system-prompt.md`, `src/mastra/agents/triage-agent.ts` (model/prompt), `lib/db/schema.ts` (schema extensions).
+- **Edit with care**: `src/mastra/tools/arcade.ts` — custom `OAuthClientProvider` for MCP OAuth. Token persistence (`.arcade-auth/`) and PKCE are stateful; read the full flow before changing it.

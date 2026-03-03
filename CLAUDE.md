@@ -56,3 +56,30 @@ The CLI is fully non-interactive with both args: `node dist/index.js <name> --te
 4. Renames dotfiles (e.g., `_gitignore` -> `.gitignore`)
 5. Runs install steps (`npm install` or `pip install`)
 6. Runs migrations (Drizzle Kit or Alembic) -- failures are non-fatal
+
+## Notes for Agents
+
+### Package managers
+
+- The **CLI itself** uses `npm`.
+- Generated `ai-sdk` and `mastra` projects use **`bun`** — `template.json` sets `bun install` and `bun run dev`. Don't substitute `npm` when writing commands for generated projects.
+- The `langchain` template uses Python (`pip` / `uvicorn`).
+
+### Template system
+
+- `templates/_shared/nextjs-ui/` is the shared React frontend, injected into generated projects via the `sharedFiles` map in each `template.json`. It has its own `eslint.config.mjs` and is **excluded from root ESLint**.
+- `templates/_shared/partials/` holds Handlebars partials included with `{{> partial-name.md}}`.
+- `.hbs` files render with context `{ projectName, name }` where `name` is the template slug (e.g. `"ai-sdk"`).
+
+### UI components
+
+Generated Next.js templates use `@arcadeai/design-system` (not bare shadcn/ui). Import components from `@arcadeai/design-system` and brand icons from `@arcadeai/design-system/components/ui/atoms/icons`.
+
+### End-to-end testing
+
+```bash
+npm run build
+node dist/index.js test-proj --template ai-sdk
+cd test-proj && bun run build && bun run lint
+cd .. && node dist/index.js test-proj-py --template langchain
+```

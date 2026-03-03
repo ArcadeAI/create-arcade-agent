@@ -2,44 +2,51 @@
 
 import type { ComponentType, SVGProps } from "react";
 import { Card, CardContent, Badge } from "@arcadeai/design-system";
-import { Slack, Github, GoogleCalendar, Linear, Gmail } from "@arcadeai/design-system/components/ui/atoms/icons";
+import {
+  Slack,
+  Github,
+  GoogleCalendar,
+  Linear,
+  Gmail,
+} from "@arcadeai/design-system/components/ui/atoms/icons";
 import { Globe } from "lucide-react";
 import type { InboxItem, ItemSource } from "@/types/inbox";
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
 
-const sourceConfig: Record<ItemSource, { icon: IconComponent; label: string; className: string }> = {
-  slack: {
-    icon: Slack,
-    label: "Slack",
-    className: "bg-purple-100 border-purple-200",
-  },
-  google_calendar: {
-    icon: GoogleCalendar,
-    label: "Calendar",
-    className: "bg-blue-100 border-blue-200",
-  },
-  linear: {
-    icon: Linear,
-    label: "Linear",
-    className: "bg-indigo-100 border-indigo-200",
-  },
-  github: {
-    icon: Github,
-    label: "GitHub",
-    className: "bg-gray-100 border-gray-300",
-  },
-  gmail: {
-    icon: Gmail,
-    label: "Gmail",
-    className: "bg-red-100 border-red-200",
-  },
-  other: {
-    icon: Globe,
-    label: "Other",
-    className: "bg-gray-100 text-gray-600 border-gray-200",
-  },
-};
+const sourceConfig: Record<ItemSource, { icon: IconComponent; label: string; className: string }> =
+  {
+    slack: {
+      icon: Slack,
+      label: "Slack",
+      className: "bg-purple-100 border-purple-200",
+    },
+    google_calendar: {
+      icon: GoogleCalendar,
+      label: "Calendar",
+      className: "bg-blue-100 border-blue-200",
+    },
+    linear: {
+      icon: Linear,
+      label: "Linear",
+      className: "bg-indigo-100 border-indigo-200",
+    },
+    github: {
+      icon: Github,
+      label: "GitHub",
+      className: "bg-gray-100 border-gray-300",
+    },
+    gmail: {
+      icon: Gmail,
+      label: "Gmail",
+      className: "bg-red-100 border-red-200",
+    },
+    other: {
+      icon: Globe,
+      label: "Other",
+      className: "bg-gray-100 text-gray-600 border-gray-200",
+    },
+  };
 
 const priorityConfig: Record<
   InboxItem["priority"],

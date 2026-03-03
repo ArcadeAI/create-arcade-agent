@@ -12,7 +12,7 @@ A Slack triage agent built with the Vercel AI SDK, Next.js, and Arcade's MCP Gat
 - **Web**: Next.js 16 App Router + React 19
 - **DB**: Drizzle ORM + better-sqlite3
 - **Auth**: bcrypt + httpOnly session cookies
-- **Frontend**: `@ai-sdk/react` `useChat` hook + Tailwind CSS
+- **Frontend**: `@arcadeai/design-system` components + Tailwind CSS 4; `@ai-sdk/react` `useChat` for the chat panel
 
 ## Key Commands
 
@@ -38,7 +38,7 @@ bunx drizzle-kit migrate        # Run migrations
 | `app/api/auth/arcade/connect/route.ts`  | Pre-flight Arcade connection check                     |
 | `app/api/auth/arcade/callback/route.ts` | OAuth callback (code → tokens)                         |
 | `app/api/auth/arcade/verify/route.ts`   | Custom user verifier (COAT protection)                 |
-| `app/chat/page.tsx`                     | Chat UI with `useChat` hook                            |
+| `app/dashboard/page.tsx`                | Daily triage dashboard (main UI entry point)           |
 | `lib/auth.ts`                           | Session + password helpers                             |
 | `lib/db/schema.ts`                      | Database schema (users + sessions)                     |
 
@@ -63,3 +63,12 @@ Three layers:
 - `lib/system-prompt.md` — Agent purpose and behavior
 - `lib/agent.ts` — Model selection
 - `lib/db/schema.ts` — Database schema
+
+## Claude Code Notes
+
+- **Main UI**: `app/dashboard/page.tsx` — layout, plan-run flow, and ChatPanel toggle. This is the primary entry point after login.
+- **Component library**: import UI components from `@arcadeai/design-system`; import brand icons (Slack, GitHub, Gmail, etc.) from `@arcadeai/design-system/components/ui/atoms/icons`.
+- **Startup checks**: add new env-var warnings in `app/api/health/route.ts` — push a new `ConfigWarning` object to the `warnings` array.
+- **Safe to edit**: `lib/system-prompt.md`, `lib/agent.ts` (model choice), `lib/db/schema.ts` (schema extensions).
+- **Edit with care**: anything under `app/api/auth/arcade/` — the OAuth flow is stateful (PKCE verifier, token exchange, `.arcade-auth/` persistence). Read the full flow before making changes.
+- **Do not touch**: `lib/arcade.ts` unless you understand the `OAuthClientProvider` contract expected by `@ai-sdk/mcp`.

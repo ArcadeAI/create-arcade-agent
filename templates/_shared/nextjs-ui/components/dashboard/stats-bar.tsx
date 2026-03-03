@@ -1,6 +1,12 @@
 import type { ComponentType, SVGProps } from "react";
 import { LayoutDashboard, Globe } from "lucide-react";
-import { Slack, Github, GoogleCalendar, Linear, Gmail } from "@arcadeai/design-system/components/ui/atoms/icons";
+import {
+  Slack,
+  Github,
+  GoogleCalendar,
+  Linear,
+  Gmail,
+} from "@arcadeai/design-system/components/ui/atoms/icons";
 import { Card, CardAction, CardHeader, CardTitle } from "@arcadeai/design-system";
 import { cn } from "@/lib/utils";
 
