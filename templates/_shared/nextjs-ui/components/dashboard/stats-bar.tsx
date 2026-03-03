@@ -27,7 +27,6 @@ const sourceIcons: Record<string, { icon: IconComponent; label: string }> = {
   linear: { icon: Linear, label: "Linear" },
   github: { icon: Github, label: "GitHub" },
   gmail: { icon: Gmail, label: "Gmail" },
-  other: { icon: Globe, label: "Other" },
 };
 
 const gridColsClass: Record<number, string> = {
@@ -86,7 +85,10 @@ export function StatsBar({ stats, activeSource, onSourceClick }: StatsBarProps) 
         onClick={() => onSourceClick(null)}
       />
       {activeSources.map(([source, count]) => {
-        const config = sourceIcons[source] || sourceIcons.other;
+        const config = sourceIcons[source] ?? {
+          icon: Globe,
+          label: source.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+        };
         return (
           <StatCard
             key={source}

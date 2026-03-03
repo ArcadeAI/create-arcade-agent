@@ -23,7 +23,6 @@ const sourceConfig: Record<string, { icon: IconComponent; label: string }> = {
   linear: { icon: Linear, label: "Linear" },
   github: { icon: Github, label: "GitHub" },
   gmail: { icon: Gmail, label: "Gmail" },
-  other: { icon: Globe, label: "Other" },
 };
 
 function StatusDot({ status }: { status: SourceStatus }) {
@@ -51,7 +50,10 @@ export function ToolStatusBar({ statuses, authUrls }: ToolStatusBarProps) {
     <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
       <span className="font-medium">Sources:</span>
       {entries.map(([source, status]) => {
-        const config = sourceConfig[source] || sourceConfig.other;
+        const config = sourceConfig[source] ?? {
+          icon: Globe,
+          label: source.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+        };
         const Icon = config.icon;
         const authUrl =
           status === "auth_required" ? authUrls.find((a) => a.toolName === source)?.url : undefined;
