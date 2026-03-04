@@ -389,10 +389,16 @@ export async function POST() {
       emit({ type: "done" });
     } catch (error) {
       console.error("[plan] Error:", error);
+      const msg = error instanceof Error ? error.message : "Unknown error";
+      const isAuthError =
+        msg.includes("401") ||
+        msg.includes("Missing Authorization") ||
+        msg.includes("Unauthorized");
       emit({
         type: "error",
-        message:
-          error instanceof Error ? error.message : "Unknown error",
+        message: isAuthError
+          ? "Not connected to Arcade. Please connect your Arcade account from the dashboard."
+          : msg,
       });
       emit({ type: "done" });
     } finally {

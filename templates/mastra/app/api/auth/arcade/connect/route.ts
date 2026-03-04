@@ -1,8 +1,9 @@
 import {
   oauthProvider,
-  mcpClient,
+  getArcadeMCPClient,
   getPendingAuthUrl,
   clearPendingAuthUrl,
+  initiateOAuth,
 } from "@/src/mastra/tools/arcade";
 import { getSession } from "@/lib/auth";
 
@@ -46,8 +47,24 @@ async function doConnect(): Promise<{
   data: Record<string, unknown>;
   status?: number;
 }> {
+  let mcpClient: Awaited<ReturnType<typeof getArcadeMCPClient>> | null = null;
   try {
-    const tools = await mcpClient.listTools();
+    // Use MCP SDK's standard OAuth flow (discovery, client registration, PKCE).
+    // This is more reliable than letting Mastra's MCPClient handle auth internally,
+    // as it ensures CLIENT_FILE and VERIFIER_FILE are properly saved before redirecting.
+    const result = await initiateOAuth();
+
+    if (result === "REDIRECT") {
+      const authUrl = getPendingAuthUrl();
+      if (authUrl) {
+        clearPendingAuthUrl();
+        return { data: { connected: false, authUrl } };
+      }
+    }
+
+    // AUTHORIZED — verify by listing tools
+    mcpClient = await getArcadeMCPClient();
+    const tools = await mcpClient.tools();
     return {
       data: { connected: true, toolCount: Object.keys(tools).length },
     };
@@ -66,14 +83,32 @@ async function doConnect(): Promise<{
       },
       status: 502,
     };
+  } finally {
+    if (mcpClient) {
+      try {
+        await mcpClient.close();
+      } catch {
+        // Ignore close errors from failed initialization attempts.
+      }
+    }
   }
 }
 
 async function verifyExistingConnection(): Promise<boolean> {
+  let mcpClient: Awaited<ReturnType<typeof getArcadeMCPClient>> | null = null;
   try {
-    await mcpClient.listTools();
+    mcpClient = await getArcadeMCPClient();
+    await mcpClient.tools();
     return true;
   } catch {
     return false;
+  } finally {
+    if (mcpClient) {
+      try {
+        await mcpClient.close();
+      } catch {
+        // Best effort cleanup.
+      }
+    }
   }
 }

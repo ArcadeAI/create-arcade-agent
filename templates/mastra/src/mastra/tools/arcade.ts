@@ -154,6 +154,14 @@ export const oauthProvider = new ArcadeOAuthProvider();
 
 export { auth };
 
+/**
+ * Trigger the MCP OAuth flow (discovery, registration, PKCE).
+ * Returns "REDIRECT" if the user needs to authorize, "AUTHORIZED" if tokens are already valid.
+ */
+export async function initiateOAuth(): Promise<"AUTHORIZED" | "REDIRECT"> {
+  return auth(oauthProvider, { serverUrl: getGatewayUrl() });
+}
+
 // Mastra MCP client (used by the Mastra agent for chat)
 export const mcpClient = new MCPClient({
   servers: {
