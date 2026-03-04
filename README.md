@@ -37,20 +37,10 @@ Benefits:
 
 ## Usage
 
-### Interactive mode
-
 ```bash
-npx create-arcade-agent
-```
-
-You will be prompted for a project name and framework choice.
-
-### With flags
-
-```bash
-npx create-arcade-agent my-agent --template ai-sdk
-npx create-arcade-agent my-agent --template mastra
-npx create-arcade-agent my-agent --template langchain
+npx @arcadeai/create-agent my-agent --template ai-sdk
+npx @arcadeai/create-agent my-agent --template mastra
+npx @arcadeai/create-agent my-agent --template langchain
 ```
 
 ### What happens during scaffolding
@@ -285,6 +275,38 @@ cp .env.example .env
 bun run build
 bun run lint
 ```
+
+### Releasing a new version
+
+> Releases publish to npm and create a GitHub Release. **Nothing releases automatically on merge to `main`** — you must explicitly push a version tag.
+
+**Steps:**
+
+```bash
+# 1. Start from a clean main branch
+git checkout main && git pull
+
+# 2. Bump the version — updates package.json and creates a git tag automatically
+npm version patch   # 0.1.0 → 0.1.1  (bug fix)
+npm version minor   # 0.1.0 → 0.2.0  (new feature)
+npm version major   # 0.1.0 → 1.0.0  (breaking change)
+
+# 3. Push the commit AND the tag
+git push origin main --follow-tags
+```
+
+Pushing the tag triggers `.github/workflows/release.yml`, which:
+1. Builds the CLI (`npm run build`)
+2. Publishes `@arcadeai/create-agent` to npm with a provenance attestation
+3. Creates a GitHub Release with auto-generated release notes
+
+**Verify:**
+```bash
+npm view @arcadeai/create-agent version   # confirm version is live
+npm audit signatures                      # verify provenance attestation
+```
+
+**First-time / one-time setup:** Before the workflow can publish, the package must exist on npm and npm Trusted Publishers must be configured. See [`CLAUDE.md`](./CLAUDE.md) for the full one-time setup instructions.
 
 ## License
 
