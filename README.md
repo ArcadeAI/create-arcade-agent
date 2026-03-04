@@ -294,8 +294,6 @@ npm view @arcadeai/create-agent version   # confirm version is live
 npm audit signatures                      # verify provenance attestation
 ```
 
-**First-time / one-time setup:** Before the workflow can publish, the package must exist on npm and npm Trusted Publishers must be configured. See [`CLAUDE.md`](./CLAUDE.md) for the full one-time setup instructions.
-
 ## License
 
 MIT

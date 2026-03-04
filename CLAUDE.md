@@ -57,6 +57,14 @@ The CLI is fully non-interactive with both args: `node dist/index.js <name> --te
 5. Runs install steps (`npm install` or `pip install`)
 6. Runs migrations (Drizzle Kit or Alembic) -- failures are non-fatal
 
+## Editing Rules
+
+- Keep generated templates simple and beginner-friendly.
+- Prefer MCP Gateway patterns over direct SDK-specific concepts.
+- Preserve/extend `CUSTOMIZATION POINT` and `AI-EDIT-SAFE` markers.
+- Avoid introducing framework-specific complexity unless required.
+- Keep OAuth/security guidance aligned with Arcade docs (custom verifier for production user-facing apps).
+
 ## Notes for Agents
 
 ### Package managers
@@ -87,27 +95,6 @@ cd .. && node dist/index.js test-proj-py --template langchain
 ## Releasing
 
 Releases are **automatic** — when a PR that bumps the version in `package.json` merges to `main`, the release workflow (`.github/workflows/release.yml`) creates a git tag, publishes to npm, and creates a GitHub Release.
-
-### One-time setup (must be done before first release)
-
-1. **Bootstrap the package on npm** — the package must exist before Trusted Publishers can be configured:
-   ```bash
-   npm run build
-   npm publish --access public
-   ```
-   _(Requires being logged in as an org member: `npm login`)_
-
-2. **Configure Trusted Publisher on npmjs.com**:
-   - Go to `npmjs.com` → `@arcadeai/create-agent` → **Settings** → **Publishing access**
-   - Add Trusted Publisher → GitHub Actions:
-     - Owner: `ArcadeAI`
-     - Repository: `create-arcade-agent`
-     - Workflow filename: `release.yml`
-     - Environment: `npm`
-
-3. **Create a GitHub Environment** (optional, adds an approval gate):
-   - Repo Settings → Environments → New environment → name it `npm`
-   - Add required reviewers if desired
 
 ### How to release a new version
 
