@@ -26,17 +26,6 @@ export function copyEnvIfMissing(targetDir: string) {
 export async function installDeps(targetDir: string, meta: TemplateMeta) {
   const s = p.spinner();
 
-  const needsBun = meta.install.some((step) => step.cmd === "bun" || step.cmd === "bunx");
-  if (needsBun) {
-    const bunCheck = await runAsync("bun", ["--version"], targetDir);
-    if (bunCheck.status !== 0) {
-      p.cancel(
-        "bun is required but not installed. Install it from https://bun.sh and re-run the CLI."
-      );
-      process.exit(1);
-    }
-  }
-
   for (const step of meta.install) {
     s.start(`${step.label}...`);
     const cmd = process.platform === "win32" && step.winCmd ? step.winCmd : step.cmd;

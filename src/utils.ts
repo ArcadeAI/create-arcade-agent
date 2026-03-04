@@ -1,5 +1,10 @@
 import spawn from "cross-spawn";
 
+export async function detectPm(cwd: string): Promise<"bun" | "npm"> {
+  const result = await runAsync("bun", ["--version"], cwd);
+  return result.status === 0 ? "bun" : "npm";
+}
+
 export function runAsync(
   cmd: string,
   args: string[],

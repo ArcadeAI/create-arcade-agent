@@ -8,6 +8,7 @@ import pc from "picocolors";
 import { getProjectName, getTemplate, parseCli } from "./prompts.js";
 import { scaffoldTemplate } from "./scaffold.js";
 import { installDeps, copyEnvIfMissing, runMigrations, printSuccess } from "./post-scaffold.js";
+import { detectPm } from "./utils.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const templatesDir = resolve(__dirname, "../templates");
@@ -40,6 +41,22 @@ Options:
 
   const projectName = await getProjectName(process.argv);
   const { meta, templateDir } = await getTemplate(process.argv, templatesDir);
+
+  // Detect package manager: prefer bun if available, fall back to npm/npx
+  const needsBun = meta.install
+    .concat(meta.migrate)
+    .some((s) => s.cmd === "bun" || s.cmd === "bunx");
+  if (needsBun) {
+    const pm = await detectPm(process.cwd());
+    if (pm === "npm") {
+      p.log.info("bun not found — using npm/npx instead");
+      const remap = (cmd: string) =>
+        cmd === "bun" ? "npm" : cmd === "bunx" ? "npx" : cmd;
+      for (const step of meta.install) step.cmd = remap(step.cmd);
+      for (const step of meta.migrate) step.cmd = remap(step.cmd);
+      meta.devCommand = meta.devCommand.replace(/^bun /, "npm ");
+    }
+  }
 
   const targetDir = resolve(process.cwd(), projectName);
   // Ensure target is a direct child of cwd
