@@ -155,48 +155,42 @@ const SOURCE_CONFIG = {
   slack: {
     label: "Slack",
     color:
-      "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800",
-    icon: "💬",
+      "bg-purple-100 text-purple-900 border-purple-200 dark:bg-purple-950 dark:text-purple-200 dark:border-purple-900",
   },
   google_calendar: {
     label: "Calendar",
     color:
-      "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
-    icon: "📅",
+      "bg-blue-100 text-blue-900 border-blue-200 dark:bg-blue-950 dark:text-blue-200 dark:border-blue-900",
   },
   linear: {
     label: "Linear",
     color:
-      "bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800",
-    icon: "✅",
+      "bg-indigo-100 text-indigo-900 border-indigo-200 dark:bg-indigo-950 dark:text-indigo-200 dark:border-indigo-900",
   },
   github: {
     label: "GitHub",
     color:
-      "bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600",
-    icon: "🔀",
+      "bg-gray-100 text-gray-900 border-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700",
   },
   gmail: {
     label: "Gmail",
     color:
-      "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800",
-    icon: "📧",
+      "bg-red-100 text-red-900 border-red-200 dark:bg-red-950 dark:text-red-200 dark:border-red-900",
   },
   other: {
     label: "Other",
     color:
-      "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700",
-    icon: "🌐",
+      "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700",
   },
 };
 
 
 // --- Priority / Category badges ---
 const PRIORITY_COLORS = {
-  P0: "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800",
-  P1: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800",
-  P2: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
-  FYI: "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700",
+  P0: "bg-red-100 text-red-900 border-red-200 dark:bg-red-950 dark:text-red-200 dark:border-red-900",
+  P1: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-900",
+  P2: "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700",
+  FYI: "bg-transparent text-gray-600 border-gray-300 dark:text-gray-400 dark:border-gray-600",
 };
 
 const CATEGORY_LABELS = {
@@ -216,33 +210,35 @@ function createTaskCard(task, index) {
   const source = SOURCE_CONFIG[task.source] || SOURCE_CONFIG.other;
 
   card.className =
-    "task-card bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow";
+    "task-card bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 hover:shadow-md transition-shadow space-y-3";
   card.style.animation = `fadeSlideIn 0.3s ease-out ${index * 0.05}s both`;
 
   const subtitle =
     task.sourceDetail ||
     (task.participants || []).map((p) => escapeHtml(p.name || p.id)).join(", ");
   const summaryHtml = task.url
-    ? `<a href="${escapeHtml(task.url)}" target="_blank" rel="noopener noreferrer" class="text-sm font-medium mb-1 hover:underline block">${escapeHtml(task.summary || "")}</a>`
-    : `<p class="text-sm font-medium mb-1">${escapeHtml(task.summary || "")}</p>`;
+    ? `<a href="${sanitizeUrl(task.url)}" target="_blank" rel="noopener noreferrer" class="text-sm font-medium leading-snug hover:underline block">${escapeHtml(task.summary || "")}</a>`
+    : `<p class="text-sm font-medium leading-snug">${escapeHtml(task.summary || "")}</p>`;
 
   const timeHtml = task.scheduledTime
-    ? `<span class="text-xs font-medium text-blue-600">${new Date(task.scheduledTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>`
+    ? `<span class="text-xs font-medium text-blue-600 dark:text-blue-400">${new Date(task.scheduledTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>`
     : "";
 
+  const categoryBadge = `<span class="px-2 py-0.5 rounded text-xs font-medium border border-gray-200 dark:border-gray-700 bg-transparent text-gray-700 dark:text-gray-300">${escapeHtml(categoryLabel)}</span>`;
+
   card.innerHTML = `
-    <div class="flex items-start justify-between gap-3 mb-2">
-      <div class="flex items-center gap-2 flex-wrap">
-        <span class="px-2 py-0.5 rounded-full text-xs font-medium border ${source.color}">${source.icon} ${escapeHtml(source.label)}</span>
-        <span class="px-2 py-0.5 rounded-full text-xs font-medium border ${priorityClass}">${escapeHtml(task.priority)}</span>
-        <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">${escapeHtml(categoryLabel)}</span>
-        ${task.effort ? `<span class="text-xs text-gray-500 dark:text-gray-400">${escapeHtml(task.effort)}</span>` : ""}
-        ${timeHtml}
-      </div>
+    <div class="flex items-center gap-2">
+      <span class="px-2 py-0.5 rounded text-xs font-medium border ${source.color}">${escapeHtml(source.label)}</span>
+      <span class="px-2 py-0.5 rounded text-xs font-medium border ${priorityClass}">${escapeHtml(task.priority)}</span>
+      ${categoryBadge}
+      ${timeHtml}
+      ${task.effort ? `<span class="ml-auto text-xs text-gray-500 dark:text-gray-400">${escapeHtml(task.effort)}</span>` : ""}
     </div>
     ${summaryHtml}
-    ${subtitle ? `<p class="text-xs text-gray-500 dark:text-gray-400 mb-2">${escapeHtml(subtitle)}</p>` : ""}
-    ${task.suggestedNextStep ? `<p class="next-step-hint text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded px-2 py-1"><span class="font-medium">Next:</span> ${escapeHtml(task.suggestedNextStep)}</p>` : ""}
+    <div class="flex items-baseline justify-between gap-4">
+      ${subtitle ? `<span class="truncate text-xs text-gray-500 dark:text-gray-400">${escapeHtml(subtitle)}</span>` : "<span></span>"}
+      ${task.suggestedNextStep ? `<span class="shrink-0 text-xs italic text-gray-500 dark:text-gray-400">${escapeHtml(task.suggestedNextStep)}</span>` : ""}
+    </div>
   `;
 
   return card;
@@ -259,12 +255,17 @@ function renderStats(data) {
   if (!container) return;
   container.innerHTML = "";
 
+  const statCardClass =
+    "stats-card bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4";
+
   // Total card
   const totalCard = document.createElement("div");
-  totalCard.className = "stats-card bg-white rounded-xl border border-gray-200 p-4";
+  totalCard.className = statCardClass;
   totalCard.innerHTML = `
-    <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-1">📊 Total</div>
-    <div class="text-2xl font-semibold text-gray-900 dark:text-gray-100">${data.total || 0}</div>
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Total</span>
+    </div>
+    <div class="text-3xl font-bold text-gray-900 dark:text-gray-100">${data.total || 0}</div>
   `;
   container.appendChild(totalCard);
 
@@ -274,10 +275,12 @@ function renderStats(data) {
     if (count <= 0) continue;
     const config = SOURCE_CONFIG[source] || SOURCE_CONFIG.other;
     const card = document.createElement("div");
-    card.className = "stats-card bg-white rounded-xl border border-gray-200 p-4";
+    card.className = statCardClass;
     card.innerHTML = `
-      <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-1">${config.icon} ${escapeHtml(config.label)}</div>
-      <div class="text-2xl font-semibold text-gray-900 dark:text-gray-100">${count}</div>
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-sm font-medium text-gray-500 dark:text-gray-400">${escapeHtml(config.label)}</span>
+      </div>
+      <div class="text-3xl font-bold text-gray-900 dark:text-gray-100">${count}</div>
     `;
     container.appendChild(card);
   }
@@ -315,7 +318,7 @@ function addAuthPrompt(url, toolName) {
     <p class="text-gray-500 dark:text-gray-400 text-xs mb-3">${escapeHtml(label)} needs permission to continue.</p>
     <div class="flex gap-2">
       <a href="${sanitizeUrl(url)}" target="_blank" rel="noopener noreferrer"
-         class="px-3 py-1.5 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 transition-colors">Authorize</a>
+         class="px-3 py-1.5 bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-200 text-white dark:text-gray-900 text-sm rounded-md transition-colors">Authorize</a>
       <button class="dismiss-auth-btn px-3 py-1.5 border border-gray-300 text-sm rounded-md hover:bg-gray-50 transition-colors">Continue</button>
     </div>
   `;
