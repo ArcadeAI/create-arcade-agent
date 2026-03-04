@@ -1,21 +1,41 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { copyFileSync, existsSync } from "fs";
+import { copyFileSync, existsSync, readFileSync, writeFileSync } from "fs";
 import { resolve } from "path";
+import { randomBytes } from "crypto";
 import { runAsync } from "./utils.js";
 import type { TemplateMeta } from "./types.js";
-
 
 export function copyEnvIfMissing(targetDir: string) {
   const example = resolve(targetDir, ".env.example");
   const env = resolve(targetDir, ".env");
   if (existsSync(example) && !existsSync(env)) {
     copyFileSync(example, env);
+    // Generate random secrets for auth
+    let content = readFileSync(env, "utf-8");
+    const secret = randomBytes(32).toString("hex");
+    content = content.replace(/^BETTER_AUTH_SECRET=\s*$/m, `BETTER_AUTH_SECRET=${secret}`);
+    content = content.replace(
+      /^APP_SECRET_KEY=change-me-to-a-random-string\s*$/m,
+      `APP_SECRET_KEY=${randomBytes(32).toString("hex")}`
+    );
+    writeFileSync(env, content);
   }
 }
 
 export async function installDeps(targetDir: string, meta: TemplateMeta) {
   const s = p.spinner();
+
+  const needsBun = meta.install.some((step) => step.cmd === "bun" || step.cmd === "bunx");
+  if (needsBun) {
+    const bunCheck = await runAsync("bun", ["--version"], targetDir);
+    if (bunCheck.status !== 0) {
+      p.cancel(
+        "bun is required but not installed. Install it from https://bun.sh and re-run the CLI."
+      );
+      process.exit(1);
+    }
+  }
 
   for (const step of meta.install) {
     s.start(`${step.label}...`);
@@ -23,8 +43,10 @@ export async function installDeps(targetDir: string, meta: TemplateMeta) {
     const result = await runAsync(cmd, step.args, targetDir);
     if (result.status !== 0) {
       s.stop(`${step.label} failed`);
-      p.log.error(result.stderr || `${cmd} ${step.args.join(" ")} failed`);
-      process.exit(1);
+      p.log.warn(
+        `${result.stderr || `${cmd} ${step.args.join(" ")} failed`}\n\nRun manually: ${cmd} ${step.args.join(" ")}`
+      );
+      return;
     }
     s.stop(step.label.replace(/\.\.\.$/, "") + " done");
   }

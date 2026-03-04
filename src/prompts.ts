@@ -4,11 +4,18 @@ import { resolve, join } from "path";
 import { parseArgs } from "util";
 import type { TemplateMeta } from "./types.js";
 
-function parseCli(argv: string[]): { projectName?: string; template?: string } {
+export function parseCli(argv: string[]): {
+  projectName?: string;
+  template?: string;
+  help?: boolean;
+  version?: boolean;
+} {
   const parsed = parseArgs({
     args: argv.slice(2),
     options: {
       template: { type: "string" },
+      help: { type: "boolean" },
+      version: { type: "boolean" },
     },
     allowPositionals: true,
     strict: false,
@@ -16,21 +23,35 @@ function parseCli(argv: string[]): { projectName?: string; template?: string } {
 
   const projectName = parsed.positionals.find((arg) => !arg.startsWith("-"));
   const template = typeof parsed.values.template === "string" ? parsed.values.template : undefined;
-  return { projectName, template };
+  const help = parsed.values.help === true ? true : undefined;
+  const version = parsed.values.version === true ? true : undefined;
+  return { projectName, template, help, version };
+}
+
+export function validateProjectName(name: string): string | undefined {
+  if (!name.trim()) return "Name is required";
+  if (/[/\\]/.test(name)) return "Project name cannot contain path separators";
+  if (name.startsWith(".")) return "Project name cannot start with a dot";
+  if (name.startsWith("-"))
+    return "Project name cannot start with a hyphen (would be treated as a flag)";
+  if (/[`'"$!;|&<>(){}]/.test(name)) return "Project name contains invalid characters";
+  return undefined;
 }
 
 export async function getProjectName(argv: string[]): Promise<string> {
   let projectName = parseCli(argv).projectName ?? "";
+  if (projectName) {
+    const err = validateProjectName(projectName);
+    if (err) {
+      p.cancel(err);
+      process.exit(1);
+    }
+  }
   if (!projectName) {
     const result = await p.text({
       message: "What is your project name?",
       placeholder: "my-arcade-agent",
-      validate: (v) => {
-        if (!v.trim()) return "Name is required";
-        if (/[/\\]/.test(v.trim())) return "Project name cannot contain path separators";
-        if (v.trim().startsWith(".")) return "Project name cannot start with a dot";
-        return undefined;
-      },
+      validate: (v) => validateProjectName(v.trim()),
     });
     if (p.isCancel(result)) {
       p.cancel("Cancelled.");

@@ -119,11 +119,21 @@ export async function GET(req: Request) {
 
     const data = await response.json();
 
-    // Redirect to Arcade's next_uri if provided, otherwise back to dashboard
+    // Redirect to Arcade's next_uri if provided and same-origin, otherwise dashboard
     const base = process.env.NEXT_PUBLIC_APP_URL
       ? process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")
       : new URL(req.url).origin;
-    const redirectTo = data.next_uri || `${base}/dashboard`;
+    let redirectTo = `${base}/dashboard`;
+    if (data.next_uri) {
+      try {
+        const nextUrl = new URL(data.next_uri, base);
+        if (nextUrl.origin === new URL(base).origin) {
+          redirectTo = nextUrl.toString();
+        }
+      } catch {
+        // Invalid URL — fall through to dashboard
+      }
+    }
     return NextResponse.redirect(redirectTo);
   } catch (error) {
     console.error("Arcade verify error:", error);

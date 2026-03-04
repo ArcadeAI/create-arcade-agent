@@ -80,7 +80,8 @@ def _build_plan_prompt():
         "- confidence: 0.0 to 1.0\n\n"
         "SOURCE MAPPING:\n"
         '- Tools starting with "Slack" -> source: "slack"\n'
-        '- Tools starting with "Google", "GoogleCalendar", or "Calendar" -> source: "google_calendar"\n'
+        '- Tools starting with "Google", "GoogleCalendar", or "Calendar"'
+        ' -> source: "google_calendar"\n'
         '- Tools starting with "Linear" -> source: "linear"\n'
         '- Tools starting with "Git" or "GitHub" -> source: "github"\n'
         '- Tools starting with "Gmail" -> source: "gmail"\n'
@@ -236,7 +237,9 @@ async def plan(request: Request, db: AsyncSession = Depends(get_db)):
                 if original_func is not None:
                     def _truncated_invoke(*args, **kwargs):
                         result = original_func(*args, **kwargs)
-                        s = result if isinstance(result, str) else json.dumps(result) if result else ""
+                        s = result if isinstance(result, str) else (
+                            json.dumps(result) if result else ""
+                        )
                         if len(s) > MAX_TOOL_RESULT_CHARS:
                             return (
                                 s[:MAX_TOOL_RESULT_CHARS]

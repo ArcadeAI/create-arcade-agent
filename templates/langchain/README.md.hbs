@@ -40,7 +40,7 @@ The agent connects to Arcade's MCP Gateway to call Slack tools (and any other to
    uvicorn app.main:app --reload
    ```
 
-6. **Open [http://localhost:8000](http://localhost:8000)**, register an account, and start chatting.
+6. **Open [http://localhost:{{port}}](http://localhost:{{port}})**, register an account, and start chatting.
 
 When the agent first tries to use an Arcade tool that requires OAuth (e.g., Slack), it will return an authorization URL. Click the link to authorize in a new tab, then click "Continue After Authorization" in the chat to retry.
 

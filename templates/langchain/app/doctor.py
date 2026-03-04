@@ -67,9 +67,8 @@ async def main() -> int:
     if not settings.openai_api_key and not settings.anthropic_api_key:
         errors.append("Missing LLM key. Set OPENAI_API_KEY or ANTHROPIC_API_KEY in .env.")
 
-    if settings.arcade_gateway_url:
-        if not await _gateway_reachable(settings.arcade_gateway_url):
-            errors.append(f"Gateway not reachable at {settings.arcade_gateway_url}")
+    if settings.arcade_gateway_url and not await _gateway_reachable(settings.arcade_gateway_url):
+        errors.append(f"Gateway not reachable at {settings.arcade_gateway_url}")
 
     if errors:
         print("\nDoctor found setup issues:\n")

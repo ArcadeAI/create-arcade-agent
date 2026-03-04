@@ -10,6 +10,7 @@ Arcade MCP Gateway OAuth connection and custom user verifier.
 import asyncio
 import json
 import re
+from urllib.parse import urlparse
 
 import httpx
 from fastapi import APIRouter, Depends, Request
@@ -250,7 +251,18 @@ async def verify(request: Request, db: AsyncSession = Depends(get_db)):
             return RedirectResponse("/dashboard?error=verify_failed", status_code=302)
 
         data = resp.json()
-        redirect_to = data.get("next_uri", "/dashboard")
+        next_uri = data.get("next_uri", "")
+        # Validate next_uri to prevent open redirect: only allow relative paths
+        # or same-origin absolute URLs
+        redirect_to = "/dashboard"
+        if next_uri:
+            parsed = urlparse(next_uri)
+            if not parsed.netloc:
+                # Relative path — safe
+                redirect_to = next_uri
+            elif parsed.netloc == urlparse(settings.app_url).netloc:
+                # Same origin — safe
+                redirect_to = next_uri
         return RedirectResponse(redirect_to)
 
     except Exception:

@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 import * as p from "@clack/prompts";
-import { existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 import pc from "picocolors";
 
-import { getProjectName, getTemplate } from "./prompts.js";
+import { getProjectName, getTemplate, parseCli } from "./prompts.js";
 import { scaffoldTemplate } from "./scaffold.js";
 import { installDeps, copyEnvIfMissing, runMigrations, printSuccess } from "./post-scaffold.js";
 
@@ -14,6 +14,28 @@ const templatesDir = resolve(__dirname, "../templates");
 const sharedDir = resolve(templatesDir, "_shared");
 
 async function main() {
+  const cliArgs = parseCli(process.argv);
+  if (cliArgs.help) {
+    console.log(`create-arcade-agent
+
+Usage:
+  create-arcade-agent [project-name] [options]
+
+Options:
+  --template <name>   Template to use (ai-sdk, mastra, langchain)
+  --help              Show this help message
+  --version           Show version number
+`);
+    process.exit(0);
+  }
+  if (cliArgs.version) {
+    const pkg = JSON.parse(readFileSync(resolve(__dirname, "../package.json"), "utf-8")) as {
+      version: string;
+    };
+    console.log(pkg.version);
+    process.exit(0);
+  }
+
   p.intro(pc.bold("create-arcade-agent"));
 
   const projectName = await getProjectName(process.argv);
