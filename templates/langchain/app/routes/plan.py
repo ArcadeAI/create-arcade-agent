@@ -108,6 +108,18 @@ def _build_plan_prompt():
         "```json:summary\n"
         '{"total": <total items>, "bySource": {"slack": 5, "google_calendar": 3, "linear": 2}}\n'
         "```\n\n"
+        "URL RULES:\n"
+        'The "url" field MUST be a deep link to the ITEM ITSELF in its source app '
+        "— NOT a URL found inside the item's content.\n"
+        "- Slack: use the message permalink (https://<team>.slack.com/archives/<channel>/p<ts>). "
+        "If the tool output includes a \"permalink\" field, use it directly. "
+        "NEVER use URLs found within the message text — those are links the sender shared, "
+        "not links to the message.\n"
+        "- GitHub: use the issue or PR URL on github.com\n"
+        "- Linear: use the Linear issue URL\n"
+        "- Gmail: use the Gmail thread URL (https://mail.google.com/mail/u/0/#inbox/<threadId>)\n"
+        "- Google Calendar: use the calendar event htmlLink if available\n"
+        "- If no deep link to the item itself is available, OMIT the \"url\" field entirely.\n\n"
         "Rules:\n"
         "- One json:task block per ACTIONABLE item (skip empty results, metadata, and errors)\n"
         "- Brief status text between blocks is fine\n"
