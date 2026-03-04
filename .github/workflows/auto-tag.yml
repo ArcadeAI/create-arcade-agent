@@ -1,0 +1,28 @@
+name: Auto-tag on version bump
+
+on:
+  push:
+    branches: [main]
+    paths: [package.json]
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    name: Create tag if version changed
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check version and create tag
+        run: |
+          VERSION="v$(node -p 'require("./package.json").version')"
+          if git rev-parse "$VERSION" >/dev/null 2>&1; then
+            echo "Tag $VERSION already exists — skipping"
+          else
+            echo "Creating tag $VERSION"
+            git tag "$VERSION"
+            git push origin "$VERSION"
+          fi
