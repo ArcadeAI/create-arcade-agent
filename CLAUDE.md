@@ -86,7 +86,7 @@ cd .. && node dist/index.js test-proj-py --template langchain
 
 ## Releasing
 
-Releases are **manual and tag-triggered** — nothing publishes automatically on merge to `main`. You must explicitly push a version tag to trigger the release workflow (`.github/workflows/release.yml`).
+Releases are **automatic** — when a PR that bumps the version in `package.json` merges to `main`, the release workflow (`.github/workflows/release.yml`) creates a git tag, publishes to npm, and creates a GitHub Release.
 
 ### One-time setup (must be done before first release)
 
@@ -111,27 +111,21 @@ Releases are **manual and tag-triggered** — nothing publishes automatically on
 
 ### How to release a new version
 
-```bash
-# 1. Make sure you're on main and it's clean
-git checkout main && git pull
+1. Bump the version in `package.json` on your branch (pick one level):
+   - `patch` — `0.1.0` → `0.1.1` (bug fixes)
+   - `minor` — `0.1.0` → `0.2.0` (new features)
+   - `major` — `0.1.0` → `1.0.0` (breaking changes)
+2. Merge the PR to `main`.
 
-# 2. Bump the version in package.json (pick one)
-npm version patch   # 0.1.0 → 0.1.1  (bug fixes)
-npm version minor   # 0.1.0 → 0.2.0  (new features)
-npm version major   # 0.1.0 → 1.0.0  (breaking changes)
-
-# 3. Push the commit AND the tag
-git push origin main --follow-tags
-```
-
-That's it. Pushing the `v*` tag fires the release workflow, which:
-1. Builds the CLI (`npm run build`)
-2. Publishes to npm with provenance (`npm publish --provenance --access public`)
-3. Uses OIDC-based auth (no NPM_TOKEN secret required after Trusted Publishers is configured)
+That's it. The release workflow automatically:
+1. Creates a `v*` git tag from the version in `package.json`
+2. Builds the CLI (`npm run build`)
+3. Publishes to npm with provenance (`npm publish --provenance --access public`)
+4. Creates a GitHub Release with auto-generated notes
 
 ### Verifying a release
 
 After the workflow completes:
-- Check the Actions tab to confirm the publish job succeeded
+- Check the Actions tab to confirm the release job succeeded
 - Run `npm view @arcadeai/create-agent version` to confirm the new version is live
 - Run `npm audit signatures` to verify the provenance attestation
