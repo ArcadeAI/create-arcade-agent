@@ -23,7 +23,7 @@ export function copyEnvIfMissing(targetDir: string) {
   }
 }
 
-export async function installDeps(targetDir: string, meta: TemplateMeta) {
+export async function installDeps(targetDir: string, meta: TemplateMeta): Promise<boolean> {
   const s = p.spinner();
 
   for (const step of meta.install) {
@@ -35,10 +35,11 @@ export async function installDeps(targetDir: string, meta: TemplateMeta) {
       p.log.warn(
         `${result.stderr || `${cmd} ${step.args.join(" ")} failed`}\n\nRun manually: ${cmd} ${step.args.join(" ")}`
       );
-      return;
+      return false;
     }
     s.stop(step.label.replace(/\.\.\.$/, "") + " done");
   }
+  return true;
 }
 
 export async function runMigrations(targetDir: string, meta: TemplateMeta) {

@@ -73,7 +73,11 @@ const PENDING_AUTH_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 function setPendingAuthUrl(url: string) {
   ensureDir();
-  writeFileSync(PENDING_AUTH_URL_FILE, JSON.stringify({ url, createdAt: Date.now() }), { encoding: "utf-8", mode: 0o600 });
+  writeFileSync(
+    PENDING_AUTH_URL_FILE,
+    JSON.stringify({ url, createdAt: Date.now() }),
+    { encoding: "utf-8", mode: 0o600 }
+  );
 }
 
 export function getPendingAuthUrl(): string | null {

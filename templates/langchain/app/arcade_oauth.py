@@ -68,6 +68,7 @@ _PENDING_AUTH_TTL = 300  # 5 minutes
 
 
 def _ensure_dir():
+    # mkdir's mode arg is umask-affected, so we chmod afterward to guarantee 0o700.
     AUTH_DIR.mkdir(exist_ok=True)
     AUTH_DIR.chmod(0o700)
 

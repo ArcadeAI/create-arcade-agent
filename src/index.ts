@@ -74,9 +74,9 @@ Options:
   scaffoldTemplate(templateDir, targetDir, meta, projectName, sharedDir);
   s.stop("Template copied");
 
-  await installDeps(targetDir, meta);
+  const installOk = await installDeps(targetDir, meta);
   copyEnvIfMissing(targetDir);
-  await runMigrations(targetDir, meta);
+  if (installOk) await runMigrations(targetDir, meta);
   printSuccess(projectName, meta);
 
   p.outro(pc.green("Done! Happy building."));

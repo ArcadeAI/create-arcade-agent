@@ -123,11 +123,12 @@ export async function GET(req: Request) {
     const base = process.env.NEXT_PUBLIC_APP_URL
       ? process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")
       : new URL(req.url).origin;
+    const baseUrl = new URL(base);
     let redirectTo = `${base}/dashboard`;
     if (data.next_uri) {
       try {
         const nextUrl = new URL(data.next_uri, base);
-        if (nextUrl.origin === new URL(base).origin) {
+        if (nextUrl.origin === baseUrl.origin) {
           redirectTo = nextUrl.toString();
         }
       } catch {

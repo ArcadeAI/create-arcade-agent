@@ -34,7 +34,7 @@ export function validateProjectName(name: string): string | undefined {
   if (name.startsWith(".")) return "Project name cannot start with a dot";
   if (name.startsWith("-"))
     return "Project name cannot start with a hyphen (would be treated as a flag)";
-  if (/[`'"$!;|&<>(){}]/.test(name)) return "Project name contains invalid characters";
+  if (/[`'"$!;|&<>(){}:]/.test(name)) return "Project name contains invalid characters";
   return undefined;
 }
 
