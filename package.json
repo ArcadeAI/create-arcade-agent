@@ -1,11 +1,19 @@
 {
-  "name": "create-arcade-agent",
+  "name": "@arcadeai/create-agent",
   "version": "0.1.0",
   "type": "module",
   "description": "Scaffold an Arcade-powered AI agent",
   "license": "MIT",
   "bin": {
-    "create-arcade-agent": "./dist/index.js"
+    "create-agent": "./dist/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ArcadeAI/create-arcade-agent.git"
+  },
+  "homepage": "https://github.com/ArcadeAI/create-arcade-agent#readme",
+  "publishConfig": {
+    "access": "public"
   },
   "files": [
     "dist",

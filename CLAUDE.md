@@ -83,3 +83,55 @@ node dist/index.js test-proj --template ai-sdk
 cd test-proj && bun run build && bun run lint
 cd .. && node dist/index.js test-proj-py --template langchain
 ```
+
+## Releasing
+
+Releases are **manual and tag-triggered** — nothing publishes automatically on merge to `main`. You must explicitly push a version tag to trigger the release workflow (`.github/workflows/release.yml`).
+
+### One-time setup (must be done before first release)
+
+1. **Bootstrap the package on npm** — the package must exist before Trusted Publishers can be configured:
+   ```bash
+   npm run build
+   npm publish --access public
+   ```
+   _(Requires being logged in as an org member: `npm login`)_
+
+2. **Configure Trusted Publisher on npmjs.com**:
+   - Go to `npmjs.com` → `@arcadeai/create-agent` → **Settings** → **Publishing access**
+   - Add Trusted Publisher → GitHub Actions:
+     - Owner: `ArcadeAI`
+     - Repository: `create-arcade-agent`
+     - Workflow filename: `release.yml`
+     - Environment: `npm`
+
+3. **Create a GitHub Environment** (optional, adds an approval gate):
+   - Repo Settings → Environments → New environment → name it `npm`
+   - Add required reviewers if desired
+
+### How to release a new version
+
+```bash
+# 1. Make sure you're on main and it's clean
+git checkout main && git pull
+
+# 2. Bump the version in package.json (pick one)
+npm version patch   # 0.1.0 → 0.1.1  (bug fixes)
+npm version minor   # 0.1.0 → 0.2.0  (new features)
+npm version major   # 0.1.0 → 1.0.0  (breaking changes)
+
+# 3. Push the commit AND the tag
+git push origin main --follow-tags
+```
+
+That's it. Pushing the `v*` tag fires the release workflow, which:
+1. Builds the CLI (`npm run build`)
+2. Publishes to npm with provenance (`npm publish --provenance --access public`)
+3. Uses OIDC-based auth (no NPM_TOKEN secret required after Trusted Publishers is configured)
+
+### Verifying a release
+
+After the workflow completes:
+- Check the Actions tab to confirm the publish job succeeded
+- Run `npm view @arcadeai/create-agent version` to confirm the new version is live
+- Run `npm audit signatures` to verify the provenance attestation
