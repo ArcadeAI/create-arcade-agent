@@ -128,7 +128,6 @@ async function checkSourceStatuses() {
       sourceStatuses[source] = info.status;
       if (info.authUrl) authUrlsBySource[source] = info.authUrl;
     }
-    renderToolStatus();
   } catch {
     /* silent */
   }
@@ -191,56 +190,6 @@ const SOURCE_CONFIG = {
   },
 };
 
-// --- Tool status bar ---
-function renderToolStatus() {
-  let container = document.getElementById("tool-status-bar");
-  if (!container) {
-    container = document.createElement("div");
-    container.id = "tool-status-bar";
-    container.className = "flex flex-wrap items-center gap-2 text-xs text-gray-500 mb-4";
-    const main = dashboardArea.querySelector(".max-w-4xl") || dashboardArea;
-    main.insertBefore(container, main.firstChild);
-  }
-
-  const entries = Object.entries(sourceStatuses);
-  if (entries.length === 0) {
-    container.classList.add("hidden");
-    return;
-  }
-  container.classList.remove("hidden");
-
-  container.innerHTML =
-    '<span class="font-medium">Sources:</span>' +
-    entries
-      .map(([source, status]) => {
-        const config = SOURCE_CONFIG[source] || SOURCE_CONFIG.other;
-        const dotClass =
-          status === "connected"
-            ? "bg-green-500"
-            : status === "auth_required"
-              ? "bg-amber-500"
-              : status === "checking"
-                ? "bg-gray-400 animate-pulse"
-                : "bg-gray-300";
-        const borderClass =
-          status === "connected"
-            ? "border-green-200 bg-green-50 dark:bg-green-950/40 dark:border-green-800"
-            : status === "auth_required"
-              ? "border-amber-200 bg-amber-50 dark:bg-amber-950/40 dark:border-amber-800"
-              : "border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-700";
-        const authUrl = status === "auth_required" ? authUrlsBySource[source] : null;
-        const inner =
-          `<span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 ${borderClass}">` +
-          `${config.icon} <span>${escapeHtml(config.label)}</span>` +
-          `<span class="inline-block w-2 h-2 rounded-full ${dotClass}"></span>` +
-          `</span>`;
-        if (authUrl) {
-          return `<a href="${sanitizeUrl(authUrl)}" class="hover:opacity-80 transition-opacity">${inner}</a>`;
-        }
-        return inner;
-      })
-      .join("");
-}
 
 // --- Priority / Category badges ---
 const PRIORITY_COLORS = {
@@ -402,7 +351,6 @@ async function handlePlan() {
   errorBar.classList.add("hidden");
   authPrompts.innerHTML = "";
   authPrompts.classList.add("hidden");
-  renderToolStatus();
   showState();
 
   try {
@@ -436,14 +384,12 @@ async function handlePlan() {
               break;
             case "sources":
               sourceStatuses = Object.fromEntries(event.sources.map((s) => [s, "checking"]));
-              renderToolStatus();
               break;
             case "auth_required":
               addAuthPrompt(event.authUrl || event.auth_url, event.toolName);
               if (event.toolName) {
                 sourceStatuses[event.toolName] = "auth_required";
                 authUrlsBySource[event.toolName] = event.authUrl || event.auth_url;
-                renderToolStatus();
               }
               break;
             case "status":
@@ -474,7 +420,6 @@ async function handlePlan() {
     for (const key of Object.keys(sourceStatuses)) {
       if (sourceStatuses[key] === "checking") sourceStatuses[key] = "connected";
     }
-    renderToolStatus();
     showState();
   }
 }
