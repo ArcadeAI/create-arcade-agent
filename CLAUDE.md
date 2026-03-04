@@ -91,10 +91,12 @@ Releases are **manual and tag-triggered** — nothing publishes automatically on
 ### One-time setup (must be done before first release)
 
 1. **Bootstrap the package on npm** — the package must exist before Trusted Publishers can be configured:
+
    ```bash
    npm run build
    npm publish --access public
    ```
+
    _(Requires being logged in as an org member: `npm login`)_
 
 2. **Configure Trusted Publisher on npmjs.com**:
@@ -125,6 +127,7 @@ git push origin main --follow-tags
 ```
 
 That's it. Pushing the `v*` tag fires the release workflow, which:
+
 1. Builds the CLI (`npm run build`)
 2. Publishes to npm with provenance (`npm publish --provenance --access public`)
 3. Uses OIDC-based auth (no NPM_TOKEN secret required after Trusted Publishers is configured)
@@ -132,6 +135,7 @@ That's it. Pushing the `v*` tag fires the release workflow, which:
 ### Verifying a release
 
 After the workflow completes:
+
 - Check the Actions tab to confirm the publish job succeeded
 - Run `npm view @arcadeai/create-agent version` to confirm the new version is live
 - Run `npm audit signatures` to verify the provenance attestation

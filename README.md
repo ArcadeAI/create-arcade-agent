@@ -296,11 +296,13 @@ git push origin main --follow-tags
 ```
 
 Pushing the tag triggers `.github/workflows/release.yml`, which:
+
 1. Builds the CLI (`npm run build`)
 2. Publishes `@arcadeai/create-agent` to npm with a provenance attestation
 3. Creates a GitHub Release with auto-generated release notes
 
 **Verify:**
+
 ```bash
 npm view @arcadeai/create-agent version   # confirm version is live
 npm audit signatures                      # verify provenance attestation
