@@ -40,7 +40,14 @@ jobs:
         if: steps.check.outputs.exists == 'false'
         with:
           node-version: 22
+          registry-url: "https://registry.npmjs.org"
           cache: npm
+      - name: Upgrade npm for OIDC trusted publishing support
+        if: steps.check.outputs.exists == 'false'
+        run: npm install -g npm@latest
+      - name: Remove _authToken so npm uses OIDC exchange
+        if: steps.check.outputs.exists == 'false'
+        run: npm config delete '//registry.npmjs.org/:_authToken'
       - if: steps.check.outputs.exists == 'false'
         run: npm ci
       - if: steps.check.outputs.exists == 'false'
