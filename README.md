@@ -47,8 +47,7 @@ Rather than listing every generated file, here are the ones you'll actually touc
 | `system-prompt.md`                  | Agent personality and purpose |
 | `agent.ts` / `agent.py`             | Model and provider config     |
 | `lib/arcade.ts` / `arcade_oauth.py` | MCP client setup              |
-| `app/api/chat/` / `routes/chat.py`  | Streaming chat endpoint       |
-| `db/` schema files                  | Data layer                    |
+| `lib/db/` schema files              | Data layer                    |
 | `.env`                              | Configuration                 |
 
 The `mastra` template places agent and tool definitions under `src/mastra/` instead of `lib/`.
