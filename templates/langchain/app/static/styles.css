@@ -33,6 +33,87 @@
   }
 }
 
+/* Custom color utilities — Tailwind CDN is v3 and ignores @theme, so we define these manually */
+.bg-background {
+  background-color: var(--background);
+}
+.bg-card {
+  background-color: var(--card);
+}
+.bg-muted {
+  background-color: var(--muted);
+}
+.bg-primary {
+  background-color: var(--primary);
+}
+.bg-primary\/90 {
+  background-color: color-mix(in oklch, var(--primary) 90%, transparent);
+}
+.bg-destructive\/10 {
+  background-color: color-mix(in oklch, var(--destructive) 10%, transparent);
+}
+.bg-warning\/10 {
+  background-color: color-mix(in oklch, var(--warning) 10%, transparent);
+}
+
+.text-foreground {
+  color: var(--foreground);
+}
+.text-muted-foreground {
+  color: var(--muted-foreground);
+}
+.text-primary {
+  color: var(--primary);
+}
+.text-primary-foreground {
+  color: var(--primary-foreground);
+}
+.text-card-foreground {
+  color: var(--card-foreground);
+}
+.text-destructive {
+  color: var(--destructive);
+}
+.text-warning {
+  color: var(--warning);
+}
+
+.border-border {
+  border-color: var(--border);
+}
+.border-input {
+  border-color: var(--input);
+}
+.border-destructive\/30 {
+  border-color: color-mix(in oklch, var(--destructive) 30%, transparent);
+}
+.border-warning\/30 {
+  border-color: color-mix(in oklch, var(--warning) 30%, transparent);
+}
+.border-t-primary {
+  border-top-color: var(--primary);
+}
+.border-t-foreground {
+  border-top-color: var(--foreground);
+}
+
+.placeholder-muted-foreground::placeholder {
+  color: var(--muted-foreground);
+}
+.ring-ring {
+  --tw-ring-color: var(--ring);
+}
+
+.hover\:bg-primary\/90:hover {
+  background-color: color-mix(in oklch, var(--primary) 90%, transparent);
+}
+.hover\:bg-muted:hover {
+  background-color: var(--muted);
+}
+.hover\:text-foreground:hover {
+  color: var(--foreground);
+}
+
 /* Dark mode: dynamically generated task and stats cards */
 .dark .task-card,
 .dark .stats-card {

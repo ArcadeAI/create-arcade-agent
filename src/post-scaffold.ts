@@ -144,7 +144,7 @@ export function printSuccess(projectName: string, meta: TemplateMeta) {
     "",
     `2. cd ${projectName}`,
     "",
-    `3. # fill in .env with your API keys`,
+    `3. fill in .env with your API keys`,
     pc.dim(
       `     ARCADE_GATEWAY_URL  — from ${arcadeRed(pc.underline("https://app.arcade.dev/mcp-gateways"))}`
     ),

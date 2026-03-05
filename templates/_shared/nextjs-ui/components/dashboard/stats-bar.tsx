@@ -7,7 +7,7 @@ import {
   Linear,
   Gmail,
 } from "@arcadeai/design-system/components/ui/atoms/icons";
-import { Card, CardHeader, CardTitle } from "@arcadeai/design-system";
+import { Card, CardHeader, CardTitle, Skeleton } from "@arcadeai/design-system";
 import { cn } from "@/lib/utils";
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
@@ -19,6 +19,7 @@ interface StatsBarProps {
   };
   activeSource: string | null;
   onSourceClick: (source: string | null) => void;
+  isLoading?: boolean;
 }
 
 const sourceIcons: Record<string, { icon: IconComponent; label: string }> = {
@@ -70,20 +71,32 @@ function StatCard({
   );
 }
 
-export function StatsBar({ stats, activeSource, onSourceClick }: StatsBarProps) {
+export function StatsBar({ stats, activeSource, onSourceClick, isLoading }: StatsBarProps) {
   const activeSources = Object.entries(stats.bySource).filter(([, count]) => count > 0);
   const cardCount = 1 + activeSources.length;
   const gridClass = gridColsClass[Math.min(cardCount, 6)] || gridColsClass[6];
 
   return (
     <div className={cn("grid gap-4", gridClass)}>
-      <StatCard
-        label="Total"
-        count={stats.total}
-        icon={LayoutDashboard}
-        active={activeSource === null}
-        onClick={() => onSourceClick(null)}
-      />
+      {isLoading ? (
+        <Card className="ring-2 ring-primary">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
+              <LayoutDashboard className="size-5 text-muted-foreground" />
+            </div>
+            <Skeleton className="h-9 w-12" />
+          </CardHeader>
+        </Card>
+      ) : (
+        <StatCard
+          label="Total"
+          count={stats.total}
+          icon={LayoutDashboard}
+          active={activeSource === null}
+          onClick={() => onSourceClick(null)}
+        />
+      )}
       {activeSources.map(([source, count]) => {
         const config = sourceIcons[source] ?? {
           icon: Globe,
