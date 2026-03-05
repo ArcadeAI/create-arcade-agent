@@ -14,18 +14,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const templatesDir = resolve(__dirname, "../templates");
 const sharedDir = resolve(templatesDir, "_shared");
 
-// Replace clack's hardcoded green diamonds with Arcade red
-const ESC = "\x1b";
-const greenDiamonds = new RegExp(`${ESC}\\[32m([◇◆●◼])`, "g");
-const _write = process.stdout.write.bind(process.stdout);
-process.stdout.write = function (chunk, ...args) {
-  if (typeof chunk === "string") {
-    chunk = chunk.replace(greenDiamonds, `${ESC}[31m$1`);
-  }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return _write(chunk as any, ...(args as any[]));
-} as typeof process.stdout.write;
-
 async function main() {
   const cliArgs = parseCli(process.argv);
   if (cliArgs.help) {

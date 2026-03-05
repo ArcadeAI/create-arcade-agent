@@ -59,7 +59,7 @@ function printNote(content: string, title: string) {
     ) + 2;
   const bar = pc.gray("│");
   const blankLine = `${bar}  ${" ".repeat(maxLen)}${pc.gray("│")}`;
-  const topLine = `${pc.red("◇")}  ${title} ${pc.gray("─".repeat(maxLen - titleLen - 1) + "╮")}`;
+  const topLine = `${"◇"}  ${title} ${pc.gray("─".repeat(maxLen - titleLen - 1) + "╮")}`;
   const contentLines = lines.map(
     (line) =>
       `${bar}  ${line}${" ".repeat(maxLen - stripVTControlCharacters(line).length)}${pc.gray("│")}`
@@ -132,11 +132,11 @@ export function printSuccess(projectName: string, meta: TemplateMeta) {
   const lines: string[] = [];
 
   lines.push(
-    `${pc.red("1.")} ${hyperlink(GATEWAY_SETUP_URL, pc.red(pc.underline("Click here to create your MCP gateway")))}`,
+    `1. ${hyperlink(GATEWAY_SETUP_URL, pc.underline("Click here to create your MCP gateway"))}`,
     "",
-    `${pc.red("2.")} cd ${projectName}`,
+    `2. cd ${projectName}`,
     "",
-    `${pc.red("3.")} # fill in .env with your API keys`,
+    `3. # fill in .env with your API keys`,
     pc.dim(
       `     ARCADE_GATEWAY_URL  — from ${pc.underline("https://app.arcade.dev/mcp-gateways")}`
     ),
@@ -145,9 +145,9 @@ export function printSuccess(projectName: string, meta: TemplateMeta) {
   );
 
   if (meta.language === "python") {
-    lines.push(`${pc.red("4.")} ${activateCmd}`, `${pc.red("5.")} ${meta.devCommand}`);
+    lines.push(`4. ${activateCmd}`, `5. ${meta.devCommand}`);
   } else {
-    lines.push(`${pc.red("4.")} ${meta.devCommand}`);
+    lines.push(`4. ${meta.devCommand}`);
   }
 
   printNote(lines.join("\n"), "Next steps");
