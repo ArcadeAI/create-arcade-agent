@@ -3,7 +3,7 @@
   "displayName": "LangChain (FastAPI + Python)",
   "hint": "LangGraph + FastAPI + Python",
   "language": "python",
-  "devCommand": "uvicorn app.main:app --host localhost --port 8765",
+  "devCommand": "python server.py",
   "port": 8765,
   "sharedFiles": {
     "system-prompt.md": "app/system-prompt.md",

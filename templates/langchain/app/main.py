@@ -1,4 +1,3 @@
-from contextlib import asynccontextmanager
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -44,18 +43,7 @@ class CanonicalHostMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
-@asynccontextmanager
-async def lifespan(application: FastAPI):
-    # Print registered routes on startup for debugging
-    print("\n📋 Registered routes:")
-    for route in application.routes:
-        if hasattr(route, "methods") and hasattr(route, "path"):
-            print(f"  {', '.join(route.methods):20s} {route.path}")
-    print()
-    yield
-
-
-app = FastAPI(title="Arcade Agent", lifespan=lifespan)
+app = FastAPI(title="Arcade Agent")
 app.add_middleware(CanonicalHostMiddleware)
 
 BASE_DIR = Path(__file__).resolve().parent
