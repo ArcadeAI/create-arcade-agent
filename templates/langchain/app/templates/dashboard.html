@@ -94,21 +94,37 @@
         <p class="text-muted-foreground text-sm mb-6">
           Sign in with your Arcade account to give the agent access to your tools.
         </p>
-        <a
-          id="gate-auth-link"
-          href="#"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="block w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm font-medium transition-colors mb-3"
-        >
-          Sign in with Arcade
-        </a>
-        <button
-          id="gate-auth-retry"
-          class="text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          I've already signed in &mdash; retry
-        </button>
+        <div id="gate-auth-cta">
+          <a
+            id="gate-auth-link"
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="block w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm font-medium transition-colors mb-3"
+          >
+            Sign in with Arcade
+          </a>
+          <button
+            id="gate-auth-retry"
+            class="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            I've already signed in &mdash; retry
+          </button>
+        </div>
+        <div id="gate-auth-waiting" class="hidden">
+          <div class="flex items-center justify-center gap-2 mb-3">
+            <div
+              class="animate-spin h-4 w-4 border-2 border-border border-t-primary rounded-full"
+            ></div>
+            <span class="text-sm text-muted-foreground">Waiting for authorization...</span>
+          </div>
+          <button
+            id="gate-auth-waiting-retry"
+            class="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Done &mdash; check again
+          </button>
+        </div>
       </div>
       <div
         id="gate-error"

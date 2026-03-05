@@ -6,7 +6,10 @@ const gate = document.getElementById("gate");
 const gateChecking = document.getElementById("gate-checking");
 const gateAuth = document.getElementById("gate-auth");
 const gateAuthLink = document.getElementById("gate-auth-link");
+const gateAuthCta = document.getElementById("gate-auth-cta");
+const gateAuthWaiting = document.getElementById("gate-auth-waiting");
 const gateAuthRetry = document.getElementById("gate-auth-retry");
+const gateAuthWaitingRetry = document.getElementById("gate-auth-waiting-retry");
 const gateError = document.getElementById("gate-error");
 const gateErrorMsg = document.getElementById("gate-error-msg");
 const dashboardArea = document.getElementById("dashboard-area");
@@ -53,6 +56,7 @@ function showGateState(state) {
   if (state === "checking") {
     gateChecking.classList.remove("hidden");
   } else if (state === "auth") {
+    resetGateAuthWaiting();
     gateAuth.classList.remove("hidden");
   } else if (state === "error") {
     gateError.classList.remove("hidden");
@@ -99,12 +103,25 @@ async function checkArcadeConnection() {
   }
 }
 
+function showGateAuthWaiting() {
+  gateAuthCta.classList.add("hidden");
+  gateAuthWaiting.classList.remove("hidden");
+}
+
+function resetGateAuthWaiting() {
+  gateAuthCta.classList.remove("hidden");
+  gateAuthWaiting.classList.add("hidden");
+}
+
 function retryArcadeConnection() {
+  resetGateAuthWaiting();
   authInProgress = false;
   checkArcadeConnection();
 }
 
+gateAuthLink.addEventListener("click", showGateAuthWaiting);
 gateAuthRetry.addEventListener("click", retryArcadeConnection);
+gateAuthWaitingRetry.addEventListener("click", retryArcadeConnection);
 checkArcadeConnection();
 window.addEventListener("focus", () => {
   if (!dashboardArea.classList.contains("hidden")) return;
