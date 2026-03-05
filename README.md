@@ -12,29 +12,6 @@ The default template is a daily planning and triage assistant (Slack, Google Cal
 - **An Arcade account** -- sign up at [arcade.dev](https://arcade.dev) and create an MCP Gateway at [app.arcade.dev/mcp-gateways](https://app.arcade.dev/mcp-gateways)
 - **An LLM API key** -- either an [OpenAI API key](https://platform.openai.com) or an [Anthropic API key](https://console.anthropic.com) (if both are set, Anthropic takes priority)
 
-## Quick start
-
-### TypeScript templates (ai-sdk, mastra)
-
-```bash
-npm create @arcadeai/agent my-agent -- --template ai-sdk
-cd my-agent
-cp .env.example .env   # add your keys
-bun run dev
-```
-
-> Or with `npx`: `npx @arcadeai/create-agent my-agent --template ai-sdk`
-
-### Python template (langchain)
-
-```bash
-npm create @arcadeai/agent my-agent -- --template langchain
-cd my-agent
-cp .env.example .env   # add your keys
-source .venv/bin/activate
-uvicorn app.main:app --host localhost --port 8765
-```
-
 ## Templates
 
 | Template      | Flag value  | Tech stack                                                              | UI                            |
