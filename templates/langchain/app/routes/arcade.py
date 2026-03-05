@@ -10,6 +10,7 @@ Arcade MCP Gateway OAuth connection and custom user verifier.
 import asyncio
 import json
 import re
+from urllib.parse import urlparse
 
 import httpx
 from fastapi import APIRouter, Depends, Request
@@ -61,11 +62,32 @@ async def connect(request: Request, db: AsyncSession = Depends(get_db)):
             mcp_client = get_mcp_client()
             await get_cached_tools(mcp_client)
             return {"connected": True}
-        except Exception:  # noqa: S110
-            # Token may be expired/revoked; fall through and restart OAuth.
-            pass
+        except Exception as e:
+            # Distinguish auth failures (need re-auth) from connectivity errors.
+            # Don't trigger a new OAuth redirect for transient failures — that would
+            # force the user to re-authorize when the gateway is just briefly down.
+            err = str(e)
+            is_auth_error = (
+                (isinstance(e, httpx.HTTPStatusError) and e.response.status_code in (401, 403))
+                or "401" in err
+                or "403" in err
+                or "unauthorized" in err.lower()
+                or "forbidden" in err.lower()
+            )
+            if not is_auth_error:
+                return JSONResponse(
+                    {
+                        "connected": False,
+                        "error": (
+                            "Cannot reach Arcade Gateway. "
+                            "Check ARCADE_GATEWAY_URL and try again."
+                        ),
+                    },
+                    status_code=502,
+                )
+            # Auth error — tokens invalid/expired; fall through to re-auth
 
-    # No tokens — kick off OAuth discovery + registration + redirect
+    # No tokens (or expired) — kick off OAuth discovery + registration + redirect
     try:
         auth_url = await discover_and_authorize()
         clear_pending_auth_url()
@@ -250,7 +272,18 @@ async def verify(request: Request, db: AsyncSession = Depends(get_db)):
             return RedirectResponse("/dashboard?error=verify_failed", status_code=302)
 
         data = resp.json()
-        redirect_to = data.get("next_uri", "/dashboard")
+        next_uri = data.get("next_uri", "")
+        # Validate next_uri to prevent open redirect: only allow relative paths
+        # or same-origin absolute URLs
+        redirect_to = "/dashboard"
+        if next_uri:
+            parsed = urlparse(next_uri)
+            if not parsed.netloc:
+                # Relative path — safe
+                redirect_to = next_uri
+            elif parsed.netloc == urlparse(settings.app_url).netloc:
+                # Same origin — safe
+                redirect_to = next_uri
         return RedirectResponse(redirect_to)
 
     except Exception:

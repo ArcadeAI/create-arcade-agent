@@ -5,8 +5,7 @@ import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 
 export const auth = betterAuth({
-  baseURL:
-    process.env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${process.env.PORT ?? 8765}`,
+  baseURL: process.env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${process.env.PORT ?? 8765}`,
   database: drizzleAdapter(db, {
     provider: "sqlite",
     schema,

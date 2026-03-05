@@ -68,7 +68,9 @@ _PENDING_AUTH_TTL = 300  # 5 minutes
 
 
 def _ensure_dir():
+    # mkdir's mode arg is umask-affected, so we chmod afterward to guarantee 0o700.
     AUTH_DIR.mkdir(exist_ok=True)
+    AUTH_DIR.chmod(0o700)
 
 
 def _read_json(path: Path) -> dict | None:
@@ -81,6 +83,7 @@ def _read_json(path: Path) -> dict | None:
 def _write_json(path: Path, data: dict):
     _ensure_dir()
     path.write_text(json.dumps(data, indent=2))
+    path.chmod(0o600)
 
 
 # --- Token / client persistence ---
@@ -272,7 +275,9 @@ async def discover_and_authorize() -> str:
 
         _ensure_dir()
         VERIFIER_FILE.write_text(pkce.code_verifier)
+        VERIFIER_FILE.chmod(0o600)
         STATE_FILE.write_text(state)
+        STATE_FILE.chmod(0o600)
 
         # Persist metadata for exchange_code()
         if oauth_meta:
@@ -306,6 +311,7 @@ async def discover_and_authorize() -> str:
         _pending_auth_url_time = time.time()
         _ensure_dir()
         PENDING_AUTH_URL_FILE.write_text(json.dumps({"url": auth_url, "createdAt": time.time()}))
+        PENDING_AUTH_URL_FILE.chmod(0o600)
         return auth_url
 
 

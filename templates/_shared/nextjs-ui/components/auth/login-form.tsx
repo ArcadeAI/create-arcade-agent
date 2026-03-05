@@ -9,14 +9,13 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
   Input,
   Label,
 } from "@arcadeai/design-system";
 
 export function LoginForm() {
   const router = useRouter();
-  const [isRegister, setIsRegister] = useState(false);
+  const [isRegister, setIsRegister] = useState(true);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -67,8 +66,39 @@ export function LoginForm() {
         <span className="text-xl font-semibold tracking-tight">Arcade Agent</span>
       </div>
       <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-xl">{isRegister ? "Create account" : "Sign in"}</CardTitle>
+        <CardHeader className="pb-2">
+          <div className="mb-3 flex rounded-lg bg-muted p-1">
+            <button
+              type="button"
+              onClick={() => {
+                setIsRegister(true);
+                setError("");
+                formRef.current?.reset();
+              }}
+              className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                isRegister
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Create account
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsRegister(false);
+                setError("");
+                formRef.current?.reset();
+              }}
+              className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                !isRegister
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Sign in
+            </button>
+          </div>
           <CardDescription>
             {isRegister ? "Get started with Arcade Agent" : "Welcome back to Arcade Agent"}
           </CardDescription>
@@ -88,20 +118,6 @@ export function LoginForm() {
               {loading ? "Loading..." : isRegister ? "Create account" : "Sign in"}
             </Button>
           </form>
-          <div className="mt-4 text-center text-sm text-muted-foreground">
-            {isRegister ? "Already have an account?" : "No account yet?"}{" "}
-            <button
-              type="button"
-              onClick={() => {
-                setIsRegister(!isRegister);
-                setError("");
-                formRef.current?.reset();
-              }}
-              className="text-primary underline-offset-4 hover:underline"
-            >
-              {isRegister ? "Sign in" : "Create account"}
-            </button>
-          </div>
         </CardContent>
       </Card>
     </div>

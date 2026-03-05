@@ -1,3 +1,5 @@
+export const maxDuration = 60;
+
 import { handleChatStream } from "@mastra/ai-sdk";
 import { createUIMessageStreamResponse } from "ai";
 import { mastra } from "@/src/mastra";

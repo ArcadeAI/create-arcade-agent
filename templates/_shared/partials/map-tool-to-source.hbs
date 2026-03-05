@@ -1,0 +1,11 @@
+function mapToolToSource(toolName?: string): string {
+  if (!toolName) return "other";
+  if (/^slack[._]/i.test(toolName)) return "slack";
+  if (/^(google|googlecalendar|calendar)[._]/i.test(toolName)) return "google_calendar";
+  if (/^linear[._]/i.test(toolName)) return "linear";
+  if (/^git(hub)?[._]/i.test(toolName)) return "github";
+  if (/^gmail[._]/i.test(toolName)) return "gmail";
+  // Extract namespace from "Namespace.ToolName" pattern
+  const namespace = toolName.split(/[._]/)[0];
+  return namespace ? namespace.toLowerCase() : "other";
+}

@@ -283,12 +283,9 @@ bun run lint
 1. Bump `version` in `package.json` on your branch (patch / minor / major)
 2. Merge the PR to `main`
 
-The release workflow (`.github/workflows/release.yml`) automatically:
-1. Creates a `v*` git tag
-2. Builds the CLI and publishes to npm with provenance
-3. Creates a GitHub Release with auto-generated notes
 
 **Verify:**
+
 ```bash
 npm view @arcadeai/create-agent version   # confirm version is live
 npm audit signatures                      # verify provenance attestation

@@ -29,6 +29,7 @@ export default tseslint.config(
   {
     files: ["templates/**/*.{ts,tsx,js,jsx,mjs}"],
     rules: {
+      "no-console": "off",
       "@typescript-eslint/no-unused-vars": [
         "warn",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
@@ -37,6 +38,7 @@ export default tseslint.config(
   },
 
   {
+    files: ["src/**/*.ts"],
     rules: {
       "no-console": "off",
       "@typescript-eslint/no-unused-vars": [

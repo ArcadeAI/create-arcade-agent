@@ -70,7 +70,7 @@
     <div id="gate" class="flex-1 flex items-center justify-center px-4">
       <div id="gate-checking" class="text-center">
         <div
-          class="animate-spin h-8 w-8 border-4 border-gray-300 dark:border-gray-700 border-t-red-500 rounded-full mx-auto mb-4"
+          class="animate-spin h-8 w-8 border-4 border-gray-300 dark:border-gray-700 border-t-gray-600 dark:border-t-gray-300 rounded-full mx-auto mb-4"
         ></div>
         <p class="text-gray-500 dark:text-gray-400 text-sm">Connecting to Arcade...</p>
       </div>
@@ -80,7 +80,7 @@
       >
         <div class="flex justify-center mb-4">
           <svg
-            class="w-10 h-10 text-red-500"
+            class="w-10 h-10 text-gray-500 dark:text-gray-400"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -104,7 +104,7 @@
           href="#"
           target="_blank"
           rel="noopener noreferrer"
-          class="block w-full px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm font-medium transition-colors mb-3"
+          class="block w-full px-4 py-2 bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-200 text-white dark:text-gray-900 rounded-md text-sm font-medium transition-colors mb-3"
         >
           Sign in with Arcade
         </a>
@@ -121,7 +121,7 @@
       >
         <div class="flex justify-center mb-4">
           <svg
-            class="w-10 h-10 text-red-500"
+            class="w-10 h-10 text-gray-500 dark:text-gray-400"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -134,11 +134,11 @@
             />
           </svg>
         </div>
-        <h2 class="text-lg font-semibold mb-2 text-red-600 dark:text-red-400">Connection Failed</h2>
+        <h2 class="text-lg font-semibold mb-2">Connection Failed</h2>
         <p id="gate-error-msg" class="text-gray-500 dark:text-gray-400 text-sm mb-6"></p>
         <button
           onclick="retryArcadeConnection()"
-          class="block w-full px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm font-medium transition-colors"
+          class="block w-full px-4 py-2 bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-200 text-white dark:text-gray-900 rounded-md text-sm font-medium transition-colors"
         >
           Retry
         </button>
@@ -192,7 +192,7 @@
           </p>
           <button
             id="plan-btn"
-            class="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 transition-colors font-medium"
+            class="px-6 py-3 bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-200 text-white dark:text-gray-900 rounded-lg disabled:opacity-50 transition-colors font-medium"
           >
             Plan my day
           </button>
