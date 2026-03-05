@@ -14,6 +14,18 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const templatesDir = resolve(__dirname, "../templates");
 const sharedDir = resolve(templatesDir, "_shared");
 
+// Replace clack's hardcoded green diamonds with Arcade red
+const ESC = "\x1b";
+const greenDiamonds = new RegExp(`${ESC}\\[32m([◇◆●◼])`, "g");
+const _write = process.stdout.write.bind(process.stdout);
+process.stdout.write = function (chunk, ...args) {
+  if (typeof chunk === "string") {
+    chunk = chunk.replace(greenDiamonds, `${ESC}[31m$1`);
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return _write(chunk as any, ...(args as any[]));
+} as typeof process.stdout.write;
+
 async function main() {
   const cliArgs = parseCli(process.argv);
   if (cliArgs.help) {
@@ -50,8 +62,7 @@ Options:
     const pm = await detectPm(process.cwd());
     if (pm === "npm") {
       p.log.info("bun not found — using npm/npx instead");
-      const remap = (cmd: string) =>
-        cmd === "bun" ? "npm" : cmd === "bunx" ? "npx" : cmd;
+      const remap = (cmd: string) => (cmd === "bun" ? "npm" : cmd === "bunx" ? "npx" : cmd);
       for (const step of meta.install) step.cmd = remap(step.cmd);
       for (const step of meta.migrate) step.cmd = remap(step.cmd);
       meta.devCommand = meta.devCommand.replace(/^bun /, "npm ");
@@ -79,7 +90,7 @@ Options:
   if (installOk) await runMigrations(targetDir, meta);
   printSuccess(projectName, meta);
 
-  p.outro(pc.green("Done! Happy building."));
+  p.outro("Done! Happy building.");
 }
 
 main().catch((error) => {

@@ -1,10 +1,74 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
+import { stripVTControlCharacters } from "node:util";
 import { copyFileSync, existsSync, readFileSync, writeFileSync } from "fs";
 import { resolve } from "path";
 import { randomBytes } from "crypto";
 import { runAsync } from "./utils.js";
 import type { TemplateMeta } from "./types.js";
+
+const GATEWAY_SETUP_URL =
+  "https://app.arcade.dev/mcp-gateways?create=true&tools=" +
+  encodeURIComponent(
+    JSON.stringify([
+      "Slack.ListConversations",
+      "Slack.GetMessages",
+      "Slack.GetConversationMetadata",
+      "Slack.WhoAmI",
+      "GoogleCalendar.ListEvents",
+      "GoogleCalendar.ListCalendars",
+      "GoogleCalendar.WhoAmI",
+      "Linear.GetNotifications",
+      "Linear.GetRecentActivity",
+      "Linear.ListIssues",
+      "Linear.GetIssue",
+      "Linear.ListProjects",
+      "Linear.GetProject",
+      "Linear.WhoAmI",
+      "Github.ListNotifications",
+      "Github.GetNotificationSummary",
+      "Github.ListPullRequests",
+      "Github.GetPullRequest",
+      "Github.GetUserOpenItems",
+      "Github.GetUserRecentActivity",
+      "Github.GetReviewWorkload",
+      "Github.GetIssue",
+      "Github.WhoAmI",
+      "Gmail.ListEmails",
+      "Gmail.ListThreads",
+      "Gmail.GetThread",
+      "Gmail.SearchThreads",
+      "Gmail.WhoAmI",
+    ])
+  );
+
+function hyperlink(url: string, text: string): string {
+  return `\x1b]8;;${url}\x1b\\${text}\x1b]8;;\x1b\\`;
+}
+
+function printNote(content: string, title: string) {
+  const lines = `\n${content}\n`.split("\n");
+  const titleLen = stripVTControlCharacters(title).length;
+  const maxLen =
+    Math.max(
+      lines.reduce((max, line) => {
+        const len = stripVTControlCharacters(line).length;
+        return len > max ? len : max;
+      }, 0),
+      titleLen
+    ) + 2;
+  const bar = pc.gray("│");
+  const blankLine = `${bar}  ${" ".repeat(maxLen)}${pc.gray("│")}`;
+  const topLine = `${pc.red("◇")}  ${title} ${pc.gray("─".repeat(maxLen - titleLen - 1) + "╮")}`;
+  const contentLines = lines.map(
+    (line) =>
+      `${bar}  ${line}${" ".repeat(maxLen - stripVTControlCharacters(line).length)}${pc.gray("│")}`
+  );
+  const bottomLine = pc.gray(`├${"─".repeat(maxLen + 2)}╯`);
+  process.stdout.write(
+    [pc.gray("│"), topLine, blankLine, ...contentLines, blankLine, bottomLine, ""].join("\n") + "\n"
+  );
+}
 
 export function copyEnvIfMissing(targetDir: string) {
   const example = resolve(targetDir, ".env.example");
@@ -65,37 +129,26 @@ export function printSuccess(projectName: string, meta: TemplateMeta) {
   const isWin = process.platform === "win32";
   const activateCmd = isWin ? ".venv\\Scripts\\activate" : "source .venv/bin/activate";
 
-  const lines = [`cd ${projectName}`];
-
-  if (meta.language === "python") {
-    lines.push(`${pc.dim("# fill in .env with your API keys")}`, activateCmd);
-    lines.push(meta.devCommand);
-  } else {
-    lines.push(`${pc.dim("# fill in .env with your API keys")}`, meta.devCommand);
-  }
+  const lines: string[] = [];
 
   lines.push(
+    `${pc.red("1.")} ${hyperlink(GATEWAY_SETUP_URL, pc.red(pc.underline("Click here to create your MCP gateway")))}`,
     "",
-    pc.dim("Your .env needs:"),
-    pc.dim(`  ARCADE_GATEWAY_URL  — from ${pc.cyan("https://app.arcade.dev/mcp-gateways")}`),
-    pc.dim(`  OPENAI_API_KEY or ANTHROPIC_API_KEY`),
+    `${pc.red("2.")} cd ${projectName}`,
     "",
-    pc.dim("Add only these minimum tools to your Arcade Gateway:"),
-    pc.dim("  Slack: Slack_ListConversations, Slack_GetMessages,"),
-    pc.dim("    Slack_GetConversationMetadata, Slack_WhoAmI"),
-    pc.dim("  Google Calendar: GoogleCalendar_ListEvents,"),
-    pc.dim("    GoogleCalendar_ListCalendars, GoogleCalendar_WhoAmI"),
-    pc.dim("  Linear: Linear_GetNotifications, Linear_GetRecentActivity,"),
-    pc.dim("    Linear_ListIssues, Linear_GetIssue, Linear_ListProjects,"),
-    pc.dim("    Linear_GetProject, Linear_WhoAmI"),
-    pc.dim("  GitHub: Github_ListNotifications, Github_GetNotificationSummary,"),
-    pc.dim("    Github_ListPullRequests, Github_GetPullRequest,"),
-    pc.dim("    Github_GetUserOpenItems, Github_GetUserRecentActivity,"),
-    pc.dim("    Github_GetReviewWorkload, Github_GetIssue, Github_WhoAmI"),
-    pc.dim("  Gmail: Gmail_ListEmails, Gmail_ListThreads, Gmail_GetThread,"),
-    pc.dim("    Gmail_SearchThreads, Gmail_WhoAmI"),
-    pc.dim(`Configure at: ${pc.cyan("https://app.arcade.dev/mcp-gateways")}`)
+    `${pc.red("3.")} # fill in .env with your API keys`,
+    pc.dim(
+      `     ARCADE_GATEWAY_URL  — from ${pc.underline("https://app.arcade.dev/mcp-gateways")}`
+    ),
+    pc.dim(`     OPENAI_API_KEY or ANTHROPIC_API_KEY`),
+    ""
   );
 
-  p.note(lines.join("\n"), "Next steps");
+  if (meta.language === "python") {
+    lines.push(`${pc.red("4.")} ${activateCmd}`, `${pc.red("5.")} ${meta.devCommand}`);
+  } else {
+    lines.push(`${pc.red("4.")} ${meta.devCommand}`);
+  }
+
+  printNote(lines.join("\n"), "Next steps");
 }
