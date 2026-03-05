@@ -50,8 +50,7 @@ Options:
     const pm = await detectPm(process.cwd());
     if (pm === "npm") {
       p.log.info("bun not found — using npm/npx instead");
-      const remap = (cmd: string) =>
-        cmd === "bun" ? "npm" : cmd === "bunx" ? "npx" : cmd;
+      const remap = (cmd: string) => (cmd === "bun" ? "npm" : cmd === "bunx" ? "npx" : cmd);
       for (const step of meta.install) step.cmd = remap(step.cmd);
       for (const step of meta.migrate) step.cmd = remap(step.cmd);
       meta.devCommand = meta.devCommand.replace(/^bun /, "npm ");
@@ -79,7 +78,7 @@ Options:
   if (installOk) await runMigrations(targetDir, meta);
   printSuccess(projectName, meta);
 
-  p.outro(pc.green("Done! Happy building."));
+  p.outro("Done! Happy building.");
 }
 
 main().catch((error) => {

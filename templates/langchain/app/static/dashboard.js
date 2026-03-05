@@ -6,7 +6,10 @@ const gate = document.getElementById("gate");
 const gateChecking = document.getElementById("gate-checking");
 const gateAuth = document.getElementById("gate-auth");
 const gateAuthLink = document.getElementById("gate-auth-link");
+const gateAuthCta = document.getElementById("gate-auth-cta");
+const gateAuthWaiting = document.getElementById("gate-auth-waiting");
 const gateAuthRetry = document.getElementById("gate-auth-retry");
+const gateAuthWaitingRetry = document.getElementById("gate-auth-waiting-retry");
 const gateError = document.getElementById("gate-error");
 const gateErrorMsg = document.getElementById("gate-error-msg");
 const dashboardArea = document.getElementById("dashboard-area");
@@ -53,6 +56,7 @@ function showGateState(state) {
   if (state === "checking") {
     gateChecking.classList.remove("hidden");
   } else if (state === "auth") {
+    resetGateAuthWaiting();
     gateAuth.classList.remove("hidden");
   } else if (state === "error") {
     gateError.classList.remove("hidden");
@@ -99,12 +103,25 @@ async function checkArcadeConnection() {
   }
 }
 
+function showGateAuthWaiting() {
+  gateAuthCta.classList.add("hidden");
+  gateAuthWaiting.classList.remove("hidden");
+}
+
+function resetGateAuthWaiting() {
+  gateAuthCta.classList.remove("hidden");
+  gateAuthWaiting.classList.add("hidden");
+}
+
 function retryArcadeConnection() {
+  resetGateAuthWaiting();
   authInProgress = false;
   checkArcadeConnection();
 }
 
+gateAuthLink.addEventListener("click", showGateAuthWaiting);
 gateAuthRetry.addEventListener("click", retryArcadeConnection);
+gateAuthWaitingRetry.addEventListener("click", retryArcadeConnection);
 checkArcadeConnection();
 window.addEventListener("focus", () => {
   if (!dashboardArea.classList.contains("hidden")) return;
@@ -169,8 +186,7 @@ const SOURCE_CONFIG = {
   },
   github: {
     label: "GitHub",
-    color:
-      "bg-gray-100 text-gray-900 border-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700",
+    color: "bg-muted text-muted-foreground border-border",
   },
   gmail: {
     label: "Gmail",
@@ -179,18 +195,16 @@ const SOURCE_CONFIG = {
   },
   other: {
     label: "Other",
-    color:
-      "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700",
+    color: "bg-muted text-muted-foreground border-border",
   },
 };
-
 
 // --- Priority / Category badges ---
 const PRIORITY_COLORS = {
   P0: "bg-red-100 text-red-900 border-red-200 dark:bg-red-950 dark:text-red-200 dark:border-red-900",
   P1: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-900",
   P2: "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700",
-  FYI: "bg-transparent text-gray-600 border-gray-300 dark:text-gray-400 dark:border-gray-600",
+  FYI: "bg-muted text-muted-foreground border-border",
 };
 
 const CATEGORY_LABELS = {
@@ -210,7 +224,7 @@ function createTaskCard(task, index) {
   const source = SOURCE_CONFIG[task.source] || SOURCE_CONFIG.other;
 
   card.className =
-    "task-card bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 hover:shadow-md transition-shadow space-y-3";
+    "task-card bg-card rounded-xl border border-border p-4 hover:shadow-md transition-shadow space-y-3";
   card.style.animation = `fadeSlideIn 0.3s ease-out ${index * 0.05}s both`;
 
   const subtitle =
@@ -224,7 +238,7 @@ function createTaskCard(task, index) {
     ? `<span class="text-xs font-medium text-blue-600 dark:text-blue-400">${new Date(task.scheduledTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>`
     : "";
 
-  const categoryBadge = `<span class="px-2 py-0.5 rounded text-xs font-medium border border-gray-200 dark:border-gray-700 bg-transparent text-gray-700 dark:text-gray-300">${escapeHtml(categoryLabel)}</span>`;
+  const categoryBadge = `<span class="px-2 py-0.5 rounded text-xs font-medium border border-border bg-muted text-muted-foreground">${escapeHtml(categoryLabel)}</span>`;
 
   card.innerHTML = `
     <div class="flex items-center gap-2">
@@ -232,12 +246,12 @@ function createTaskCard(task, index) {
       <span class="px-2 py-0.5 rounded text-xs font-medium border ${priorityClass}">${escapeHtml(task.priority)}</span>
       ${categoryBadge}
       ${timeHtml}
-      ${task.effort ? `<span class="ml-auto text-xs text-gray-500 dark:text-gray-400">${escapeHtml(task.effort)}</span>` : ""}
+      ${task.effort ? `<span class="ml-auto text-xs text-muted-foreground">${escapeHtml(task.effort)}</span>` : ""}
     </div>
     ${summaryHtml}
     <div class="flex items-baseline justify-between gap-4">
-      ${subtitle ? `<span class="truncate text-xs text-gray-500 dark:text-gray-400">${escapeHtml(subtitle)}</span>` : "<span></span>"}
-      ${task.suggestedNextStep ? `<span class="shrink-0 text-xs italic text-gray-500 dark:text-gray-400">${escapeHtml(task.suggestedNextStep)}</span>` : ""}
+      ${subtitle ? `<span class="truncate text-xs text-muted-foreground">${escapeHtml(subtitle)}</span>` : "<span></span>"}
+      ${task.suggestedNextStep ? `<span class="shrink-0 text-xs italic text-muted-foreground">${escapeHtml(task.suggestedNextStep)}</span>` : ""}
     </div>
   `;
 
@@ -255,17 +269,16 @@ function renderStats(data) {
   if (!container) return;
   container.innerHTML = "";
 
-  const statCardClass =
-    "stats-card bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4";
+  const statCardClass = "stats-card bg-card rounded-xl border border-border p-4";
 
   // Total card
   const totalCard = document.createElement("div");
   totalCard.className = statCardClass;
   totalCard.innerHTML = `
     <div class="flex items-center justify-between mb-2">
-      <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Total</span>
+      <span class="text-sm font-medium text-muted-foreground">Total</span>
     </div>
-    <div class="text-3xl font-bold text-gray-900 dark:text-gray-100">${data.total || 0}</div>
+    <div class="text-3xl font-bold">${data.total || 0}</div>
   `;
   container.appendChild(totalCard);
 
@@ -278,9 +291,9 @@ function renderStats(data) {
     card.className = statCardClass;
     card.innerHTML = `
       <div class="flex items-center justify-between mb-2">
-        <span class="text-sm font-medium text-gray-500 dark:text-gray-400">${escapeHtml(config.label)}</span>
+        <span class="text-sm font-medium text-muted-foreground">${escapeHtml(config.label)}</span>
       </div>
-      <div class="text-3xl font-bold text-gray-900 dark:text-gray-100">${count}</div>
+      <div class="text-3xl font-bold">${count}</div>
     `;
     container.appendChild(card);
   }
@@ -307,19 +320,18 @@ function addAuthPrompt(url, toolName) {
 
   const label = toolName || "Service";
   const card = document.createElement("div");
-  card.className =
-    "auth-prompt-card bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4";
+  card.className = "auth-prompt-card bg-warning/10 border border-warning/30 rounded-lg p-4";
   card.dataset.url = url;
   card.innerHTML = `
     <div class="flex items-center gap-2 mb-2">
-      <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      <svg class="w-5 h-5 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
       <h3 class="font-semibold text-sm">${escapeHtml(label)} authorization required</h3>
     </div>
-    <p class="text-gray-500 dark:text-gray-400 text-xs mb-3">${escapeHtml(label)} needs permission to continue.</p>
+    <p class="text-muted-foreground text-xs mb-3">${escapeHtml(label)} needs permission to continue.</p>
     <div class="flex gap-2">
       <a href="${sanitizeUrl(url)}" target="_blank" rel="noopener noreferrer"
-         class="px-3 py-1.5 bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-200 text-white dark:text-gray-900 text-sm rounded-md transition-colors">Authorize</a>
-      <button class="dismiss-auth-btn px-3 py-1.5 border border-gray-300 text-sm rounded-md hover:bg-gray-50 transition-colors">Continue</button>
+         class="px-3 py-1.5 bg-primary text-primary-foreground hover:bg-primary/90 text-sm rounded-md transition-colors">Authorize</a>
+      <button class="dismiss-auth-btn px-3 py-1.5 border border-border text-sm rounded-md hover:bg-muted transition-colors">Continue</button>
     </div>
   `;
 

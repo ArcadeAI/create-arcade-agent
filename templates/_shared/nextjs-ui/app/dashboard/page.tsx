@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/dashboard/empty-state";
 import { StatsBar } from "@/components/dashboard/stats-bar";
 import { TaskList } from "@/components/dashboard/task-list";
 import { SourceAuthGate } from "@/components/dashboard/source-auth-gate";
-import { AuthPrompt } from "@/components/chat/auth-prompt";
+import { AuthPrompt } from "@/components/dashboard/auth-prompt";
 import {
   Skeleton,
   Button,
@@ -76,6 +76,29 @@ function parseArcadeResponse(data: {
     state: "error",
     message: data.error || "Could not connect to Arcade Gateway.",
   };
+}
+
+function ArcadeSignInButton({ authUrl }: { authUrl: string }) {
+  const [loading, setLoading] = useState(false);
+  return (
+    <Button
+      className="w-full"
+      disabled={loading}
+      onClick={() => {
+        setLoading(true);
+        window.location.href = authUrl;
+      }}
+    >
+      {loading ? (
+        <>
+          <Loader2 className="size-4 animate-spin" />
+          Redirecting...
+        </>
+      ) : (
+        "Sign in with Arcade"
+      )}
+    </Button>
+  );
 }
 
 export default function DashboardPage() {
@@ -398,9 +421,7 @@ function DashboardContent() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button asChild className="w-full">
-                  <a href={arcadeStatus.authUrl}>Sign in with Arcade</a>
-                </Button>
+                <ArcadeSignInButton authUrl={arcadeStatus.authUrl} />
                 <button
                   onClick={retryConnection}
                   className="block w-full text-sm text-muted-foreground hover:text-foreground"
@@ -547,7 +568,12 @@ function DashboardContent() {
                   )}
                 </Button>
               </div>
-              <StatsBar stats={stats} activeSource={activeSource} onSourceClick={setActiveSource} />
+              <StatsBar
+                stats={stats}
+                activeSource={activeSource}
+                onSourceClick={setActiveSource}
+                isLoading={loading}
+              />
               <TaskList items={filteredItems} />
             </>
           )}
