@@ -6,7 +6,7 @@ The generated agent is a daily planning and triage assistant that connects to Sl
 
 ## Prerequisites
 
-- **Node.js >= 18** -- required for the CLI itself and the `langchain` template
+- **Node.js >= 22** -- required for the CLI and all templates
 - **Bun >= 1.x** -- required for the `ai-sdk` and `mastra` templates (install from [bun.sh](https://bun.sh))
 - **Python >= 3.10** -- required only for the `langchain` template
 - **An Arcade account** -- sign up at [arcade.dev](https://arcade.dev) and create an MCP Gateway at [app.arcade.dev/mcp-gateways](https://app.arcade.dev/mcp-gateways)
