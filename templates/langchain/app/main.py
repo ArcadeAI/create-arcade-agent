@@ -12,7 +12,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from app.auth import get_current_user
 from app.config import settings
 from app.database import get_db
-from app.routes import arcade, auth, chat, plan
+from app.routes import arcade, auth, plan
 
 _parsed_app_url = urlparse(settings.app_url)
 _canonical_host = _parsed_app_url.hostname
@@ -64,7 +64,6 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 # API routers
 app.include_router(auth.router)
-app.include_router(chat.router)
 app.include_router(arcade.router)
 app.include_router(plan.router)
 
@@ -86,8 +85,3 @@ async def dashboard_page(request: Request, db: AsyncSession = Depends(get_db)):
         return RedirectResponse("/")
     return templates.TemplateResponse("dashboard.html", {"request": request, "user": user})
 
-
-@app.get("/chat")
-async def chat_page(request: Request, db: AsyncSession = Depends(get_db)):
-    """Chat page -- redirect to dashboard."""
-    return RedirectResponse("/dashboard")

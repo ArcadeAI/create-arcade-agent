@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/dashboard/empty-state";
 import { StatsBar } from "@/components/dashboard/stats-bar";
 import { TaskList } from "@/components/dashboard/task-list";
 import { SourceAuthGate } from "@/components/dashboard/source-auth-gate";
-import { AuthPrompt } from "@/components/chat/auth-prompt";
+import { AuthPrompt } from "@/components/dashboard/auth-prompt";
 import {
   Skeleton,
   Button,

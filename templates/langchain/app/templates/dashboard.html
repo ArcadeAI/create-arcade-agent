@@ -1,10 +1,8 @@
 {% extends "base.html" %} {% block title %}Dashboard - Arcade Agent{% endblock %} {% block content
 %}
-<div class="flex flex-col min-h-screen bg-white dark:bg-gray-950">
+<div class="flex flex-col min-h-screen bg-background">
   <!-- Header -->
-  <header
-    class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex-shrink-0"
-  >
+  <header class="bg-card border-b border-border flex-shrink-0">
     <div class="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
       <div class="flex items-center gap-4">
         <div class="flex items-center gap-2">
@@ -15,15 +13,12 @@
           </svg>
           <span class="text-base font-semibold tracking-tight">Arcade Agent</span>
         </div>
-        <span
-          class="hidden text-sm text-gray-400 dark:text-gray-500 sm:block"
-          id="header-date"
-        ></span>
+        <span class="hidden text-sm text-muted-foreground sm:block" id="header-date"></span>
       </div>
       <div class="flex items-center gap-1">
         <button
           onclick="toggleTheme()"
-          class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors"
+          class="p-2 rounded-md hover:bg-muted text-muted-foreground transition-colors"
           title="Toggle theme"
         >
           <svg
@@ -57,7 +52,7 @@
         </button>
         <button
           id="logout-btn"
-          class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 px-2 py-2"
+          class="text-sm text-muted-foreground hover:text-foreground px-2 py-2"
         >
           Logout
         </button>
@@ -70,17 +65,17 @@
     <div id="gate" class="flex-1 flex items-center justify-center px-4">
       <div id="gate-checking" class="text-center">
         <div
-          class="animate-spin h-8 w-8 border-4 border-gray-300 dark:border-gray-700 border-t-red-500 rounded-full mx-auto mb-4"
+          class="animate-spin h-8 w-8 border-4 border-border border-t-primary rounded-full mx-auto mb-4"
         ></div>
-        <p class="text-gray-500 dark:text-gray-400 text-sm">Connecting to Arcade...</p>
+        <p class="text-muted-foreground text-sm">Connecting to Arcade...</p>
       </div>
       <div
         id="gate-auth"
-        class="hidden bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm p-8 max-w-md w-full text-center"
+        class="hidden bg-card border border-border rounded-xl shadow-sm p-8 max-w-md w-full text-center"
       >
         <div class="flex justify-center mb-4">
           <svg
-            class="w-10 h-10 text-red-500"
+            class="w-10 h-10 text-primary"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -96,7 +91,7 @@
           </svg>
         </div>
         <h2 class="text-lg font-semibold mb-2">Connect to Arcade</h2>
-        <p class="text-gray-500 dark:text-gray-400 text-sm mb-6">
+        <p class="text-muted-foreground text-sm mb-6">
           Sign in with your Arcade account to give the agent access to your tools.
         </p>
         <a
@@ -104,24 +99,24 @@
           href="#"
           target="_blank"
           rel="noopener noreferrer"
-          class="block w-full px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm font-medium transition-colors mb-3"
+          class="block w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm font-medium transition-colors mb-3"
         >
           Sign in with Arcade
         </a>
         <button
           id="gate-auth-retry"
-          class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+          class="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           I've already signed in &mdash; retry
         </button>
       </div>
       <div
         id="gate-error"
-        class="hidden bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm p-8 max-w-md w-full text-center"
+        class="hidden bg-card border border-border rounded-xl shadow-sm p-8 max-w-md w-full text-center"
       >
         <div class="flex justify-center mb-4">
           <svg
-            class="w-10 h-10 text-red-500"
+            class="w-10 h-10 text-destructive"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -134,11 +129,11 @@
             />
           </svg>
         </div>
-        <h2 class="text-lg font-semibold mb-2 text-red-600 dark:text-red-400">Connection Failed</h2>
-        <p id="gate-error-msg" class="text-gray-500 dark:text-gray-400 text-sm mb-6"></p>
+        <h2 class="text-lg font-semibold mb-2 text-destructive">Connection Failed</h2>
+        <p id="gate-error-msg" class="text-muted-foreground text-sm mb-6"></p>
         <button
           onclick="retryArcadeConnection()"
-          class="block w-full px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm font-medium transition-colors"
+          class="block w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm font-medium transition-colors"
         >
           Retry
         </button>
@@ -152,12 +147,9 @@
         <div id="auth-prompts" class="hidden space-y-3"></div>
 
         <!-- Status message -->
-        <div
-          id="status-bar"
-          class="hidden flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
-        >
+        <div id="status-bar" class="hidden flex items-center gap-2 text-sm text-muted-foreground">
           <div
-            class="animate-spin h-4 w-4 border-2 border-gray-300 dark:border-gray-700 border-t-gray-600 dark:border-t-gray-400 rounded-full"
+            class="animate-spin h-4 w-4 border-2 border-border border-t-foreground rounded-full"
           ></div>
           <span id="status-text"></span>
         </div>
@@ -165,14 +157,14 @@
         <!-- Error display -->
         <div
           id="error-bar"
-          class="hidden rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950 px-4 py-3 text-sm text-red-800 dark:text-red-400"
+          class="hidden rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
         ></div>
 
         <!-- Empty state -->
         <div id="empty-state" class="flex flex-col items-center justify-center py-24 text-center">
-          <div class="mb-6 rounded-full bg-gray-100 dark:bg-gray-800 p-4">
+          <div class="mb-6 rounded-full bg-muted p-4">
             <svg
-              class="w-8 h-8 text-gray-400 dark:text-gray-500"
+              class="w-8 h-8 text-muted-foreground"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -186,13 +178,13 @@
             </svg>
           </div>
           <h2 class="text-2xl font-semibold tracking-tight mb-2">Ready to triage?</h2>
-          <p class="text-gray-500 dark:text-gray-400 max-w-sm mb-8">
+          <p class="text-muted-foreground max-w-sm mb-8">
             Your agent will scan your inbox, calendar, tasks, and PRs, then prioritize everything
             and build your action plan.
           </p>
           <button
             id="plan-btn"
-            class="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 transition-colors font-medium"
+            class="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground transition-colors font-medium"
           >
             Plan my day
           </button>
@@ -201,14 +193,14 @@
         <!-- Loading skeletons -->
         <div id="loading-skeletons" class="hidden space-y-6">
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="h-24 rounded-xl bg-gray-200 dark:bg-gray-800 animate-pulse"></div>
-            <div class="h-24 rounded-xl bg-gray-200 dark:bg-gray-800 animate-pulse"></div>
-            <div class="h-24 rounded-xl bg-gray-200 dark:bg-gray-800 animate-pulse"></div>
+            <div class="h-24 rounded-xl bg-muted animate-pulse"></div>
+            <div class="h-24 rounded-xl bg-muted animate-pulse"></div>
+            <div class="h-24 rounded-xl bg-muted animate-pulse"></div>
           </div>
           <div class="space-y-3">
-            <div class="h-28 rounded-xl bg-gray-200 dark:bg-gray-800 animate-pulse"></div>
-            <div class="h-28 rounded-xl bg-gray-200 dark:bg-gray-800 animate-pulse"></div>
-            <div class="h-28 rounded-xl bg-gray-200 dark:bg-gray-800 animate-pulse"></div>
+            <div class="h-28 rounded-xl bg-muted animate-pulse"></div>
+            <div class="h-28 rounded-xl bg-muted animate-pulse"></div>
+            <div class="h-28 rounded-xl bg-muted animate-pulse"></div>
           </div>
         </div>
 
@@ -222,14 +214,11 @@
           <div class="flex items-center justify-between gap-3">
             <h2 class="text-lg font-semibold flex items-center gap-2">
               Today's Tasks
-              <span
-                id="task-count"
-                class="text-sm font-normal text-gray-400 dark:text-gray-500"
-              ></span>
+              <span id="task-count" class="text-sm font-normal text-muted-foreground"></span>
             </h2>
             <button
               id="replan-btn"
-              class="hidden px-3 py-1.5 border border-gray-300 dark:border-gray-700 rounded-md text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              class="hidden px-3 py-1.5 border border-border rounded-md text-sm text-muted-foreground hover:bg-muted transition-colors"
             >
               Replan my day
             </button>

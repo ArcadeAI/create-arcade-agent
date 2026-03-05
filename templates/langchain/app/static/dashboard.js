@@ -173,8 +173,7 @@ const SOURCE_CONFIG = {
   },
   github: {
     label: "GitHub",
-    color:
-      "bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600",
+    color: "bg-muted text-muted-foreground border-border",
     icon: "🔀",
   },
   gmail: {
@@ -185,8 +184,7 @@ const SOURCE_CONFIG = {
   },
   other: {
     label: "Other",
-    color:
-      "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700",
+    color: "bg-muted text-muted-foreground border-border",
     icon: "🌐",
   },
 };
@@ -197,7 +195,7 @@ function renderToolStatus() {
   if (!container) {
     container = document.createElement("div");
     container.id = "tool-status-bar";
-    container.className = "flex flex-wrap items-center gap-2 text-xs text-gray-500 mb-4";
+    container.className = "flex flex-wrap items-center gap-2 text-xs text-muted-foreground mb-4";
     const main = dashboardArea.querySelector(".max-w-4xl") || dashboardArea;
     main.insertBefore(container, main.firstChild);
   }
@@ -220,14 +218,14 @@ function renderToolStatus() {
             : status === "auth_required"
               ? "bg-amber-500"
               : status === "checking"
-                ? "bg-gray-400 animate-pulse"
-                : "bg-gray-300";
+                ? "bg-muted-foreground animate-pulse"
+                : "bg-border";
         const borderClass =
           status === "connected"
             ? "border-green-200 bg-green-50 dark:bg-green-950/40 dark:border-green-800"
             : status === "auth_required"
-              ? "border-amber-200 bg-amber-50 dark:bg-amber-950/40 dark:border-amber-800"
-              : "border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-700";
+              ? "border-warning/30 bg-warning/10"
+              : "border-border bg-muted";
         const authUrl = status === "auth_required" ? authUrlsBySource[source] : null;
         const inner =
           `<span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 ${borderClass}">` +
@@ -247,7 +245,7 @@ const PRIORITY_COLORS = {
   P0: "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800",
   P1: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800",
   P2: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
-  FYI: "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700",
+  FYI: "bg-muted text-muted-foreground border-border",
 };
 
 const CATEGORY_LABELS = {
@@ -267,7 +265,7 @@ function createTaskCard(task, index) {
   const source = SOURCE_CONFIG[task.source] || SOURCE_CONFIG.other;
 
   card.className =
-    "task-card bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow";
+    "task-card bg-card rounded-xl border border-border p-4 hover:shadow-md transition-shadow";
   card.style.animation = `fadeSlideIn 0.3s ease-out ${index * 0.05}s both`;
 
   const subtitle =
@@ -286,14 +284,14 @@ function createTaskCard(task, index) {
       <div class="flex items-center gap-2 flex-wrap">
         <span class="px-2 py-0.5 rounded-full text-xs font-medium border ${source.color}">${source.icon} ${escapeHtml(source.label)}</span>
         <span class="px-2 py-0.5 rounded-full text-xs font-medium border ${priorityClass}">${escapeHtml(task.priority)}</span>
-        <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">${escapeHtml(categoryLabel)}</span>
-        ${task.effort ? `<span class="text-xs text-gray-500 dark:text-gray-400">${escapeHtml(task.effort)}</span>` : ""}
+        <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border">${escapeHtml(categoryLabel)}</span>
+        ${task.effort ? `<span class="text-xs text-muted-foreground">${escapeHtml(task.effort)}</span>` : ""}
         ${timeHtml}
       </div>
     </div>
     ${summaryHtml}
-    ${subtitle ? `<p class="text-xs text-gray-500 dark:text-gray-400 mb-2">${escapeHtml(subtitle)}</p>` : ""}
-    ${task.suggestedNextStep ? `<p class="next-step-hint text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded px-2 py-1"><span class="font-medium">Next:</span> ${escapeHtml(task.suggestedNextStep)}</p>` : ""}
+    ${subtitle ? `<p class="text-xs text-muted-foreground mb-2">${escapeHtml(subtitle)}</p>` : ""}
+    ${task.suggestedNextStep ? `<p class="next-step-hint text-xs text-muted-foreground bg-muted rounded px-2 py-1"><span class="font-medium">Next:</span> ${escapeHtml(task.suggestedNextStep)}</p>` : ""}
   `;
 
   return card;
@@ -312,10 +310,10 @@ function renderStats(data) {
 
   // Total card
   const totalCard = document.createElement("div");
-  totalCard.className = "stats-card bg-white rounded-xl border border-gray-200 p-4";
+  totalCard.className = "stats-card bg-card rounded-xl border border-border p-4";
   totalCard.innerHTML = `
-    <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-1">📊 Total</div>
-    <div class="text-2xl font-semibold text-gray-900 dark:text-gray-100">${data.total || 0}</div>
+    <div class="flex items-center gap-2 text-muted-foreground text-sm mb-1">📊 Total</div>
+    <div class="text-2xl font-semibold">${data.total || 0}</div>
   `;
   container.appendChild(totalCard);
 
@@ -325,10 +323,10 @@ function renderStats(data) {
     if (count <= 0) continue;
     const config = SOURCE_CONFIG[source] || SOURCE_CONFIG.other;
     const card = document.createElement("div");
-    card.className = "stats-card bg-white rounded-xl border border-gray-200 p-4";
+    card.className = "stats-card bg-card rounded-xl border border-border p-4";
     card.innerHTML = `
-      <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-1">${config.icon} ${escapeHtml(config.label)}</div>
-      <div class="text-2xl font-semibold text-gray-900 dark:text-gray-100">${count}</div>
+      <div class="flex items-center gap-2 text-muted-foreground text-sm mb-1">${config.icon} ${escapeHtml(config.label)}</div>
+      <div class="text-2xl font-semibold">${count}</div>
     `;
     container.appendChild(card);
   }
@@ -355,19 +353,18 @@ function addAuthPrompt(url, toolName) {
 
   const label = toolName || "Service";
   const card = document.createElement("div");
-  card.className =
-    "auth-prompt-card bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4";
+  card.className = "auth-prompt-card bg-warning/10 border border-warning/30 rounded-lg p-4";
   card.dataset.url = url;
   card.innerHTML = `
     <div class="flex items-center gap-2 mb-2">
-      <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      <svg class="w-5 h-5 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
       <h3 class="font-semibold text-sm">${escapeHtml(label)} authorization required</h3>
     </div>
-    <p class="text-gray-500 dark:text-gray-400 text-xs mb-3">${escapeHtml(label)} needs permission to continue.</p>
+    <p class="text-muted-foreground text-xs mb-3">${escapeHtml(label)} needs permission to continue.</p>
     <div class="flex gap-2">
       <a href="${sanitizeUrl(url)}" target="_blank" rel="noopener noreferrer"
-         class="px-3 py-1.5 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 transition-colors">Authorize</a>
-      <button class="dismiss-auth-btn px-3 py-1.5 border border-gray-300 text-sm rounded-md hover:bg-gray-50 transition-colors">Continue</button>
+         class="px-3 py-1.5 bg-primary text-primary-foreground text-sm rounded-md hover:bg-primary/90 transition-colors">Authorize</a>
+      <button class="dismiss-auth-btn px-3 py-1.5 border border-border text-sm rounded-md hover:bg-muted transition-colors">Continue</button>
     </div>
   `;
 
