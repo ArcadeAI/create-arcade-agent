@@ -1,7 +1,7 @@
 {
   "name": "ai-sdk",
   "displayName": "AI SDK (Next.js + TypeScript)",
-  "hint": "",
+  "hint": "Vercel AI SDK + React + TypeScript",
   "language": "typescript",
   "devCommand": "bun run dev",
   "port": 8765,
@@ -23,27 +23,19 @@
   "install": [
     {
       "cmd": "bun",
-      "args": [
-        "install"
-      ],
+      "args": ["install"],
       "label": "Installing dependencies"
     }
   ],
   "migrate": [
     {
       "cmd": "bunx",
-      "args": [
-        "drizzle-kit",
-        "generate"
-      ],
+      "args": ["drizzle-kit", "generate"],
       "label": "Generating migrations"
     },
     {
       "cmd": "bunx",
-      "args": [
-        "drizzle-kit",
-        "migrate"
-      ],
+      "args": ["drizzle-kit", "migrate"],
       "label": "Running migrations"
     }
   ]

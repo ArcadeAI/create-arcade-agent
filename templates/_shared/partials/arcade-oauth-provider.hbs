@@ -1,4 +1,6 @@
+{{#if (eq name "mastra")}}
 import { MCPClient } from "@mastra/mcp";
+{{/if}}
 import { createMCPClient } from "@ai-sdk/mcp";
 import { auth } from "@modelcontextprotocol/sdk/client/auth.js";
 import type { OAuthClientProvider } from "@modelcontextprotocol/sdk/client/auth.js";
@@ -48,7 +50,7 @@ const VERIFIER_FILE = join(AUTH_DIR, "verifier.txt");
 const PENDING_AUTH_URL_FILE = join(AUTH_DIR, "pending-auth-url.txt");
 
 function ensureDir() {
-  if (!existsSync(AUTH_DIR)) mkdirSync(AUTH_DIR, { recursive: true });
+  if (!existsSync(AUTH_DIR)) mkdirSync(AUTH_DIR, { recursive: true, mode: 0o700 });
 }
 
 function readJson<T>(path: string): T | undefined {
@@ -62,7 +64,7 @@ function readJson<T>(path: string): T | undefined {
 
 function writeJson(path: string, data: unknown) {
   ensureDir();
-  writeFileSync(path, JSON.stringify(data, null, 2));
+  writeFileSync(path, JSON.stringify(data, null, 2), { mode: 0o600 });
 }
 
 // --- Pending auth URL (consumed by the connect endpoint) ---
@@ -71,7 +73,11 @@ const PENDING_AUTH_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 function setPendingAuthUrl(url: string) {
   ensureDir();
-  writeFileSync(PENDING_AUTH_URL_FILE, JSON.stringify({ url, createdAt: Date.now() }), "utf-8");
+  writeFileSync(
+    PENDING_AUTH_URL_FILE,
+    JSON.stringify({ url, createdAt: Date.now() }),
+    { encoding: "utf-8", mode: 0o600 }
+  );
 }
 
 export function getPendingAuthUrl(): string | null {
@@ -98,7 +104,7 @@ export function clearPendingAuthUrl() {
   }
 }
 
-// --- OAuth provider (implements OAuthClientProvider from MCP SDK directly) ---
+// --- OAuth provider (implements OAuthClientProvider from MCP SDK) ---
 
 class ArcadeOAuthProvider implements OAuthClientProvider {
   get redirectUrl() {
@@ -142,7 +148,7 @@ class ArcadeOAuthProvider implements OAuthClientProvider {
   // connect route prevents race conditions within a single process.
   saveCodeVerifier(verifier: string): void {
     ensureDir();
-    writeFileSync(VERIFIER_FILE, verifier);
+    writeFileSync(VERIFIER_FILE, verifier, { mode: 0o600 });
   }
 
   codeVerifier(): string {
@@ -162,6 +168,7 @@ export async function initiateOAuth(): Promise<"AUTHORIZED" | "REDIRECT"> {
   return auth(oauthProvider, { serverUrl: getGatewayUrl() });
 }
 
+{{#if (eq name "mastra")}}
 // Mastra MCP client (used by the Mastra agent for chat)
 export const mcpClient = new MCPClient({
   servers: {
@@ -172,8 +179,9 @@ export const mcpClient = new MCPClient({
   },
 });
 
+{{/if}}
 /**
- * Create an AI SDK MCP client for Arcade Gateway (used by the plan API).
+ * Create an AI SDK MCP client for Arcade Gateway using stored OAuth tokens.
  * Auto-detects transport: SSE for /sse URLs, Streamable HTTP otherwise.
  */
 export async function getArcadeMCPClient() {

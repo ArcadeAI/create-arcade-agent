@@ -1,5 +1,5 @@
 {% extends "base.html" %} {% block title %}Login - Arcade Agent{% endblock %} {% block content %}
-<div class="min-h-screen flex items-center justify-center">
+<div class="min-h-screen flex items-center justify-center px-4">
   <div class="w-full max-w-sm">
     <div class="flex flex-col items-center gap-3 mb-8">
       <svg width="40" height="41" viewBox="0 0 309 315" fill="currentColor" aria-hidden="true">
@@ -11,9 +11,28 @@
     </div>
 
     <div class="bg-card border border-border rounded-xl p-6 shadow-sm">
-      <h1 class="text-lg font-semibold mb-1" id="form-title">Sign in</h1>
+      <!-- Tab switcher -->
+      <div class="mb-4 flex rounded-lg bg-muted p-1">
+        <button
+          type="button"
+          id="tab-register"
+          onclick="setMode(true)"
+          class="flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors bg-card text-foreground shadow-sm"
+        >
+          Create account
+        </button>
+        <button
+          type="button"
+          id="tab-signin"
+          onclick="setMode(false)"
+          class="flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors text-muted-foreground hover:text-foreground"
+        >
+          Sign in
+        </button>
+      </div>
+
       <p class="text-sm text-muted-foreground mb-5" id="form-subtitle">
-        Welcome back to Arcade Agent
+        Get started with Arcade Agent
       </p>
 
       <form id="auth-form" class="space-y-4">
@@ -37,44 +56,47 @@
         <button
           type="submit"
           id="submit-btn"
-          class="w-full py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground transition-colors"
+          class="w-full py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 transition-colors font-medium"
         >
-          Sign in
+          Create account
         </button>
       </form>
-
-      <p class="text-sm text-center mt-4 text-muted-foreground">
-        <span id="toggle-text">No account yet?</span>
-        <button id="toggle-mode" class="underline text-foreground ml-1">Create account</button>
-      </p>
     </div>
   </div>
 </div>
 {% endblock %} {% block scripts %}
 <script>
-  let isRegister = false;
-  const form = document.getElementById("auth-form");
-  const submitBtn = document.getElementById("submit-btn");
-  const toggleBtn = document.getElementById("toggle-mode");
-  const toggleText = document.getElementById("toggle-text");
-  const formTitle = document.getElementById("form-title");
-  const formSubtitle = document.getElementById("form-subtitle");
-  const errorMsg = document.getElementById("error-msg");
+  let isRegister = true;
 
-  toggleBtn.addEventListener("click", () => {
-    isRegister = !isRegister;
-    formTitle.textContent = isRegister ? "Create account" : "Sign in";
-    formSubtitle.textContent = isRegister
+  function setMode(register) {
+    isRegister = register;
+
+    // Update subtitle
+    document.getElementById("form-subtitle").textContent = register
       ? "Get started with Arcade Agent"
       : "Welcome back to Arcade Agent";
-    submitBtn.textContent = isRegister ? "Create account" : "Sign in";
-    toggleText.textContent = isRegister ? "Already have an account?" : "No account yet?";
-    toggleBtn.textContent = isRegister ? "Sign in" : "Create account";
-    errorMsg.classList.add("hidden");
-  });
 
-  form.addEventListener("submit", async (e) => {
+    // Update submit button
+    document.getElementById("submit-btn").textContent = register ? "Create account" : "Sign in";
+
+    // Update tab appearance
+    const activeClasses = "bg-card text-foreground shadow-sm";
+    const inactiveClasses = "text-muted-foreground hover:text-foreground";
+
+    const tabRegister = document.getElementById("tab-register");
+    const tabSignin = document.getElementById("tab-signin");
+
+    tabRegister.className = `flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${register ? activeClasses : inactiveClasses}`;
+    tabSignin.className = `flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${!register ? activeClasses : inactiveClasses}`;
+
+    document.getElementById("error-msg").classList.add("hidden");
+    document.getElementById("auth-form").reset();
+  }
+
+  document.getElementById("auth-form").addEventListener("submit", async (e) => {
     e.preventDefault();
+    const errorMsg = document.getElementById("error-msg");
+    const submitBtn = document.getElementById("submit-btn");
     errorMsg.classList.add("hidden");
     submitBtn.disabled = true;
     submitBtn.textContent = "Loading...";

@@ -15,51 +15,9 @@ function encodeEvent(event: PlanEvent): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(event) + "\n");
 }
 
-function mapToolToSource(toolName?: string): string {
-  if (!toolName) return "other";
-  const service = toolName.split(".")[0].toLowerCase();
-  if (service === "slack") return "slack";
-  if (service === "google" || service === "googlecalendar" || service === "calendar") return "google_calendar";
-  if (service === "linear") return "linear";
-  if (service === "git" || service === "github") return "github";
-  if (service === "gmail") return "gmail";
-  return service || "other";
-}
+{{> map-tool-to-source}}
 
-function extractAuthUrlFromToolOutput(output: unknown): string | null {
-  const looksLikeAuthUrl = (value: unknown): value is string =>
-    typeof value === "string" &&
-    /oauth|authorize/i.test(value);
-
-  const fromRecord = (value: unknown): string | null => {
-    if (!value || typeof value !== "object") return null;
-    const obj = value as Record<string, unknown>;
-    const direct =
-      (typeof obj.authorization_url === "string" && obj.authorization_url) ||
-      (looksLikeAuthUrl(obj.url) ? obj.url : null);
-    if (direct) return direct;
-
-    if (obj.structuredContent && typeof obj.structuredContent === "object") {
-      const nested = obj.structuredContent as Record<string, unknown>;
-      const nestedUrl =
-        (typeof nested.authorization_url === "string" &&
-          nested.authorization_url) ||
-        (looksLikeAuthUrl(nested.url) ? nested.url : null);
-      if (nestedUrl) return nestedUrl;
-    }
-    return null;
-  };
-
-  const fromObject = fromRecord(output);
-  if (fromObject) return fromObject;
-
-  const raw =
-    typeof output === "string" ? output : JSON.stringify(output ?? "");
-  const match = raw.match(
-    /https:\/\/[^\s"'\]}>]+\/oauth\/[^\s"'\]}>]+|https:\/\/[^\s"'\]}>]+authorize[^\s"'\]}>]*/i
-  );
-  return match ? match[0] : null;
-}
+{{> extract-auth-url}}
 
 // --- System prompt for plan mode ---
 
@@ -118,6 +76,16 @@ After all items from all sources, output:
 \`\`\`json:summary
 {"total": <total items>, "bySource": {"slack": 5, "google_calendar": 3, "linear": 2}}
 \`\`\`
+
+URL RULES:
+Prefer a direct deep link to the item itself:
+- Slack: use the "permalink" field if present (https://<team>.slack.com/archives/<channel>/p<ts>)
+- GitHub: use the issue or PR URL on github.com
+- Linear: use the Linear issue URL
+- Gmail: use the Gmail thread URL (https://mail.google.com/mail/u/0/#inbox/<threadId>)
+- Google Calendar: use the "htmlLink" field if present
+If no direct deep link is available, fall back to the most relevant URL found anywhere in the tool response.
+Only omit "url" if there is truly no URL available in the response at all.
 
 Rules:
 - One json:task block per ACTIONABLE item (skip empty results, metadata, and errors)

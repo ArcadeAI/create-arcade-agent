@@ -80,7 +80,8 @@ def _build_plan_prompt():
         "- confidence: 0.0 to 1.0\n\n"
         "SOURCE MAPPING:\n"
         '- Tools starting with "Slack" -> source: "slack"\n'
-        '- Tools starting with "Google", "GoogleCalendar", or "Calendar" -> source: "google_calendar"\n'
+        '- Tools starting with "Google", "GoogleCalendar", or "Calendar"'
+        ' -> source: "google_calendar"\n'
         '- Tools starting with "Linear" -> source: "linear"\n'
         '- Tools starting with "Git" or "GitHub" -> source: "github"\n'
         '- Tools starting with "Gmail" -> source: "gmail"\n'
@@ -107,6 +108,17 @@ def _build_plan_prompt():
         "```json:summary\n"
         '{"total": <total items>, "bySource": {"slack": 5, "google_calendar": 3, "linear": 2}}\n'
         "```\n\n"
+        "URL RULES:\n"
+        "Prefer a direct deep link to the item itself:\n"
+        "- Slack: use the \"permalink\" field if present"
+        " (https://<team>.slack.com/archives/<channel>/p<ts>)\n"
+        "- GitHub: use the issue or PR URL on github.com\n"
+        "- Linear: use the Linear issue URL\n"
+        "- Gmail: use the Gmail thread URL (https://mail.google.com/mail/u/0/#inbox/<threadId>)\n"
+        "- Google Calendar: use the \"htmlLink\" field if present\n"
+        "If no direct deep link is available, fall back to the most relevant URL"
+        " found anywhere in the tool response.\n"
+        "Only omit \"url\" if there is truly no URL available in the response at all.\n\n"
         "Rules:\n"
         "- One json:task block per ACTIONABLE item (skip empty results, metadata, and errors)\n"
         "- Brief status text between blocks is fine\n"
@@ -236,7 +248,9 @@ async def plan(request: Request, db: AsyncSession = Depends(get_db)):
                 if original_func is not None:
                     def _truncated_invoke(*args, **kwargs):
                         result = original_func(*args, **kwargs)
-                        s = result if isinstance(result, str) else json.dumps(result) if result else ""
+                        s = result if isinstance(result, str) else (
+                            json.dumps(result) if result else ""
+                        )
                         if len(s) > MAX_TOOL_RESULT_CHARS:
                             return (
                                 s[:MAX_TOOL_RESULT_CHARS]

@@ -30,10 +30,23 @@ export async function POST() {
     );
   }
 
-  // Fast path: if tokens exist and still work, we're connected.
+  // Fast path: tokens already on disk.
   const existingTokens = oauthProvider.tokens();
-  if (existingTokens?.access_token && (await verifyExistingConnection())) {
-    return Response.json({ connected: true });
+  if (existingTokens?.access_token) {
+    const connStatus = await verifyExistingConnection();
+    if (connStatus === "ok") return Response.json({ connected: true });
+    if (connStatus === "unreachable") {
+      // Don't trigger a new OAuth redirect for transient connectivity failures —
+      // that would force the user to re-authorize when the gateway is just briefly down.
+      return Response.json(
+        {
+          connected: false,
+          error: "Cannot reach Arcade Gateway. Check ARCADE_GATEWAY_URL and try again.",
+        },
+        { status: 502 }
+      );
+    }
+    // "needs_reauth": tokens invalid/expired — fall through to OAuth
   }
 
   if (!connectPromise) {
@@ -95,14 +108,16 @@ async function doConnect(): Promise<{
   }
 }
 
-async function verifyExistingConnection(): Promise<boolean> {
+async function verifyExistingConnection(): Promise<"ok" | "needs_reauth" | "unreachable"> {
   let mcpClient: Awaited<ReturnType<typeof getArcadeMCPClient>> | null = null;
   try {
     mcpClient = await getArcadeMCPClient();
     await mcpClient.tools();
-    return true;
-  } catch {
-    return false;
+    return "ok";
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (/401|403|unauthorized|forbidden/i.test(msg)) return "needs_reauth";
+    return "unreachable";
   } finally {
     if (mcpClient) {
       try {

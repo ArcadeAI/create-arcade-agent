@@ -1,0 +1,34 @@
+function extractAuthUrlFromToolOutput(output: unknown): string | null {
+  const looksLikeAuthUrl = (value: unknown): value is string =>
+    typeof value === "string" &&
+    /oauth|authorize/i.test(value);
+
+  const fromRecord = (value: unknown): string | null => {
+    if (!value || typeof value !== "object") return null;
+    const obj = value as Record<string, unknown>;
+    const direct =
+      (typeof obj.authorization_url === "string" && obj.authorization_url) ||
+      (looksLikeAuthUrl(obj.url) ? obj.url : null);
+    if (direct) return direct;
+
+    if (obj.structuredContent && typeof obj.structuredContent === "object") {
+      const nested = obj.structuredContent as Record<string, unknown>;
+      const nestedUrl =
+        (typeof nested.authorization_url === "string" &&
+          nested.authorization_url) ||
+        (looksLikeAuthUrl(nested.url) ? nested.url : null);
+      if (nestedUrl) return nestedUrl;
+    }
+    return null;
+  };
+
+  const fromObject = fromRecord(output);
+  if (fromObject) return fromObject;
+
+  const raw =
+    typeof output === "string" ? output : JSON.stringify(output ?? "");
+  const match = raw.match(
+    /https:\/\/[^\s"'\]}>]+\/oauth\/[^\s"'\]}>]+|https:\/\/[^\s"'\]}>]+authorize[^\s"'\]}>]*/i
+  );
+  return match ? match[0] : null;
+}
