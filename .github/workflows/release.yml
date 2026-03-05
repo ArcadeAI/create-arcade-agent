@@ -2,16 +2,16 @@ name: Release
 
 on:
   push:
-    tags:
-      - "v[0-9]*"
+    branches: [main]
+    paths: [package.json]
 
 permissions:
   contents: write
   id-token: write
 
 jobs:
-  publish:
-    name: Publish to npm
+  release:
+    name: Tag & Publish
     runs-on: ubuntu-latest
     environment: npm
     env:
@@ -19,15 +19,43 @@ jobs:
       NPM_CONFIG_FUND: "false"
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check if version is already tagged
+        id: check
+        run: |
+          VERSION="v$(node -p 'require("./package.json").version')"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if git rev-parse "$VERSION" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Create tag
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          git tag "${{ steps.check.outputs.version }}"
+          git push origin "${{ steps.check.outputs.version }}"
       - uses: actions/setup-node@v4
+        if: steps.check.outputs.exists == 'false'
         with:
           node-version: 22
           registry-url: "https://registry.npmjs.org"
           cache: npm
-      - run: npm ci
-      - run: npm run build
-      - run: npm publish --provenance --access public
+      - name: Upgrade npm for OIDC trusted publishing support
+        if: steps.check.outputs.exists == 'false'
+        run: npm install -g npm@latest
+      - name: Remove _authToken so npm uses OIDC exchange
+        if: steps.check.outputs.exists == 'false'
+        run: npm config delete '//registry.npmjs.org/:_authToken'
+      - if: steps.check.outputs.exists == 'false'
+        run: npm ci
+      - if: steps.check.outputs.exists == 'false'
+        run: npm run build
+      - if: steps.check.outputs.exists == 'false'
+        run: npm publish --access public
       - name: Create GitHub Release
-        run: gh release create ${{ github.ref_name }} --generate-notes --verify-tag
+        if: steps.check.outputs.exists == 'false'
+        run: gh release create "${{ steps.check.outputs.version }}" --generate-notes --verify-tag
         env:
           GH_TOKEN: ${{ github.token }}

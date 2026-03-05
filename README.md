@@ -278,28 +278,11 @@ bun run lint
 
 ### Releasing a new version
 
-> Releases publish to npm and create a GitHub Release. **Nothing releases automatically on merge to `main`** — you must explicitly push a version tag.
+> Releases are automatic — bump the version in `package.json`, merge to `main`, and the workflow handles the rest.
 
-**Steps:**
+1. Bump `version` in `package.json` on your branch (patch / minor / major)
+2. Merge the PR to `main`
 
-```bash
-# 1. Start from a clean main branch
-git checkout main && git pull
-
-# 2. Bump the version — updates package.json and creates a git tag automatically
-npm version patch   # 0.1.0 → 0.1.1  (bug fix)
-npm version minor   # 0.1.0 → 0.2.0  (new feature)
-npm version major   # 0.1.0 → 1.0.0  (breaking change)
-
-# 3. Push the commit AND the tag
-git push origin main --follow-tags
-```
-
-Pushing the tag triggers `.github/workflows/release.yml`, which:
-
-1. Builds the CLI (`npm run build`)
-2. Publishes `@arcadeai/create-agent` to npm with a provenance attestation
-3. Creates a GitHub Release with auto-generated release notes
 
 **Verify:**
 
