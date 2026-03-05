@@ -52,6 +52,13 @@ bun run build
 bun run lint
 ```
 
+## What happens during scaffolding
+
+1. Template files are copied to a new directory named after your project
+2. Handlebars templates (`.hbs` files) are rendered with your project name and template config
+3. Dependencies are installed (`npm install` for TypeScript, `python3 -m venv` + `pip install` for Python)
+4. Database migrations run automatically (Drizzle Kit for TypeScript, Alembic for Python)
+
 ## Releasing a new version
 
 > Releases are automatic — bump the version in `package.json`, merge to `main`, and the workflow handles the rest.

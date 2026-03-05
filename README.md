@@ -1,8 +1,8 @@
 # create-arcade-agent
 
-Scaffold an AI agent powered by [Arcade](https://arcade.dev) in one command.
+A starter kit for building AI agents powered by [Arcade](https://arcade.dev). Scaffold a working agent in one command, then customize it to fit your use case — by hand or with an AI coding agent.
 
-The generated agent is a daily planning and triage assistant that connects to Slack, Google Calendar, Linear, GitHub, and Gmail through Arcade's MCP Gateway. Users log in, authorize their accounts, and the agent scans and classifies incoming items by priority and effort.
+The default template is a daily planning and triage assistant (Slack, Google Calendar, Linear, GitHub, Gmail), but every part is designed to be swapped out: the system prompt, the tools, the model, and the data layer.
 
 ## Prerequisites
 
@@ -11,6 +11,29 @@ The generated agent is a daily planning and triage assistant that connects to Sl
 - **Python >= 3.10** -- required only for the `langchain` template
 - **An Arcade account** -- sign up at [arcade.dev](https://arcade.dev) and create an MCP Gateway at [app.arcade.dev/mcp-gateways](https://app.arcade.dev/mcp-gateways)
 - **An LLM API key** -- either an [OpenAI API key](https://platform.openai.com) or an [Anthropic API key](https://console.anthropic.com) (if both are set, Anthropic takes priority)
+
+## Quick start
+
+### TypeScript templates (ai-sdk, mastra)
+
+```bash
+npm create @arcadeai/agent my-agent -- --template ai-sdk
+cd my-agent
+cp .env.example .env   # add your keys
+bun run dev
+```
+
+> Or with `npx`: `npx @arcadeai/create-agent my-agent --template ai-sdk`
+
+### Python template (langchain)
+
+```bash
+npm create @arcadeai/agent my-agent -- --template langchain
+cd my-agent
+cp .env.example .env   # add your keys
+source .venv/bin/activate
+uvicorn app.main:app --host localhost --port 8765
+```
 
 ## Templates
 
@@ -21,6 +44,37 @@ The generated agent is a daily planning and triage assistant that connects to Sl
 | **LangChain** | `langchain` | FastAPI + LangGraph + `langchain-mcp-adapters` + SQLAlchemy + aiosqlite | Jinja2 templates + vanilla JS |
 
 All three templates connect to Arcade's MCP Gateway for tool discovery and execution. The Next.js + TypeScript templates (`ai-sdk` and `mastra`) share a common frontend. The Python template (`langchain`) uses server-rendered HTML with SSE streaming.
+
+## Make it yours
+
+Each template marks extensibility points with `CUSTOMIZATION POINT` comments. Here's what you'd typically change:
+
+**System prompt** -- edit `system-prompt.md` to redefine the agent's purpose. Swap in a different goal and the agent becomes something new: a GitHub PR reviewer, a calendar scheduling assistant, a support triage bot, or anything else.
+
+**Tools** -- update which tools your agent can see by editing your gateway in [Arcade's dashboard](https://app.arcade.dev/mcp-gateways). No code changes needed — the agent discovers tools automatically at startup.
+
+**Model** -- edit `agent.ts` (TypeScript templates) or `agent.py` (Python template) to change the LLM model or provider.
+
+**Database schema** -- extend the Drizzle schema (TypeScript) or SQLAlchemy models (Python) to store additional data for your use case.
+
+**Frontend** -- the React UI in the TypeScript templates is yours to modify. It's standard Next.js with Tailwind CSS.
+
+> These projects work great with AI coding agents like Claude Code or Cursor — point them at the codebase and describe what you want to build.
+
+## Key files
+
+Rather than listing every generated file, here are the ones you'll actually touch when customizing:
+
+| File                                | Purpose                       |
+| ----------------------------------- | ----------------------------- |
+| `system-prompt.md`                  | Agent personality and purpose |
+| `agent.ts` / `agent.py`             | Model and provider config     |
+| `lib/arcade.ts` / `arcade_oauth.py` | MCP client setup              |
+| `app/api/chat/` / `routes/chat.py`  | Streaming chat endpoint       |
+| `db/` schema files                  | Data layer                    |
+| `.env`                              | Configuration                 |
+
+The `mastra` template places agent and tool definitions under `src/mastra/` instead of `lib/`.
 
 ## What Is an MCP Gateway?
 
@@ -34,76 +88,6 @@ Benefits:
 - **Faster iteration** -- update tool access in Arcade without changing integration code
 - **Clean model context** -- smaller, focused toolsets improve tool selection reliability
 - **Portable setup** -- same gateway pattern works across frameworks and MCP clients
-
-## Usage
-
-```bash
-npm create @arcadeai/agent my-agent -- --template ai-sdk
-npm create @arcadeai/agent my-agent -- --template mastra
-npm create @arcadeai/agent my-agent -- --template langchain
-```
-
-Or with `npx`:
-
-```bash
-npx @arcadeai/create-agent my-agent --template ai-sdk
-npx @arcadeai/create-agent my-agent --template mastra
-npx @arcadeai/create-agent my-agent --template langchain
-```
-
-### What happens during scaffolding
-
-1. Template files are copied to a new directory named after your project
-2. Handlebars templates (`.hbs` files) are rendered with your project name and template config
-3. Dependencies are installed (`npm install` for TypeScript, `python3 -m venv` + `pip install` for Python)
-4. Database migrations run automatically (Drizzle Kit for TypeScript, Alembic for Python)
-
-## Generated project structure
-
-### Next.js + TypeScript templates (ai-sdk, mastra)
-
-```
-my-agent/
-  app/                  # Next.js App Router pages and API routes
-    dashboard/          # Daily triage dashboard (main UI)
-    api/
-      chat/             # Streaming chat endpoint (backend only)
-      auth/             # Login, register, session management
-      auth/arcade/      # Arcade OAuth connect, callback, verify
-      plan/             # Daily plan generation endpoint
-      sources/          # Tool auth status check
-      health/           # Startup env-var validation
-  components/           # React UI components (dashboard, chat panel)
-  lib/
-    agent.ts            # Model selection (Claude / GPT)
-    arcade.ts           # MCP client + OAuth provider
-    auth.ts             # Password hashing, session helpers
-    db/                 # Drizzle schema and database setup
-    system-prompt.md    # Agent system prompt (customization point)
-  .env.example          # Environment variable template
-```
-
-The `mastra` template places agent and tool definitions under `src/mastra/` instead of `lib/`.
-
-### Python template (langchain)
-
-```
-my-agent/
-  app/
-    agent.py            # Model selection (Claude / GPT)
-    arcade_oauth.py     # MCP OAuth flow with file-based persistence
-    system-prompt.md    # Agent system prompt (customization point)
-    routes/
-      chat.py           # SSE streaming chat endpoint
-      arcade.py         # OAuth connect, callback, verify
-      auth.py           # Login, register, logout
-    models.py           # SQLAlchemy models (User, Session)
-    templates/          # Jinja2 HTML templates
-    static/             # JS and CSS
-  alembic/              # Database migrations
-  .env.example          # Environment variable template
-  requirements.txt      # Python dependencies
-```
 
 ## Configuration
 
@@ -142,33 +126,6 @@ For best agent performance, create a dedicated gateway for this starter and keep
    - GitHub: `Github_ListNotifications`, `Github_GetNotificationSummary`, `Github_ListPullRequests`, `Github_GetPullRequest`, `Github_GetUserOpenItems`, `Github_GetUserRecentActivity`, `Github_GetReviewWorkload`, `Github_GetIssue`, `Github_WhoAmI`
    - Gmail: `Gmail_ListEmails`, `Gmail_ListThreads`, `Gmail_GetThread`, `Gmail_SearchThreads`, `Gmail_WhoAmI`
 3. Avoid enabling broad "all tools" access. Start small and add tools only when the agent needs them.
-
-## Running the generated project
-
-### Next.js + TypeScript templates
-
-```bash
-cd my-agent
-cp .env.example .env   # fill in your env vars
-bun run dev
-```
-
-### Python template
-
-```bash
-cd my-agent
-cp .env.example .env   # fill in your env vars
-source .venv/bin/activate
-uvicorn app.main:app --host localhost --port 8765
-```
-
-## Customization
-
-Each template marks extensibility points with `CUSTOMIZATION POINT` comments:
-
-- **System prompt** -- edit `system-prompt.md` to change the agent's purpose (e.g., a GitHub PR review agent, a calendar scheduling assistant, or a Gmail drafting bot)
-- **Model selection** -- edit `agent.ts` (TypeScript) or `agent.py` (Python) to change the LLM model
-- **Database schema** -- extend the Drizzle or SQLAlchemy schema to store additional data
 
 ## Troubleshooting
 
