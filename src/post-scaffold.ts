@@ -42,6 +42,14 @@ const GATEWAY_SETUP_URL =
     ])
   );
 
+// Arcade brand red — closest ANSI approximation of oklch(63.1% .255 22.8)
+const ARCADE_RED = "\x1b[91m";
+const RESET = "\x1b[0m";
+
+function arcadeRed(s: string): string {
+  return `${ARCADE_RED}${s}${RESET}`;
+}
+
 function hyperlink(url: string, text: string): string {
   return `\x1b]8;;${url}\x1b\\${text}\x1b]8;;\x1b\\`;
 }
@@ -132,13 +140,13 @@ export function printSuccess(projectName: string, meta: TemplateMeta) {
   const lines: string[] = [];
 
   lines.push(
-    `1. ${hyperlink(GATEWAY_SETUP_URL, pc.underline("Click here to create your MCP gateway"))}`,
+    `1. ${hyperlink(GATEWAY_SETUP_URL, arcadeRed(pc.underline("Click here to create your MCP gateway")))}`,
     "",
     `2. cd ${projectName}`,
     "",
     `3. # fill in .env with your API keys`,
     pc.dim(
-      `     ARCADE_GATEWAY_URL  — from ${pc.underline("https://app.arcade.dev/mcp-gateways")}`
+      `     ARCADE_GATEWAY_URL  — from ${arcadeRed(pc.underline("https://app.arcade.dev/mcp-gateways"))}`
     ),
     pc.dim(`     OPENAI_API_KEY or ANTHROPIC_API_KEY`),
     ""
