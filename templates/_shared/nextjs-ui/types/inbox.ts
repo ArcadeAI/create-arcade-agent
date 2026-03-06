@@ -1,4 +1,5 @@
-export type ItemSource = "slack" | "google_calendar" | "linear" | "github" | "gmail" | "other";
+export type KnownSource = "slack" | "google_calendar" | "linear" | "github" | "gmail";
+export type ItemSource = KnownSource | (string & {});
 
 export type SourceStatus = "unknown" | "checking" | "connected" | "auth_required" | "skipped";
 

@@ -1,16 +1,7 @@
-import type { ComponentType, SVGProps } from "react";
-import { LayoutDashboard, Globe } from "lucide-react";
-import {
-  Slack,
-  Github,
-  GoogleCalendar,
-  Linear,
-  Gmail,
-} from "@arcadeai/design-system/components/ui/atoms/icons";
+import { LayoutDashboard } from "lucide-react";
 import { Card, CardHeader, CardTitle, Skeleton } from "@arcadeai/design-system";
 import { cn } from "@/lib/utils";
-
-type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
+import { getSource, type IconComponent } from "@/lib/sources";
 
 interface StatsBarProps {
   stats: {
@@ -21,14 +12,6 @@ interface StatsBarProps {
   onSourceClick: (source: string | null) => void;
   isLoading?: boolean;
 }
-
-const sourceIcons: Record<string, { icon: IconComponent; label: string }> = {
-  slack: { icon: Slack, label: "Slack" },
-  google_calendar: { icon: GoogleCalendar, label: "Calendar" },
-  linear: { icon: Linear, label: "Linear" },
-  github: { icon: Github, label: "GitHub" },
-  gmail: { icon: Gmail, label: "Gmail" },
-};
 
 const gridColsClass: Record<number, string> = {
   1: "grid-cols-1",
@@ -98,10 +81,7 @@ export function StatsBar({ stats, activeSource, onSourceClick, isLoading }: Stat
         />
       )}
       {activeSources.map(([source, count]) => {
-        const config = sourceIcons[source] ?? {
-          icon: Globe,
-          label: source.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-        };
+        const config = getSource(source);
         return (
           <StatCard
             key={source}

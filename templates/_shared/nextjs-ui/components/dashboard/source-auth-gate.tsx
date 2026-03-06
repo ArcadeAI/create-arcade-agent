@@ -1,35 +1,9 @@
 "use client";
 
-import type { ComponentType, SVGProps } from "react";
-import { Globe, Check, ArrowUpRight } from "lucide-react";
-import {
-  Slack,
-  Github,
-  GoogleCalendar,
-  Linear,
-  Gmail,
-} from "@arcadeai/design-system/components/ui/atoms/icons";
+import { Check, ArrowUpRight } from "lucide-react";
 import { Button } from "@arcadeai/design-system";
 import type { SourceStatus } from "@/types/inbox";
-
-type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
-
-function GoogleServicesIcon(_props: SVGProps<SVGSVGElement>) {
-  return (
-    <span className="relative inline-flex size-4 shrink-0">
-      <Gmail className="absolute left-0 top-0 size-3" />
-      <GoogleCalendar className="absolute bottom-0 right-0 size-3" />
-    </span>
-  );
-}
-
-const sourceConfig: Record<string, { icon: IconComponent; label: string }> = {
-  slack: { icon: Slack, label: "Slack" },
-  google_calendar: { icon: GoogleServicesIcon as IconComponent, label: "Google" },
-  linear: { icon: Linear, label: "Linear" },
-  github: { icon: Github, label: "GitHub" },
-  gmail: { icon: Gmail, label: "Gmail" },
-};
+import { getSource } from "@/lib/sources";
 
 interface SourceAuthGateProps {
   sourceStatuses: Record<string, SourceStatus>;
@@ -64,10 +38,7 @@ export function SourceAuthGate({
 
       <div className="mb-6 space-y-2">
         {Object.entries(sourceStatuses).map(([source, status]) => {
-          const config = sourceConfig[source] ?? {
-            icon: Globe,
-            label: source.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-          };
+          const config = getSource(source);
           const Icon = config.icon;
           const authUrl = authUrls.find((a) => a.toolName === source)?.url;
           const isSkipped = skippedSources.has(source);
