@@ -11,9 +11,12 @@ export function useSourceCheck(options: { enabled: boolean }): {
   skippedSources: Set<string>;
   skipSource: (source: string) => void;
   sourceStatuses: Record<string, SourceStatus>;
-  setSourceStatuses: React.Dispatch<React.SetStateAction<Record<string, SourceStatus>>>;
   authUrls: { url: string; toolName?: string }[];
-  setAuthUrls: React.Dispatch<React.SetStateAction<{ url: string; toolName?: string }[]>>;
+  markSourceAuthRequired: (toolName: string) => void;
+  markAllCheckingAsConnected: () => void;
+  addAuthUrl: (url: string, toolName?: string) => void;
+  dismissAuthUrl: (url: string) => void;
+  resetForNewPlan: () => void;
 } {
   const { enabled } = options;
 
@@ -80,6 +83,33 @@ export function useSourceCheck(options: { enabled: boolean }): {
     setSkippedSources((prev) => new Set([...prev, source]));
   };
 
+  const markSourceAuthRequired = useCallback((toolName: string) => {
+    setSourceStatuses((prev) => ({ ...prev, [toolName]: "auth_required" }));
+  }, []);
+
+  const markAllCheckingAsConnected = useCallback(() => {
+    setSourceStatuses((prev) => {
+      const next = { ...prev };
+      for (const key of Object.keys(next)) {
+        if (next[key] === "checking") next[key] = "connected";
+      }
+      return next;
+    });
+  }, []);
+
+  const addAuthUrl = useCallback((url: string, toolName?: string) => {
+    setAuthUrls((prev) => (prev.some((a) => a.url === url) ? prev : [...prev, { url, toolName }]));
+  }, []);
+
+  const dismissAuthUrl = useCallback((url: string) => {
+    setAuthUrls((prev) => prev.filter((a) => a.url !== url));
+  }, []);
+
+  const resetForNewPlan = useCallback(() => {
+    setAuthUrls([]);
+    setSourceStatuses({});
+  }, []);
+
   return {
     sourceCheckPhase,
     authGateActive,
@@ -87,8 +117,11 @@ export function useSourceCheck(options: { enabled: boolean }): {
     skippedSources,
     skipSource,
     sourceStatuses,
-    setSourceStatuses,
     authUrls,
-    setAuthUrls,
+    markSourceAuthRequired,
+    markAllCheckingAsConnected,
+    addAuthUrl,
+    dismissAuthUrl,
+    resetForNewPlan,
   };
 }

@@ -1,26 +1,27 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import type { InboxItem, PlanEvent, SourceStatus } from "@/types/inbox";
+import type { InboxItem, PlanEvent } from "@/types/inbox";
 
-export function usePlanStream(options: {
-  setSourceStatuses: React.Dispatch<React.SetStateAction<Record<string, SourceStatus>>>;
-  setAuthUrls: React.Dispatch<React.SetStateAction<{ url: string; toolName?: string }[]>>;
-}): {
+interface PlanStreamCallbacks {
+  onAuthRequired?: (authUrl: string, toolName?: string) => void;
+  onSourcesDone?: () => void;
+}
+
+export function usePlanStream(callbacks?: PlanStreamCallbacks): {
   items: InboxItem[];
   stats: { total: number; bySource: Record<string, number> };
   loading: boolean;
   error: string | null;
-  setError: React.Dispatch<React.SetStateAction<string | null>>;
+  showError: (message: string) => void;
+  clearError: () => void;
   activeSource: string | null;
   setActiveSource: React.Dispatch<React.SetStateAction<string | null>>;
   statusMessage: string | null;
   planRan: boolean;
-  setPlanRan: React.Dispatch<React.SetStateAction<boolean>>;
+  resetPlan: () => void;
   handlePlan: () => Promise<void>;
 } {
-  const { setSourceStatuses, setAuthUrls } = options;
-
   const [items, setItems] = useState<InboxItem[]>([]);
   const [stats, setStats] = useState<{ total: number; bySource: Record<string, number> }>({
     total: 0,
@@ -33,14 +34,20 @@ export function usePlanStream(options: {
   const abortRef = useRef<AbortController | null>(null);
   const [planRan, setPlanRan] = useState(false);
 
+  // Keep callbacks in a ref so handlePlan is stable even when callbacks change
+  const callbacksRef = useRef(callbacks);
+  callbacksRef.current = callbacks;
+
+  const showError = useCallback((message: string) => setError(message), []);
+  const clearError = useCallback(() => setError(null), []);
+  const resetPlan = useCallback(() => setPlanRan(false), []);
+
   const handlePlan = useCallback(async () => {
     setLoading(true);
     setError(null);
     setItems([]);
     setStats({ total: 0, bySource: {} });
-    setAuthUrls([]);
     setStatusMessage(null);
-    setSourceStatuses({});
 
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -83,14 +90,7 @@ export function usePlanStream(options: {
                 });
                 break;
               case "auth_required":
-                setAuthUrls((prev) =>
-                  prev.some((a) => a.url === event.authUrl)
-                    ? prev
-                    : [...prev, { url: event.authUrl, toolName: event.toolName }]
-                );
-                if (event.toolName) {
-                  setSourceStatuses((prev) => ({ ...prev, [event.toolName!]: "auth_required" }));
-                }
+                callbacksRef.current?.onAuthRequired?.(event.authUrl, event.toolName);
                 break;
               case "status":
                 setStatusMessage(event.message);
@@ -99,13 +99,7 @@ export function usePlanStream(options: {
                 setError(event.message);
                 break;
               case "done":
-                setSourceStatuses((prev) => {
-                  const next = { ...prev };
-                  for (const key of Object.keys(next)) {
-                    if (next[key] === "checking") next[key] = "connected";
-                  }
-                  return next;
-                });
+                callbacksRef.current?.onSourcesDone?.();
                 break;
             }
           } catch {
@@ -122,19 +116,20 @@ export function usePlanStream(options: {
       setStatusMessage(null);
       setPlanRan(true);
     }
-  }, [setSourceStatuses, setAuthUrls]);
+  }, []);
 
   return {
     items,
     stats,
     loading,
     error,
-    setError,
+    showError,
+    clearError,
     activeSource,
     setActiveSource,
     statusMessage,
     planRan,
-    setPlanRan,
+    resetPlan,
     handlePlan,
   };
 }

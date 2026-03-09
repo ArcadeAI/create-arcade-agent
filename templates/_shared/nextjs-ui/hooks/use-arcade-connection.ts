@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ArcadeStatus } from "@/types/dashboard";
 
@@ -17,10 +17,11 @@ function parseArcadeResponse(data: {
   };
 }
 
-export function useArcadeConnection(router: ReturnType<typeof useRouter>): {
+export function useArcadeConnection(): {
   arcadeStatus: ArcadeStatus;
   retryConnection: () => void;
 } {
+  const router = useRouter();
   const [arcadeStatus, setArcadeStatus] = useState<ArcadeStatus>({
     state: "checking",
   });
@@ -28,9 +29,15 @@ export function useArcadeConnection(router: ReturnType<typeof useRouter>): {
   const authInProgress = useRef(false);
   const lastCheckRef = useRef(0);
 
-  useEffect(() => {
-    const doConnect = async () => {
-      if (connectInFlight.current || authInProgress.current) return;
+  const checkConnection = useCallback(
+    async (opts?: { isRetry?: boolean }) => {
+      if (connectInFlight.current) return;
+      if (opts?.isRetry) {
+        authInProgress.current = false;
+        setArcadeStatus({ state: "checking" });
+      } else if (authInProgress.current) {
+        return;
+      }
       lastCheckRef.current = Date.now();
       connectInFlight.current = true;
       try {
@@ -51,47 +58,22 @@ export function useArcadeConnection(router: ReturnType<typeof useRouter>): {
       } finally {
         connectInFlight.current = false;
       }
-    };
+    },
+    [router]
+  );
 
-    doConnect();
+  useEffect(() => {
+    checkConnection();
     const onFocus = () => {
       if (Date.now() - lastCheckRef.current < 2000) return;
       authInProgress.current = false; // User returned from OAuth tab — re-check
-      doConnect();
+      checkConnection();
     };
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
-  }, [router]);
+  }, [checkConnection]);
 
-  const retryConnection = () => {
-    if (connectInFlight.current) return;
-    authInProgress.current = false;
-    setArcadeStatus({ state: "checking" });
-    connectInFlight.current = true;
-    fetch("/api/auth/arcade/connect", { method: "POST" })
-      .then((r) => {
-        if (r.status === 401) {
-          router.push("/");
-          return;
-        }
-        return r.json();
-      })
-      .then((data) => {
-        if (!data) return;
-        const status = parseArcadeResponse(data);
-        authInProgress.current = status.state === "needs_auth";
-        setArcadeStatus(status);
-      })
-      .catch(() =>
-        setArcadeStatus({
-          state: "error",
-          message: "Failed to check Arcade connection.",
-        })
-      )
-      .finally(() => {
-        connectInFlight.current = false;
-      });
-  };
+  const retryConnection = useCallback(() => checkConnection({ isRetry: true }), [checkConnection]);
 
   return { arcadeStatus, retryConnection };
 }

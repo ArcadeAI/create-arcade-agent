@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import type { ConfigWarning } from "@/types/dashboard";
@@ -90,7 +90,7 @@ function DashboardContent() {
   const urlError = searchParams.get("error");
 
   // --- Hooks ---
-  const { arcadeStatus, retryConnection } = useArcadeConnection(router);
+  const { arcadeStatus, retryConnection } = useArcadeConnection();
 
   const {
     sourceCheckPhase,
@@ -99,9 +99,12 @@ function DashboardContent() {
     skippedSources,
     skipSource,
     sourceStatuses,
-    setSourceStatuses,
     authUrls,
-    setAuthUrls,
+    markSourceAuthRequired,
+    markAllCheckingAsConnected,
+    addAuthUrl,
+    dismissAuthUrl,
+    resetForNewPlan,
   } = useSourceCheck({ enabled: arcadeStatus.state === "connected" });
 
   const {
@@ -109,14 +112,20 @@ function DashboardContent() {
     stats,
     loading,
     error,
-    setError,
+    showError,
     activeSource,
     setActiveSource,
     statusMessage,
     planRan,
-    setPlanRan,
+    resetPlan,
     handlePlan,
-  } = usePlanStream({ setSourceStatuses, setAuthUrls });
+  } = usePlanStream({
+    onAuthRequired: (url, toolName) => {
+      if (toolName) markSourceAuthRequired(toolName);
+      addAuthUrl(url, toolName);
+    },
+    onSourcesDone: markAllCheckingAsConnected,
+  });
 
   // --- Config health check ---
   const [configWarnings, setConfigWarnings] = useState<ConfigWarning[]>([]);
@@ -140,25 +149,30 @@ function DashboardContent() {
         verify_session_required:
           "Verification failed: no session found. If using ngrok, log in through the ngrok URL (not localhost) so the session cookie matches the verifier host.",
       };
-      setError(messages[urlError] || `Authentication error: ${urlError}`);
+      showError(messages[urlError] || `Authentication error: ${urlError}`);
       window.history.replaceState({}, "", window.location.pathname);
     }
-  }, [urlError, setError]);
+  }, [urlError, showError]);
 
   // --- Handlers ---
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     await authClient.signOut();
     router.push("/");
-  };
+  }, [router]);
 
-  const dismissAuthUrl = (url: string) => {
-    setAuthUrls((prev) => prev.filter((a) => a.url !== url));
-  };
+  // Resets cross-hook state then kicks off a new plan run
+  const startPlan = useCallback(() => {
+    resetPlan();
+    resetForNewPlan();
+    handlePlan();
+  }, [resetPlan, resetForNewPlan, handlePlan]);
 
   // --- Computed ---
   const hasItems = items.length > 0;
-  const filteredItems =
-    activeSource !== null ? items.filter((i) => i.source === activeSource) : items;
+  const filteredItems = useMemo(
+    () => (activeSource !== null ? items.filter((i) => i.source === activeSource) : items),
+    [activeSource, items]
+  );
   const showEmpty = !hasItems && !loading && !planRan;
   const showNoResults = !hasItems && !loading && planRan && !error;
 
@@ -279,7 +293,7 @@ function DashboardContent() {
             </div>
           )}
 
-          {showEmpty && <EmptyState onPlan={handlePlan} loading={loading} />}
+          {showEmpty && <EmptyState onPlan={startPlan} loading={loading} />}
 
           {showNoResults && (
             <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8">
@@ -291,13 +305,7 @@ function DashboardContent() {
                   happen if tools need authorization or if there&apos;s no recent activity.
                 </p>
               </div>
-              <Button
-                size="lg"
-                onClick={() => {
-                  setPlanRan(false);
-                  handlePlan();
-                }}
-              >
+              <Button size="lg" onClick={startPlan}>
                 Try again
               </Button>
             </div>
@@ -321,7 +329,7 @@ function DashboardContent() {
           {hasItems && (
             <>
               <div className="flex justify-end">
-                <Button variant="outline" onClick={handlePlan} disabled={loading}>
+                <Button variant="outline" onClick={startPlan} disabled={loading}>
                   {loading ? (
                     <>
                       <Loader2 className="size-4 animate-spin" />
