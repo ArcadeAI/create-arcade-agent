@@ -103,7 +103,7 @@ export async function installDeps(targetDir: string, meta: TemplateMeta): Promis
     const cmd = process.platform === "win32" && step.winCmd ? step.winCmd : step.cmd;
     const result = await runAsync(cmd, step.args, targetDir);
     if (result.status !== 0) {
-      s.stop(`${step.label} failed`);
+      s.error(`${step.label} failed`);
       p.log.warn(
         `${result.stderr || `${cmd} ${step.args.join(" ")} failed`}\n\nRun manually: ${cmd} ${step.args.join(" ")}`
       );
@@ -124,7 +124,7 @@ export async function runMigrations(targetDir: string, meta: TemplateMeta) {
     const cmd = process.platform === "win32" && step.winCmd ? step.winCmd : step.cmd;
     const result = await runAsync(cmd, step.args, targetDir);
     if (result.status !== 0) {
-      s.stop("Database setup failed (you can run migrations manually)");
+      s.error("Database setup failed (you can run migrations manually)");
       p.log.warn(result.stderr || `${cmd} ${step.args.join(" ")} failed`);
       return;
     }

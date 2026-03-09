@@ -51,7 +51,7 @@ export async function getProjectName(argv: string[]): Promise<string> {
     const result = await p.text({
       message: "What is your project name?",
       placeholder: "my-arcade-agent",
-      validate: (v) => validateProjectName(v.trim()),
+      validate: (v) => validateProjectName((v ?? "").trim()),
     });
     if (p.isCancel(result)) {
       p.cancel("Cancelled.");
