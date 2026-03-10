@@ -177,16 +177,12 @@ export async function POST() {
       mcpClient = await getArcadeMCPClient();
       const allTools = await mcpClient.tools();
 
-      // Only keep tools useful for triage — tools from known services, no mutations.
-      // Uses pattern matching so it works regardless of Arcade's exact naming convention
-      // (underscores, dots, or mixed casing are all handled).
-      const KNOWN_SERVICE = /^(github|gmail|google|calendar|linear|slack)/i;
+      // Only keep tools useful for triage — filter out mutations (create, delete, send, etc.)
+      // so the agent only reads data during planning.
       const MUTATION = /create|update|delete|send|reply|post|archive|remove|add|invite|merge|close|assign|edit|publish|comment/i;
 
       function isTriageTool(name: string): boolean {
-        if (!KNOWN_SERVICE.test(name)) return false;
-        if (MUTATION.test(name)) return false;
-        return true;
+        return !MUTATION.test(name);
       }
       // Cap individual tool results so they don't blow the model's context window.
       // Gmail threads, GitHub notifications, etc. can return 50k+ chars each.

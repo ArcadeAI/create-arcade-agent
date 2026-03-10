@@ -1,58 +1,8 @@
 "use client";
 
-import type { ComponentType, SVGProps } from "react";
 import { Card, CardContent, Badge } from "@arcadeai/design-system";
-import {
-  Slack,
-  Github,
-  GoogleCalendar,
-  Linear,
-  Gmail,
-} from "@arcadeai/design-system/components/ui/atoms/icons";
-import { Globe } from "lucide-react";
-import type { InboxItem, ItemSource } from "@/types/inbox";
-
-type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
-
-const sourceConfig: Record<ItemSource, { icon: IconComponent; label: string; className: string }> =
-  {
-    slack: {
-      icon: Slack,
-      label: "Slack",
-      className:
-        "bg-purple-100 border-purple-200 text-purple-900 dark:bg-purple-950 dark:border-purple-900 dark:text-purple-200",
-    },
-    google_calendar: {
-      icon: GoogleCalendar,
-      label: "Calendar",
-      className:
-        "bg-blue-100 border-blue-200 text-blue-900 dark:bg-blue-950 dark:border-blue-900 dark:text-blue-200",
-    },
-    linear: {
-      icon: Linear,
-      label: "Linear",
-      className:
-        "bg-indigo-100 border-indigo-200 text-indigo-900 dark:bg-indigo-950 dark:border-indigo-900 dark:text-indigo-200",
-    },
-    github: {
-      icon: Github,
-      label: "GitHub",
-      className:
-        "bg-gray-100 border-gray-300 text-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200",
-    },
-    gmail: {
-      icon: Gmail,
-      label: "Gmail",
-      className:
-        "bg-red-100 border-red-200 text-red-900 dark:bg-red-950 dark:border-red-900 dark:text-red-200",
-    },
-    other: {
-      icon: Globe,
-      label: "Other",
-      className:
-        "bg-gray-100 border-gray-200 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300",
-    },
-  };
+import type { InboxItem } from "@/types/inbox";
+import { getSource } from "@/lib/sources";
 
 const priorityConfig: Record<
   InboxItem["priority"],
@@ -85,7 +35,7 @@ interface TaskCardProps {
 
 export function TaskCard({ item }: TaskCardProps) {
   const priority = priorityConfig[item.priority];
-  const source = sourceConfig[item.source] || sourceConfig.other;
+  const source = getSource(item.source);
   const SourceIcon = source.icon;
   const subtitle = item.sourceDetail || item.participants?.map((p) => p.name).join(", ");
 

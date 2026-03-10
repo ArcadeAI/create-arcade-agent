@@ -1,9 +1,4 @@
-type ConfigWarning = {
-  id: string;
-  title: string;
-  message: string;
-  docsUrl: string;
-};
+import type { ConfigWarning } from "@/types/dashboard";
 
 export async function GET() {
   const warnings: ConfigWarning[] = [];
