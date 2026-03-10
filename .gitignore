@@ -8,7 +8,6 @@ __pycache__/
 .tmp
 .arcade-auth/
 .venv/
-bun.lock
 .serena/
 .context/
 test-proj*/
