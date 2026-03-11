@@ -11,3 +11,4 @@ __pycache__/
 .serena/
 .context/
 test-proj*/
+package-lock.json
