@@ -10,7 +10,7 @@
 
 import { streamText, stepCountIs } from "ai";
 import { getSession } from "@/lib/auth";
-import { getModel, systemPrompt } from "@/src/mastra/agents/triage-agent";
+import { getModel, planPrompt } from "@/src/mastra/agents/triage-agent";
 import { getArcadeMCPClient } from "@/src/mastra/tools/arcade";
 import type { InboxItem } from "@/types/inbox";
 

@@ -102,7 +102,7 @@ export async function POST() {
 
       // Only keep tools useful for triage — filter out mutations (create, delete, send, etc.)
       // so the agent only reads data during planning.
-      const MUTATION = /delete|archive|remove|merge|close/i;
+      const MUTATION = /create|update|delete|send|reply|post|archive|remove|add|invite|merge|close|assign|edit|publish|comment/i;
 
       function isTriageTool(name: string): boolean {
         return !MUTATION.test(name);
@@ -191,7 +191,7 @@ export async function POST() {
         ],
         tools,
         stopWhen: stepCountIs(20),
-        system: systemPrompt,
+        system: planPrompt,
         onStepFinish: ({ toolCalls, toolResults }) => {
           console.log(
             `[plan] Step: ${toolCalls.length} calls, ${toolResults.length} results`

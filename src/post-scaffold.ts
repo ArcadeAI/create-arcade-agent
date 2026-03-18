@@ -114,6 +114,15 @@ export async function installDeps(targetDir: string, meta: TemplateMeta): Promis
   return true;
 }
 
+function formatMigrateCommands(meta: TemplateMeta): string {
+  return meta.migrate
+    .map((step) => {
+      const cmd = process.platform === "win32" && step.winCmd ? step.winCmd : step.cmd;
+      return `${cmd} ${step.args.join(" ")}`;
+    })
+    .join(" && ");
+}
+
 export async function runMigrations(targetDir: string, meta: TemplateMeta) {
   if (meta.migrate.length === 0) return;
 
@@ -126,7 +135,7 @@ export async function runMigrations(targetDir: string, meta: TemplateMeta) {
     if (result.status !== 0) {
       s.error("Database setup failed");
       p.log.warn(
-        `${result.stderr || `${cmd} ${step.args.join(" ")} failed`}\n\nRun manually: bun run db:setup`
+        `${result.stderr || `${cmd} ${step.args.join(" ")} failed`}\n\nRun manually: ${formatMigrateCommands(meta)}`
       );
       return;
     }
@@ -138,7 +147,7 @@ export async function runMigrations(targetDir: string, meta: TemplateMeta) {
         readdirSync(migrationsDir).filter((f: string) => f.endsWith(".sql")).length === 0;
       if (isEmpty) {
         s.error("Migration generation produced no SQL files — check your schema");
-        p.log.warn("Run manually: bun run db:setup");
+        p.log.warn(`Run manually: ${formatMigrateCommands(meta)}`);
         return;
       }
     }
