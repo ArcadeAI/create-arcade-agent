@@ -3,11 +3,11 @@
 ### Change the agent's purpose
 
 {{#if (eq name "mastra")}}
-Edit `src/mastra/agents/system-prompt.md` to change what the agent does (PR reviews, calendar management, email drafting, etc.). The agent definition in `src/mastra/agents/triage-agent.ts` has `// --- CUSTOMIZATION POINT ---` markers for model selection and other settings.
+Edit `src/mastra/agents/system-prompt.md` to change what the agent does (PR reviews, calendar management, email drafting, etc.). Also update `src/mastra/agents/plan-prompt.md` in the same directory — this is the system prompt for the plan/triage endpoint and must stay in sync with your main system prompt. The agent definition in `src/mastra/agents/triage-agent.ts` has `// --- CUSTOMIZATION POINT ---` markers for model selection and other settings.
 {{else if (eq name "ai-sdk")}}
-Edit `lib/system-prompt.md` to change what the agent does (PR reviews, calendar management, email drafting, etc.). The agent configuration in `lib/agent.ts` has model selection you can customize.
+Edit `lib/system-prompt.md` to change what the agent does (PR reviews, calendar management, email drafting, etc.). Also update `lib/plan-prompt.md` — this is the system prompt for the plan/triage endpoint and must stay in sync with your main system prompt. The agent configuration in `lib/agent.ts` has model selection you can customize.
 {{else}}
-Edit `app/system-prompt.md` to change what the agent does (PR reviews, calendar management, email drafting, etc.). The agent configuration in `app/agent.py` has `# --- CUSTOMIZATION POINT ---` markers for model selection and other settings.
+Edit `app/system-prompt.md` to change what the agent does (PR reviews, calendar management, email drafting, etc.). The plan prompt is built inline in `app/routes/plan.py` — update `_build_plan_prompt()` to match your system prompt changes. The agent configuration in `app/agent.py` has `# --- CUSTOMIZATION POINT ---` markers for model selection and other settings.
 {{/if}}
 
 ### Add or change Arcade tools
@@ -16,7 +16,7 @@ Edit `app/system-prompt.md` to change what the agent does (PR reviews, calendar 
 2. Add tools to your gateway (Gmail, GitHub, Google Calendar, etc.)
 3. Update `ARCADE_GATEWAY_URL` in `.env` if needed
 
-The agent automatically discovers all tools available on your gateway.
+The agent automatically discovers all tools available on your gateway. Write tools (send, create, reply, etc.) may require additional OAuth authorization beyond read tools. The app handles this automatically — when a write tool needs auth, users see an inline prompt to grant access.
 
 ### Switch LLM provider
 
@@ -51,6 +51,16 @@ alembic upgrade head
 ```
 {{/if}}
 
+{{#if (eq language "typescript")}}
+### Customize the UI
+
+The default UI is built for a daily triage workflow. To adapt it for your agent:
+
+1. Edit `components/dashboard/empty-state.tsx` — change the heading, description, and button label
+2. The dashboard layout in `app/dashboard/page.tsx` uses task cards and stats — you can restructure this for your use case
+3. Look for `CUSTOMIZATION POINT` comments in UI files for safe edit zones
+
+{{/if}}
 ### Production considerations
 
 This template uses app-level token storage — all users share the same Arcade Gateway connection via a single `.arcade-auth/` directory. For production deployments:
