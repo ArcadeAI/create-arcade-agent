@@ -29,6 +29,10 @@ const instructions = readFileSync(
 
 // AI-EDIT-CAUTION: keep stable unless changing runtime wiring.
 export const systemPrompt = instructions;
+export const planPrompt = readFileSync(
+  join(process.cwd(), "src/mastra/agents/plan-prompt.md"),
+  "utf-8"
+);
 
 export const triageAgent = new Agent({
   id: "slack-triage",

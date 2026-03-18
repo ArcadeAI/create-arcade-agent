@@ -6,7 +6,7 @@ import {
   Linear,
   Gmail,
 } from "@arcadeai/design-system/components/ui/atoms/icons";
-import { Globe } from "lucide-react";
+import { Globe, MessageSquare, Twitter } from "lucide-react";
 
 export type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -56,6 +56,27 @@ export const sources: Record<string, SourceConfig> = {
     label: "Gmail",
     className:
       "bg-red-100 border-red-200 text-red-900 dark:bg-red-950 dark:border-red-900 dark:text-red-200",
+  },
+  reddit: {
+    pattern: /^reddit[._]/i,
+    icon: MessageSquare,
+    label: "Reddit",
+    className:
+      "bg-orange-100 border-orange-200 text-orange-900 dark:bg-orange-950 dark:border-orange-900 dark:text-orange-200",
+  },
+  x: {
+    pattern: /^x[._]/i,
+    icon: Twitter,
+    label: "X",
+    className:
+      "bg-sky-100 border-sky-200 text-sky-900 dark:bg-sky-950 dark:border-sky-900 dark:text-sky-200",
+  },
+  notion: {
+    pattern: /^notion[._]/i,
+    icon: Globe,
+    label: "Notion",
+    className:
+      "bg-gray-100 border-gray-200 text-gray-800 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200",
   },
 };
 

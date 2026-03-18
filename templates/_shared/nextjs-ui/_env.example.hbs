@@ -1,17 +1,17 @@
 {{> env-vars-shared}}
 
 # --- App ---
-# If using ARCADE_CUSTOM_VERIFIER, set this to your public URL (e.g. your ngrok URL).
-# The verify route redirects users back here after authorization — it must match the host
-# you're accessing the app from, or the session cookie won't be found.
-NEXT_PUBLIC_APP_URL=http://localhost:{{port}}
+# PORT is the only required app URL config. NEXT_PUBLIC_APP_URL and BETTER_AUTH_URL
+# are automatically derived from PORT in next.config.ts.
+# Only set these if you need to override (e.g., when using ngrok for ARCADE_CUSTOM_VERIFIER).
+# NEXT_PUBLIC_APP_URL=https://your-ngrok-url.ngrok-free.app
+# BETTER_AUTH_URL=https://your-ngrok-url.ngrok-free.app
 
 # --- Database ---
 DATABASE_URL=local.db       # SQLite file path (default: local.db)
 
 # --- Auth (Better Auth) ---
 BETTER_AUTH_SECRET=          # Random secret for session signing; generate with: openssl rand -hex 32
-BETTER_AUTH_URL=http://localhost:{{port}}  # Must match NEXT_PUBLIC_APP_URL
 
 # --- Custom User Verification (optional, recommended for production) ---
 # ARCADE_CUSTOM_VERIFIER=true
