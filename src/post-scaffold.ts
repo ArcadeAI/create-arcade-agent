@@ -1,7 +1,7 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 import { stripVTControlCharacters } from "node:util";
-import { copyFileSync, existsSync, readFileSync, writeFileSync } from "fs";
+import { copyFileSync, existsSync, readFileSync, readdirSync, writeFileSync } from "fs";
 import { resolve } from "path";
 import { randomBytes } from "crypto";
 import { runAsync } from "./utils.js";
@@ -124,9 +124,23 @@ export async function runMigrations(targetDir: string, meta: TemplateMeta) {
     const cmd = process.platform === "win32" && step.winCmd ? step.winCmd : step.cmd;
     const result = await runAsync(cmd, step.args, targetDir);
     if (result.status !== 0) {
-      s.error("Database setup failed (you can run migrations manually)");
-      p.log.warn(result.stderr || `${cmd} ${step.args.join(" ")} failed`);
+      s.error("Database setup failed");
+      p.log.warn(
+        `${result.stderr || `${cmd} ${step.args.join(" ")} failed`}\n\nRun manually: bun run db:setup`
+      );
       return;
+    }
+    // After generate, verify that migration files were actually created
+    if (step.args.includes("generate")) {
+      const migrationsDir = resolve(targetDir, "drizzle/migrations");
+      const isEmpty =
+        !existsSync(migrationsDir) ||
+        readdirSync(migrationsDir).filter((f: string) => f.endsWith(".sql")).length === 0;
+      if (isEmpty) {
+        s.error("Migration generation produced no SQL files — check your schema");
+        p.log.warn("Run manually: bun run db:setup");
+        return;
+      }
     }
   }
 
