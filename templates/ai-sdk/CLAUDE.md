@@ -29,19 +29,23 @@ bunx drizzle-kit migrate        # Run migrations
 
 ## Key Files
 
-| File                                    | Purpose                                                |
-| --------------------------------------- | ------------------------------------------------------ |
-| `lib/agent.ts`                          | Model selection (Claude/GPT-4o) + system prompt loader |
-| `lib/system-prompt.md`                  | System prompt (customization point)                    |
-| `lib/arcade.ts`                         | MCP OAuth provider + `createMCPClient` factory         |
-| `app/api/chat/route.ts`                 | Streaming chat endpoint (`streamText` + MCP tools)     |
-| `app/api/auth/arcade/connect/route.ts`  | Pre-flight Arcade connection check                     |
-| `app/api/auth/arcade/callback/route.ts` | OAuth callback (code → tokens)                         |
-| `app/api/auth/arcade/verify/route.ts`   | Custom user verifier (COAT protection)                 |
-| `app/dashboard/page.tsx`                | Daily triage dashboard (main UI entry point)           |
-| `lib/auth.ts`                           | Better Auth server config + `getSession()` helper      |
-| `lib/auth-client.ts`                    | Better Auth React client (signIn, signUp, signOut)     |
-| `lib/db/schema.ts`                      | Database schema (Better Auth tables + custom tables)   |
+| File                                    | Purpose                                                                                    |
+| --------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `lib/agent.ts`                          | Model selection (Claude/GPT-4o) + system prompt loader                                     |
+| `lib/system-prompt.md`                  | System prompt (customization point)                                                        |
+| `lib/arcade.ts`                         | MCP OAuth provider + `createMCPClient` factory                                             |
+| `app/api/chat/route.ts`                 | Streaming chat endpoint (`streamText` + MCP tools)                                         |
+| `app/api/auth/arcade/connect/route.ts`  | Pre-flight Arcade connection check                                                         |
+| `app/api/auth/arcade/callback/route.ts` | OAuth callback (code → tokens)                                                             |
+| `app/api/auth/arcade/verify/route.ts`   | Custom user verifier (COAT protection)                                                     |
+| `app/dashboard/page.tsx`                | Daily triage dashboard (main UI entry point)                                               |
+| `lib/auth.ts`                           | Better Auth server config + `getSession()` helper                                          |
+| `lib/auth-client.ts`                    | Better Auth React client (signIn, signUp, signOut)                                         |
+| `lib/db/schema.ts`                      | Database schema (Better Auth tables + custom tables)                                       |
+| `lib/plan-prompt.md`                    | Plan endpoint system prompt (customize alongside system-prompt.md)                         |
+| `app/api/plan/route.ts`                 | Plan/triage streaming endpoint — filters out write tools by default                        |
+| `lib/sources.ts`                        | Tool-to-icon/label mapping — add entries for new services (has CUSTOMIZATION POINT marker) |
+| `components/dashboard/empty-state.tsx`  | Empty state UI — customize heading, description, and button for your agent's purpose       |
 
 ## Auth Architecture
 
@@ -49,7 +53,7 @@ Three layers:
 
 1. **App auth** — email/password via [Better Auth](https://www.better-auth.com), session cookies (7-day), SQLite storage via Drizzle adapter. Configure `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` in `.env`.
 2. **Arcade Gateway OAuth** — MCP OAuth flow with file-based token persistence in `.arcade-auth/` (discovery → registration → PKCE → token exchange)
-3. **Tool-level OAuth** — Arcade handles per-tool auth (Slack, GitHub, etc.); auth URLs surfaced in chat UI
+3. **Tool-level OAuth** — Arcade handles per-tool auth (Slack, GitHub, etc.); auth URLs surfaced in chat UI. Write tools (send, create, update, etc.) may require additional OAuth scopes beyond read permissions. When a write tool needs authorization, the plan route emits an `auth_required` event with an auth URL, and the UI shows an inline auth prompt. This flow is handled automatically — just ensure your UI renders the `AuthPrompt` component.
 4. **Custom verifier** (optional) — `/api/auth/arcade/verify` confirms user identity for COAT protection. Enabling requires: (a) custom OAuth apps registered with each provider (Slack, GitHub, etc.) in the Arcade dashboard — default shared apps cannot be used, and (b) exposing the local server via ngrok so Arcade can reach the endpoint. When using ngrok: set `NEXT_PUBLIC_APP_URL` to the ngrok URL, delete `.arcade-auth/`, restart the dev server, and **log in via the ngrok URL** (not localhost) — session cookies are scoped to the host that sets them; mismatched host = silent verification failure (`verify_session_required` error). If you get repeated `400 Bad Request` from Arcade's `confirm_user` API, the `flow_id` is stale — delete `.arcade-auth/`, restart, re-authenticate, then retry tool auth from scratch.
 
 ## Constraints
@@ -62,6 +66,7 @@ Three layers:
 ## Customization Points
 
 - `lib/system-prompt.md` — Agent purpose and behavior
+- `lib/plan-prompt.md` — Plan endpoint system prompt (keep in sync with system-prompt.md)
 - `lib/agent.ts` — Model selection
 - `lib/db/schema.ts` — Database schema
 
@@ -70,6 +75,6 @@ Three layers:
 - **Main UI**: `app/dashboard/page.tsx` — layout, plan-run flow, and ChatPanel toggle. This is the primary entry point after login.
 - **Component library**: import UI components from `@arcadeai/design-system`; import brand icons (Slack, GitHub, Gmail, etc.) from `@arcadeai/design-system/components/ui/atoms/icons`.
 - **Startup checks**: add new env-var warnings in `app/api/health/route.ts` — push a new `ConfigWarning` object to the `warnings` array.
-- **Safe to edit**: `lib/system-prompt.md`, `lib/agent.ts` (model choice), `lib/db/schema.ts` (schema extensions).
-- **Edit with care**: anything under `app/api/auth/arcade/` — the OAuth flow is stateful (PKCE verifier, token exchange, `.arcade-auth/` persistence). Read the full flow before making changes.
+- **Safe to edit**: `lib/system-prompt.md`, `lib/plan-prompt.md`, `lib/agent.ts` (model choice), `lib/db/schema.ts` (schema extensions), `lib/sources.ts` (add source entries for new toolkits), `components/dashboard/empty-state.tsx` (heading, description, button label).
+- **Edit with care**: anything under `app/api/auth/arcade/` — the OAuth flow is stateful (PKCE verifier, token exchange, `.arcade-auth/` persistence). Read the full flow before making changes. `app/api/plan/route.ts` — contains a `MUTATION` regex that strips write tools (create, send, reply, etc.) from the plan endpoint. If your agent needs write tools during planning, update or remove this filter.
 - **Do not touch**: `lib/arcade.ts` unless you understand the `OAuthClientProvider` contract expected by `@ai-sdk/mcp`.

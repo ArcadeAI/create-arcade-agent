@@ -26,20 +26,24 @@ bunx drizzle-kit migrate   # Apply migrations to SQLite
 
 ## Key Files
 
-| File                                    | Purpose                                                            |
-| --------------------------------------- | ------------------------------------------------------------------ |
-| `src/mastra/agents/triage-agent.ts`     | Agent definition with system prompt + model + tools                |
-| `src/mastra/tools/arcade.ts`            | MCPClient with custom OAuthClientProvider (file-based persistence) |
-| `src/mastra/index.ts`                   | Mastra instance registration                                       |
-| `app/api/chat/route.ts`                 | Streaming chat endpoint (auth-protected)                           |
-| `app/api/auth/arcade/callback/route.ts` | OAuth callback for Arcade MCP authentication                       |
-| `app/api/auth/arcade/connect/route.ts`  | Pre-flight connection check (surfaces auth URL to frontend)        |
-| `app/api/auth/arcade/verify/route.ts`   | Custom user verifier for COAT protection (opt-in via env var)      |
-| `lib/auth.ts`                           | Better Auth server config + `getSession()` helper                  |
-| `lib/auth-client.ts`                    | Better Auth React client (signIn, signUp, signOut)                 |
-| `lib/db/schema.ts`                      | Drizzle schema (Better Auth tables + custom tables)                |
-| `app/dashboard/page.tsx`                | Daily triage dashboard (main UI entry point)                       |
-| `app/page.tsx`                          | Login/register form                                                |
+| File                                    | Purpose                                                                                    |
+| --------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `src/mastra/agents/triage-agent.ts`     | Agent definition with system prompt + model + tools                                        |
+| `src/mastra/tools/arcade.ts`            | MCPClient with custom OAuthClientProvider (file-based persistence)                         |
+| `src/mastra/index.ts`                   | Mastra instance registration                                                               |
+| `app/api/chat/route.ts`                 | Streaming chat endpoint (auth-protected)                                                   |
+| `app/api/auth/arcade/callback/route.ts` | OAuth callback for Arcade MCP authentication                                               |
+| `app/api/auth/arcade/connect/route.ts`  | Pre-flight connection check (surfaces auth URL to frontend)                                |
+| `app/api/auth/arcade/verify/route.ts`   | Custom user verifier for COAT protection (opt-in via env var)                              |
+| `lib/auth.ts`                           | Better Auth server config + `getSession()` helper                                          |
+| `lib/auth-client.ts`                    | Better Auth React client (signIn, signUp, signOut)                                         |
+| `lib/db/schema.ts`                      | Drizzle schema (Better Auth tables + custom tables)                                        |
+| `app/dashboard/page.tsx`                | Daily triage dashboard (main UI entry point)                                               |
+| `app/page.tsx`                          | Login/register form                                                                        |
+| `src/mastra/agents/plan-prompt.md`      | Plan endpoint system prompt (customize alongside system-prompt.md)                         |
+| `app/api/plan/route.ts`                 | Plan/triage streaming endpoint — filters out write tools by default                        |
+| `lib/sources.ts`                        | Tool-to-icon/label mapping — add entries for new services (has CUSTOMIZATION POINT marker) |
+| `components/dashboard/empty-state.tsx`  | Empty state UI — customize heading, description, and button for your agent's purpose       |
 
 ## Auth
 
@@ -69,5 +73,5 @@ Files with `// --- CUSTOMIZATION POINT ---` comments:
 - **Agent logic**: `src/mastra/agents/triage-agent.ts` — system prompt, model, and tool list.
 - **Component library**: import UI components from `@arcadeai/design-system`; import brand icons (Slack, GitHub, Gmail, etc.) from `@arcadeai/design-system/components/ui/atoms/icons`.
 - **Startup checks**: add new env-var warnings in `app/api/health/route.ts` — push a new `ConfigWarning` object to the `warnings` array.
-- **Safe to edit**: `src/mastra/agents/system-prompt.md`, `src/mastra/agents/triage-agent.ts` (model/prompt), `lib/db/schema.ts` (schema extensions).
-- **Edit with care**: `src/mastra/tools/arcade.ts` — custom `OAuthClientProvider` for MCP OAuth. Token persistence (`.arcade-auth/`) and PKCE are stateful; read the full flow before changing it.
+- **Safe to edit**: `src/mastra/agents/system-prompt.md`, `src/mastra/agents/plan-prompt.md`, `src/mastra/agents/triage-agent.ts` (model/prompt), `lib/db/schema.ts` (schema extensions), `lib/sources.ts` (add source entries for new toolkits), `components/dashboard/empty-state.tsx` (heading, description, button label).
+- **Edit with care**: `src/mastra/tools/arcade.ts` — custom `OAuthClientProvider` for MCP OAuth. Token persistence (`.arcade-auth/`) and PKCE are stateful; read the full flow before changing it. `app/api/plan/route.ts` — contains a `MUTATION` regex that strips write tools (create, send, reply, etc.) from the plan endpoint. If your agent needs write tools during planning, update or remove this filter.

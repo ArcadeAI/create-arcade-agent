@@ -13,7 +13,9 @@ export function EmptyState({ onPlan, loading }: EmptyStateProps) {
     <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8">
       <Inbox size={48} className="text-muted-foreground/50" />
       <div className="flex flex-col items-center gap-2">
+        {/* CUSTOMIZATION POINT — empty state heading */}
         <h2 className="text-2xl font-semibold">Ready to triage?</h2>
+        {/* CUSTOMIZATION POINT — empty state description */}
         <p className="max-w-md text-center text-muted-foreground">
           Your agent will scan your inbox, calendar, tasks, and PRs, then prioritize everything and
           build your action plan.
@@ -26,6 +28,7 @@ export function EmptyState({ onPlan, loading }: EmptyStateProps) {
             Planning...
           </>
         ) : (
+          /* CUSTOMIZATION POINT — primary action button label */
           "Plan my day"
         )}
       </Button>
