@@ -1,0 +1,23 @@
+# --- Arcade ---
+# Create a gateway at https://app.arcade.dev/mcp-gateways
+# Add tools like Slack, GitHub, Google Calendar, Linear, Gmail
+ARCADE_GATEWAY_URL=
+
+# --- LLM Provider (set one) ---
+# ANTHROPIC_API_KEY=
+# OPENAI_API_KEY=
+
+# --- Slack ---
+# Create a Slack app at https://api.slack.com/apps
+# Required scopes: app_mentions:read, chat:write, reactions:read
+# Enable Event Subscriptions and point to your webhook URL
+SLACK_BOT_TOKEN=
+SLACK_SIGNING_SECRET=
+
+# --- App URL (required for deployed environments) ---
+# Set to your deployment URL so OAuth callbacks work correctly
+# APP_URL=https://your-app.vercel.app
+
+# --- Redis (required for Vercel/serverless, optional for local dev) ---
+# Stores OAuth tokens and chat state across serverless invocations
+# REDIS_URL=redis://localhost:6379

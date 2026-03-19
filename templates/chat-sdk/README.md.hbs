@@ -1,0 +1,187 @@
+# {{projectName}}
+
+A multi-platform chat bot powered by [Arcade](https://arcade.dev) and [Chat SDK](https://chat-sdk.dev).
+
+Deploy a single bot to Slack, Discord, Microsoft Teams, Google Chat, GitHub, and Linear — with AI-powered responses and Arcade tool integration.
+
+## Prerequisites
+
+### Create a Slack App
+
+1. Go to [api.slack.com/apps](https://api.slack.com/apps) → **Create New App** → **From scratch**
+2. Under **OAuth & Permissions**, add these Bot Token Scopes:
+   - `app_mentions:read`
+   - `chat:write`
+   - `reactions:read`
+3. Install the app to your workspace and copy the **Bot User OAuth Token** (`xoxb-...`)
+4. Under **Basic Information**, copy the **Signing Secret**
+
+### Configure Arcade Gateway
+
+1. Create a gateway at [app.arcade.dev/mcp-gateways](https://app.arcade.dev/mcp-gateways)
+2. Add toolkits like Slack, Google Calendar, Linear, GitHub, Gmail
+3. Copy the gateway URL
+
+### Set up environment variables
+
+```bash
+cp .env.example .env
+```
+
+Fill in:
+
+| Variable | Description |
+| --- | --- |
+| `ARCADE_GATEWAY_URL` | Your MCP Gateway URL |
+| `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | LLM provider key (set one) |
+| `SLACK_BOT_TOKEN` | Bot User OAuth Token (`xoxb-...`) |
+| `SLACK_SIGNING_SECRET` | Signing Secret from Basic Information |
+
+---
+
+## Option A: Run Locally with ngrok
+
+Best for development and testing.
+
+### 1. Install and start ngrok
+
+```bash
+# Install ngrok (https://ngrok.com)
+brew install ngrok   # macOS
+# or download from https://ngrok.com/download
+
+# Start a tunnel to your dev server
+ngrok http 3000
+```
+
+Copy the `https://...ngrok-free.app` URL that ngrok gives you.
+
+### 2. Configure Slack Event Subscriptions
+
+1. Go to your Slack app → **Event Subscriptions** → Enable Events
+2. Set the Request URL to: `https://<your-ngrok-url>/api/chat-webhook`
+3. Subscribe to bot events: `app_mention`
+4. Save changes
+
+### 3. Start the bot
+
+```bash
+npm run dev
+```
+
+### 4. Test it
+
+Invite the bot to a Slack channel and @mention it. The first time, it will post an Arcade authorization link — click it, then @mention again.
+
+> **Note:** ngrok URLs change every time you restart. Update the Slack Event Subscription URL each time.
+
+---
+
+## Option B: Deploy to Vercel
+
+Best for production. Requires Redis for persistent storage (Vercel's filesystem is read-only).
+
+### 1. Push to GitHub and import to Vercel
+
+1. Push your project to a GitHub repo
+2. Import it at [vercel.com/new](https://vercel.com/new)
+
+### 2. Add Redis via Vercel Storage
+
+1. In your Vercel project dashboard, go to **Storage**
+2. Click **Create Database** → **Upstash Redis**
+3. Follow the prompts — Vercel will automatically add the `REDIS_URL` environment variable to your project
+
+### 3. Add environment variables
+
+In your Vercel project, go to **Settings** → **Environment Variables** and add:
+
+| Variable | Value |
+| --- | --- |
+| `ARCADE_GATEWAY_URL` | Your MCP Gateway URL |
+| `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | LLM provider key |
+| `SLACK_BOT_TOKEN` | Bot User OAuth Token |
+| `SLACK_SIGNING_SECRET` | Signing Secret |
+| `APP_URL` | Your Vercel deployment URL (e.g. `https://my-bot.vercel.app`) |
+
+> **Note:** `REDIS_URL` is already set from the previous step.
+
+### 4. Disable Deployment Protection
+
+Vercel's Deployment Protection blocks external webhooks by default.
+
+1. Go to your project → **Settings** → **Deployment Protection**
+2. Set **Vercel Authentication** to **Off**
+
+### 5. Configure Slack Event Subscriptions
+
+1. Go to your Slack app → **Event Subscriptions** → Enable Events
+2. Set the Request URL to: `https://<your-vercel-url>/api/chat-webhook`
+3. Subscribe to bot events: `app_mention`
+4. Save changes
+
+### 6. Test it
+
+Invite the bot to a Slack channel and @mention it. The first time, it will post an Arcade authorization link — click it, then @mention again.
+
+---
+
+## How It Works
+
+When someone @mentions the bot in Slack:
+
+1. The bot receives the event via the `/api/chat-webhook` endpoint
+2. It subscribes to the thread for follow-up messages
+3. It calls an LLM (Claude or GPT) with your system prompt and Arcade tools
+4. The AI response streams back to the Slack thread
+
+## Project Structure
+
+```
+├── app/
+│   ├── api/
+│   │   ├── chat-webhook/route.ts   # Chat SDK webhook handler
+│   │   └── auth/arcade/callback/   # Arcade OAuth callback
+│   ├── layout.tsx
+│   └── page.tsx                    # Status page
+├── src/
+│   ├── bot.ts                      # Chat instance + event handlers
+│   ├── agent.ts                    # Model selection + system prompt
+│   └── arcade.ts                   # Arcade MCP client + OAuth
+├── system-prompt.md                # Bot personality (edit this!)
+├── .env.example
+└── package.json
+```
+
+## Customization
+
+### Change the bot's personality
+
+Edit `system-prompt.md` to change how the bot responds.
+
+### Change the LLM
+
+The model is auto-selected based on your API key. Set `ANTHROPIC_API_KEY` for Claude or `OPENAI_API_KEY` for GPT. If both are set, Claude takes priority. Edit `src/agent.ts` to change the specific model.
+
+### Add more platforms
+
+Edit `src/bot.ts` to add adapters. Example for Discord:
+
+```bash
+npm install @chat-adapter/discord
+```
+
+```typescript
+import { createDiscordAdapter } from "@chat-adapter/discord";
+
+// In the adapters object:
+adapters.discord = createDiscordAdapter({
+  publicKey: process.env.DISCORD_PUBLIC_KEY!,
+});
+```
+
+See [chat-sdk.dev/docs](https://chat-sdk.dev/docs) for all available adapters.
+
+### Add or change Arcade tools
+
+Visit [app.arcade.dev/mcp-gateways](https://app.arcade.dev/mcp-gateways) to add toolkits to your gateway. The bot will automatically pick up any tools available through the gateway.
