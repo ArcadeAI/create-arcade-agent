@@ -1,6 +1,6 @@
 {
   "name": "@arcadeai/create-agent",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "type": "module",
   "description": "Scaffold an Arcade-powered AI agent",
   "license": "MIT",
