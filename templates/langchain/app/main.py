@@ -62,7 +62,7 @@ async def index(request: Request, db: AsyncSession = Depends(get_db)):
     user = await get_current_user(request, db)
     if user:
         return RedirectResponse("/dashboard")
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse(request, "login.html")
 
 
 @app.get("/dashboard")
@@ -71,5 +71,5 @@ async def dashboard_page(request: Request, db: AsyncSession = Depends(get_db)):
     user = await get_current_user(request, db)
     if not user:
         return RedirectResponse("/")
-    return templates.TemplateResponse("dashboard.html", {"request": request, "user": user})
+    return templates.TemplateResponse(request, "dashboard.html", {"user": user})
 
