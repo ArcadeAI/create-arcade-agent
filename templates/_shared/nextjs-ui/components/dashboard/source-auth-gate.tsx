@@ -1,12 +1,7 @@
-"use client";
-
-import { useState } from "react";
-import { Check, ArrowUpRight, Info, X } from "lucide-react";
+import { Check, ArrowUpRight, Info } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription, Button } from "@arcadeai/design-system";
 import type { SourceStatus } from "@/types/inbox";
 import { getSource } from "@/lib/sources";
-
-const CALLOUT_KEY = "callout-why-authorize";
 
 interface SourceAuthGateProps {
   sourceStatuses: Record<string, SourceStatus>;
@@ -23,14 +18,6 @@ export function SourceAuthGate({
   onSkip,
   onContinue,
 }: SourceAuthGateProps) {
-  const [showCallout, setShowCallout] = useState(() =>
-    typeof window !== "undefined" ? localStorage.getItem(CALLOUT_KEY) !== "1" : true
-  );
-  const dismissCallout = () => {
-    localStorage.setItem(CALLOUT_KEY, "1");
-    setShowCallout(false);
-  };
-
   const pendingCount = Object.entries(sourceStatuses).filter(
     ([source, status]) => status === "auth_required" && !skippedSources.has(source)
   ).length;
@@ -47,25 +34,15 @@ export function SourceAuthGate({
         </p>
       </div>
 
-      {showCallout && (
-        <Alert className="mb-6">
-          <Info className="size-4" />
-          <AlertTitle className="flex items-center justify-between">
-            Why authorize?
-            <button
-              onClick={dismissCallout}
-              className="ml-2 rounded-sm opacity-70 hover:opacity-100"
-            >
-              <X className="size-3.5" />
-            </button>
-          </AlertTitle>
-          <AlertDescription>
-            Each tool connects on your behalf using OAuth — the agent only gets read access to scan
-            for items to triage. You can skip any source you don&apos;t use, and revoke access
-            anytime from your Arcade dashboard.
-          </AlertDescription>
-        </Alert>
-      )}
+      <Alert className="mb-6">
+        <Info className="size-4" />
+        <AlertTitle>Why authorize?</AlertTitle>
+        <AlertDescription>
+          Each tool connects on your behalf using OAuth — the agent only gets read access to scan
+          for items to triage. You can skip any source you don&apos;t use, and revoke access anytime
+          from your Arcade dashboard.
+        </AlertDescription>
+      </Alert>
 
       <div className="mb-6 space-y-2">
         {Object.entries(sourceStatuses).map(([source, status]) => {

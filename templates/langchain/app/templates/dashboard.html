@@ -123,7 +123,6 @@
         <div
           id="callout-why-arcade"
           class="rounded-lg border border-border bg-card px-4 py-3 text-sm text-left mt-4"
-          data-callout
         >
           <div class="flex items-start gap-3">
             <svg
@@ -138,23 +137,7 @@
               <path d="M12 8h.01" />
             </svg>
             <div class="flex-1">
-              <div class="flex items-center justify-between mb-1">
-                <p class="font-medium text-foreground">Why Arcade?</p>
-                <button
-                  onclick="dismissCallout('callout-why-arcade')"
-                  class="ml-2 opacity-70 hover:opacity-100 text-foreground"
-                >
-                  <svg
-                    class="w-3.5 h-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    stroke-width="2"
-                  >
-                    <path d="M18 6L6 18M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
+              <p class="font-medium text-foreground mb-1">Why Arcade?</p>
               <p class="text-muted-foreground">
                 The agent uses Arcade as an MCP Gateway to read from your tools on your behalf.
                 Signing in here links your Arcade identity so the gateway knows which user's tools
@@ -253,7 +236,6 @@
           <div
             id="callout-how-it-works"
             class="rounded-lg border border-border bg-card px-4 py-3 text-sm text-left max-w-md mt-2"
-            data-callout
           >
             <div class="flex items-start gap-3">
               <svg
@@ -268,23 +250,7 @@
                 <path d="M12 8h.01" />
               </svg>
               <div class="flex-1">
-                <div class="flex items-center justify-between mb-1">
-                  <p class="font-medium text-foreground">How this works</p>
-                  <button
-                    onclick="dismissCallout('callout-how-it-works')"
-                    class="ml-2 opacity-70 hover:opacity-100 text-foreground"
-                  >
-                    <svg
-                      class="w-3.5 h-3.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      stroke-width="2"
-                    >
-                      <path d="M18 6L6 18M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
+                <p class="font-medium text-foreground mb-1">How this works</p>
                 <p class="text-muted-foreground">
                   When you click "Plan my day", the agent connects to your Slack, Gmail, Google
                   Calendar, Linear, and GitHub through Arcade's MCP Gateway. It will first check if
@@ -307,8 +273,7 @@
         <div id="loading-skeletons" class="hidden space-y-6">
           <div
             id="callout-whats-happening"
-            class="rounded-lg border border-border bg-card px-4 py-3 text-sm"
-            data-callout
+            class="rounded-lg border border-border bg-card px-4 py-3 text-sm text-left"
           >
             <div class="flex items-start gap-3">
               <svg
@@ -323,23 +288,7 @@
                 <path d="M12 8h.01" />
               </svg>
               <div class="flex-1">
-                <div class="flex items-center justify-between mb-1">
-                  <p class="font-medium text-foreground">What's happening</p>
-                  <button
-                    onclick="dismissCallout('callout-whats-happening')"
-                    class="ml-2 opacity-70 hover:opacity-100 text-foreground"
-                  >
-                    <svg
-                      class="w-3.5 h-3.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      stroke-width="2"
-                    >
-                      <path d="M18 6L6 18M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
+                <p class="font-medium text-foreground mb-1">What's happening</p>
                 <p class="text-muted-foreground">
                   The agent is reading from your connected sources and classifying what it finds.
                   This behavior is driven by the system prompt in
@@ -383,8 +332,7 @@
           </div>
           <div
             id="callout-make-it-yours"
-            class="rounded-lg border border-border bg-card px-4 py-3 text-sm"
-            data-callout
+            class="rounded-lg border border-border bg-card px-4 py-3 text-sm text-left"
           >
             <div class="flex items-start gap-3">
               <svg
@@ -399,23 +347,7 @@
                 <path d="M12 8h.01" />
               </svg>
               <div class="flex-1">
-                <div class="flex items-center justify-between mb-1">
-                  <p class="font-medium text-foreground">Make it yours</p>
-                  <button
-                    onclick="dismissCallout('callout-make-it-yours')"
-                    class="ml-2 opacity-70 hover:opacity-100 text-foreground"
-                  >
-                    <svg
-                      class="w-3.5 h-3.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      stroke-width="2"
-                    >
-                      <path d="M18 6L6 18M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
+                <p class="font-medium text-foreground mb-1">Make it yours</p>
                 <p class="text-muted-foreground">
                   Start with the system prompt in
                   <code class="rounded bg-muted px-1 py-0.5 text-xs">app/system-prompt.md</code> —
@@ -433,14 +365,5 @@
   </main>
 </div>
 {% endblock %} {% block scripts %}
-<script>
-  function dismissCallout(id) {
-    localStorage.setItem(id, "1");
-    document.getElementById(id)?.classList.add("hidden");
-  }
-  document.querySelectorAll("[data-callout]").forEach(function (el) {
-    if (localStorage.getItem(el.id) === "1") el.classList.add("hidden");
-  });
-</script>
 <script src="/static/dashboard.js"></script>
 {% endblock %}
