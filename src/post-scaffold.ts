@@ -25,8 +25,6 @@ const GATEWAY_SETUP_URL =
       "Linear.ListProjects",
       "Linear.GetProject",
       "Linear.WhoAmI",
-      "Github.ListNotifications",
-      "Github.GetNotificationSummary",
       "Github.ListPullRequests",
       "Github.GetPullRequest",
       "Github.GetUserOpenItems",
