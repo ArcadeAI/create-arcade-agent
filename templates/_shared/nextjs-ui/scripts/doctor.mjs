@@ -18,8 +18,6 @@ const REQUIRED_TOOLS = [
   "Linear_ListProjects",
   "Linear_GetProject",
   "Linear_WhoAmI",
-  "Github_ListNotifications",
-  "Github_GetNotificationSummary",
   "Github_ListPullRequests",
   "Github_GetPullRequest",
   "Github_GetUserOpenItems",
