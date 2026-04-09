@@ -14,6 +14,9 @@ import { useArcadeConnection } from "@/hooks/use-arcade-connection";
 import { useSourceCheck } from "@/hooks/use-source-check";
 import { usePlanStream } from "@/hooks/use-plan-stream";
 import {
+  Alert,
+  AlertTitle,
+  AlertDescription,
   Skeleton,
   Button,
   Card,
@@ -22,7 +25,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@arcadeai/design-system";
-import { Loader2, ShieldAlert, AlertTriangle, RotateCcw } from "lucide-react";
+import { Info, Loader2, ShieldAlert, AlertTriangle, RotateCcw, X } from "lucide-react";
 
 // --- Config health warnings ---
 
@@ -130,6 +133,22 @@ function DashboardContent() {
   // --- Config health check ---
   const [configWarnings, setConfigWarnings] = useState<ConfigWarning[]>([]);
 
+  // --- Dismissible callout state ---
+  const [showAgentWorkingCallout, setShowAgentWorkingCallout] = useState(() =>
+    typeof window !== "undefined" ? localStorage.getItem("callout-agent-working") !== "1" : true
+  );
+  const dismissAgentWorkingCallout = () => {
+    localStorage.setItem("callout-agent-working", "1");
+    setShowAgentWorkingCallout(false);
+  };
+  const [showCustomizeCallout, setShowCustomizeCallout] = useState(() =>
+    typeof window !== "undefined" ? localStorage.getItem("callout-customize-agent") !== "1" : true
+  );
+  const dismissCustomizeCallout = () => {
+    localStorage.setItem("callout-customize-agent", "1");
+    setShowCustomizeCallout(false);
+  };
+
   useEffect(() => {
     fetch("/api/health")
       .then((r) => r.json())
@@ -209,6 +228,15 @@ function DashboardContent() {
                 >
                   I&apos;ve already signed in &mdash; retry
                 </button>
+                <Alert>
+                  <Info className="size-4" />
+                  <AlertTitle>Why Arcade?</AlertTitle>
+                  <AlertDescription>
+                    The agent uses Arcade as an MCP Gateway to read from your tools on your behalf.
+                    Signing in here links your Arcade identity so the gateway knows which
+                    user&apos;s tools to access.
+                  </AlertDescription>
+                </Alert>
               </CardContent>
             </Card>
           )}
@@ -313,6 +341,29 @@ function DashboardContent() {
 
           {loading && !hasItems && authUrls.length === 0 && (
             <div className="space-y-6">
+              {showAgentWorkingCallout && (
+                <Alert>
+                  <Info className="size-4" />
+                  <AlertTitle className="flex items-center justify-between">
+                    What&apos;s happening
+                    <button
+                      onClick={dismissAgentWorkingCallout}
+                      className="ml-2 rounded-sm opacity-70 hover:opacity-100"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </AlertTitle>
+                  <AlertDescription>
+                    The agent is reading from your connected sources and classifying what it finds.
+                    This behavior is driven by the system prompt in{" "}
+                    <code className="rounded bg-muted px-1 py-0.5 text-xs">
+                      app/api/plan/route.ts
+                    </code>{" "}
+                    — edit it to change what gets fetched, how items are prioritized, or what the
+                    agent focuses on.
+                  </AlertDescription>
+                </Alert>
+              )}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 {Array.from({ length: 3 }).map((_, i) => (
                   <Skeleton key={i} className="h-24 rounded-xl" />
@@ -343,6 +394,29 @@ function DashboardContent() {
                   )}
                 </Button>
               </div>
+              {showCustomizeCallout && (
+                <Alert>
+                  <Info className="size-4" />
+                  <AlertTitle className="flex items-center justify-between">
+                    Make it yours
+                    <button
+                      onClick={dismissCustomizeCallout}
+                      className="ml-2 rounded-sm opacity-70 hover:opacity-100"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </AlertTitle>
+                  <AlertDescription>
+                    Start with the system prompt in{" "}
+                    <code className="rounded bg-muted px-1 py-0.5 text-xs">
+                      app/api/plan/route.ts
+                    </code>{" "}
+                    — that&apos;s where the agent&apos;s behavior is defined. From there, check out{" "}
+                    <code className="rounded bg-muted px-1 py-0.5 text-xs">AGENT_PLAYBOOK.md</code>{" "}
+                    for a full walkthrough of customization points.
+                  </AlertDescription>
+                </Alert>
+              )}
               <StatsBar
                 stats={stats}
                 activeSource={activeSource}

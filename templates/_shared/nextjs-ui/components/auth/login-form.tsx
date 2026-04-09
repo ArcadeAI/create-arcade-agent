@@ -4,6 +4,9 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import {
+  Alert,
+  AlertTitle,
+  AlertDescription,
   Button,
   Card,
   CardContent,
@@ -12,6 +15,7 @@ import {
   Input,
   Label,
 } from "@arcadeai/design-system";
+import { Info } from "lucide-react";
 
 export function LoginForm() {
   const router = useRouter();
@@ -65,6 +69,15 @@ export function LoginForm() {
         </svg>
         <span className="text-xl font-semibold tracking-tight">Arcade Agent</span>
       </div>
+      <Alert className="mb-4 w-full max-w-sm">
+        <Info className="size-4" />
+        <AlertTitle>Two separate sign-ins</AlertTitle>
+        <AlertDescription>
+          This creates a local account for your agent app — it&apos;s just for session management
+          and stays in your own database. You&apos;ll connect your Arcade account on the next screen
+          to give the agent access to your tools.
+        </AlertDescription>
+      </Alert>
       <Card className="w-full max-w-sm">
         <CardHeader className="pb-2">
           <div className="mb-3 flex rounded-lg bg-muted p-1">
