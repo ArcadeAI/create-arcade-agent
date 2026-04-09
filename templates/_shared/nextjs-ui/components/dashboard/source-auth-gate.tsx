@@ -1,7 +1,5 @@
-"use client";
-
-import { Check, ArrowUpRight } from "lucide-react";
-import { Button } from "@arcadeai/design-system";
+import { Check, ArrowUpRight, Info } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription, Button } from "@arcadeai/design-system";
 import type { SourceStatus } from "@/types/inbox";
 import { getSource } from "@/lib/sources";
 
@@ -35,6 +33,16 @@ export function SourceAuthGate({
           include, or skip any you want to leave out.
         </p>
       </div>
+
+      <Alert className="mb-6">
+        <Info className="size-4" />
+        <AlertTitle>Why authorize?</AlertTitle>
+        <AlertDescription>
+          Each tool connects on your behalf using OAuth — the agent only gets read access to scan
+          for items to triage. You can skip any source you don&apos;t use, and revoke access anytime
+          from your Arcade dashboard.
+        </AlertDescription>
+      </Alert>
 
       <div className="mb-6 space-y-2">
         {Object.entries(sourceStatuses).map(([source, status]) => {

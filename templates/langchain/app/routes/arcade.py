@@ -123,16 +123,14 @@ def _extract_auth_url_from_result(content: str) -> str | None:
     """Check if a tool result contains an Arcade authorization URL."""
     try:
         parsed = json.loads(content)
-        url = (
-            parsed.get("authorization_url")
-            or parsed.get("url")
-            or (parsed.get("structuredContent") or {}).get("authorization_url")
-        )
+        url = parsed.get("authorization_url") or (
+            parsed.get("structuredContent") or {}
+        ).get("authorization_url")
         if url:
             return url
     except (json.JSONDecodeError, AttributeError):
         pass
-    # Fallback: regex
+    # Fallback: regex — only match clear OAuth authorization endpoints
     match = re.search(
         r"https://[^\s\"'>\]]+/oauth/[^\s\"'>\]]+|https://[^\s\"'>\]]+authorize[^\s\"'>\]]*",
         content or "",

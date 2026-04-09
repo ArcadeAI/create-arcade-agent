@@ -14,6 +14,9 @@ import { useArcadeConnection } from "@/hooks/use-arcade-connection";
 import { useSourceCheck } from "@/hooks/use-source-check";
 import { usePlanStream } from "@/hooks/use-plan-stream";
 import {
+  Alert,
+  AlertTitle,
+  AlertDescription,
   Skeleton,
   Button,
   Card,
@@ -22,7 +25,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@arcadeai/design-system";
-import { Loader2, ShieldAlert, AlertTriangle, RotateCcw } from "lucide-react";
+import { Info, Loader2, ShieldAlert, AlertTriangle, RotateCcw } from "lucide-react";
 
 // --- Config health warnings ---
 
@@ -209,6 +212,15 @@ function DashboardContent() {
                 >
                   I&apos;ve already signed in &mdash; retry
                 </button>
+                <Alert className="text-left">
+                  <Info className="size-4" />
+                  <AlertTitle>Why Arcade?</AlertTitle>
+                  <AlertDescription>
+                    The agent uses Arcade as an MCP Gateway to read from your tools on your behalf.
+                    Signing in here links your Arcade identity so the gateway knows which
+                    user&apos;s tools to access.
+                  </AlertDescription>
+                </Alert>
               </CardContent>
             </Card>
           )}
@@ -313,6 +325,19 @@ function DashboardContent() {
 
           {loading && !hasItems && authUrls.length === 0 && (
             <div className="space-y-6">
+              <Alert>
+                <Info className="size-4" />
+                <AlertTitle>What&apos;s happening</AlertTitle>
+                <AlertDescription>
+                  The agent is reading from your connected sources and classifying what it finds.
+                  This behavior is driven by the system prompt in{" "}
+                  <code className="rounded bg-muted px-1 py-0.5 text-xs">
+                    app/api/plan/route.ts
+                  </code>{" "}
+                  — edit it to change what gets fetched, how items are prioritized, or what the
+                  agent focuses on.
+                </AlertDescription>
+              </Alert>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 {Array.from({ length: 3 }).map((_, i) => (
                   <Skeleton key={i} className="h-24 rounded-xl" />
@@ -343,6 +368,19 @@ function DashboardContent() {
                   )}
                 </Button>
               </div>
+              <Alert>
+                <Info className="size-4" />
+                <AlertTitle>Make it yours</AlertTitle>
+                <AlertDescription>
+                  Start with the system prompt in{" "}
+                  <code className="rounded bg-muted px-1 py-0.5 text-xs">
+                    app/api/plan/route.ts
+                  </code>{" "}
+                  — that&apos;s where the agent&apos;s behavior is defined. From there, check out{" "}
+                  <code className="rounded bg-muted px-1 py-0.5 text-xs">AGENT_PLAYBOOK.md</code>{" "}
+                  for a full walkthrough of customization points.
+                </AlertDescription>
+              </Alert>
               <StatsBar
                 stats={stats}
                 activeSource={activeSource}

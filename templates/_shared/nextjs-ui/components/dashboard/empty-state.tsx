@@ -1,7 +1,5 @@
-"use client";
-
-import { Inbox, Loader2 } from "lucide-react";
-import { Button } from "@arcadeai/design-system";
+import { Inbox, Info, Loader2 } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription, Button } from "@arcadeai/design-system";
 
 interface EmptyStateProps {
   onPlan: () => void;
@@ -21,6 +19,17 @@ export function EmptyState({ onPlan, loading }: EmptyStateProps) {
           build your action plan.
         </p>
       </div>
+      <Alert className="max-w-md text-left">
+        <Info className="size-4" />
+        <AlertTitle>How this works</AlertTitle>
+        <AlertDescription>
+          When you click &ldquo;Plan my day&rdquo;, the agent connects to your Slack, Gmail, Google
+          Calendar, Linear, and GitHub through Arcade&apos;s MCP Gateway. It will first check if any
+          of those need authentication — if so, you&apos;ll be prompted to authorize before the run
+          starts. Then it reads your recent messages, emails, events, issues, and pull requests, and
+          classifies each item by priority and suggests next steps.
+        </AlertDescription>
+      </Alert>
       <Button size="lg" disabled={loading} onClick={onPlan}>
         {loading ? (
           <>
