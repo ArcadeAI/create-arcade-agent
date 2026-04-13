@@ -175,7 +175,7 @@ export const mcpClient = new MCPClient({
     arcade: {
       url: new URL(getGatewayUrl()),
       authProvider: oauthProvider,
-      capabilities: { elicitation: {} },
+      capabilities: { elicitation: { url: {} } },
     },
   },
 });
@@ -228,7 +228,7 @@ export async function getArcadeMCPClient(options?: {
   const transportType = gatewayUrl.endsWith("/sse") ? "sse" : "http";
   const client = await createMCPClient({
     transport: { type: transportType, url: gatewayUrl, headers },
-    capabilities: { elicitation: {} },
+    capabilities: { elicitation: { url: {} } },
   });
 
   client.onElicitationRequest(ElicitationRequestSchema, async (request) => {
