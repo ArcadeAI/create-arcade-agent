@@ -5,6 +5,7 @@ import type { InboxItem, PlanEvent } from "@/types/inbox";
 
 interface PlanStreamCallbacks {
   onAuthRequired?: (authUrl: string, toolName?: string) => void;
+  onElicitation?: (elicitationId: string, authUrl: string, message: string) => void;
   onSourcesDone?: () => void;
 }
 
@@ -91,6 +92,13 @@ export function usePlanStream(callbacks?: PlanStreamCallbacks): {
                 break;
               case "auth_required":
                 callbacksRef.current?.onAuthRequired?.(event.authUrl, event.toolName);
+                break;
+              case "elicitation":
+                callbacksRef.current?.onElicitation?.(
+                  event.elicitationId,
+                  event.authUrl,
+                  event.message
+                );
                 break;
               case "status":
                 setStatusMessage(event.message);

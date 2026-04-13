@@ -1,7 +1,7 @@
 {{#if (eq name "mastra")}}
 import { MCPClient } from "@mastra/mcp";
 {{/if}}
-import { createMCPClient } from "@ai-sdk/mcp";
+import { createMCPClient, ElicitationRequestSchema } from "@ai-sdk/mcp";
 import { auth } from "@modelcontextprotocol/sdk/client/auth.js";
 import type { OAuthClientProvider } from "@modelcontextprotocol/sdk/client/auth.js";
 import type {
@@ -175,23 +175,71 @@ export const mcpClient = new MCPClient({
     arcade: {
       url: new URL(getGatewayUrl()),
       authProvider: oauthProvider,
+      capabilities: { elicitation: {} },
     },
   },
+});
+
+// Per-request elicitation bridge: the singleton MCPClient handles elicitation
+// at the module level, but the NDJSON emit() function is per-request.
+let _elicitationCallback: ((params: {
+  elicitationId: string;
+  message: string;
+  authUrl: string;
+}) => void) | null = null;
+
+export function setElicitationCallback(
+  cb: typeof _elicitationCallback
+) {
+  _elicitationCallback = cb;
+}
+
+mcpClient.elicitation.onRequest("arcade", async (request) => {
+  const params = request as Record<string, unknown>;
+  const message = (params.message as string) ?? "Authorization required";
+  const authUrl = (params.url as string) ?? "";
+  const elicitationId = (params.elicitationId as string) ?? "";
+  console.log(`[MCP] Elicitation request: ${message}`);
+  _elicitationCallback?.({ elicitationId, message, authUrl });
+  return { action: "accept" as const };
 });
 
 {{/if}}
 /**
  * Create an AI SDK MCP client for Arcade Gateway using stored OAuth tokens.
  * Auto-detects transport: SSE for /sse URLs, Streamable HTTP otherwise.
+ *
+ * Pass `onElicitation` to receive URL-mode elicitation events (e.g. OAuth
+ * authorization prompts from the gateway). The gateway blocks the tool call
+ * until the user completes auth, then resumes automatically.
  */
-export async function getArcadeMCPClient() {
+export async function getArcadeMCPClient(options?: {
+  onElicitation?: (params: {
+    elicitationId: string;
+    message: string;
+    authUrl: string;
+  }) => void;
+}) {
   const gatewayUrl = getGatewayUrl();
   const tokens = oauthProvider.tokens();
   const headers = tokens?.access_token
     ? { Authorization: `Bearer ${tokens.access_token}` }
     : undefined;
   const transportType = gatewayUrl.endsWith("/sse") ? "sse" : "http";
-  return createMCPClient({
+  const client = await createMCPClient({
     transport: { type: transportType, url: gatewayUrl, headers },
+    capabilities: { elicitation: {} },
   });
+
+  client.onElicitationRequest(ElicitationRequestSchema, async (request) => {
+    const params = request.params as Record<string, unknown>;
+    const message = (params.message as string) ?? "Authorization required";
+    const authUrl = (params.url as string) ?? "";
+    const elicitationId = (params.elicitationId as string) ?? "";
+    console.log(`[MCP] Elicitation request: ${message}`);
+    options?.onElicitation?.({ elicitationId, message, authUrl });
+    return { action: "accept" as const };
+  });
+
+  return client;
 }

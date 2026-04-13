@@ -1,3 +1,4 @@
+// Fallback: extract auth URL from tool output for gateways that don't support elicitation
 function extractAuthUrlFromToolOutput(output: unknown): string | null {
   const looksLikeAuthUrl = (value: unknown): value is string =>
     typeof value === "string" &&

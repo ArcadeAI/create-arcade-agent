@@ -31,6 +31,7 @@ export type PlanEvent =
   | { type: "task"; data: InboxItem }
   | { type: "summary"; data: { total: number; bySource: Record<string, number> } }
   | { type: "auth_required"; authUrl: string; toolName?: string }
+  | { type: "elicitation"; elicitationId: string; authUrl: string; message: string }
   | { type: "sources"; sources: string[] }
   | { type: "error"; message: string }
   | { type: "done" };

@@ -7,6 +7,7 @@ type PlanEvent =
   | { type: "task"; data: InboxItem }
   | { type: "summary"; data: { total: number; bySource: Record<string, number> } }
   | { type: "auth_required"; authUrl: string; toolName?: string }
+  | { type: "elicitation"; elicitationId: string; authUrl: string; message: string }
   | { type: "sources"; sources: string[] }
   | { type: "error"; message: string }
   | { type: "done" };
@@ -144,8 +145,254 @@ function extractJsonBlocks(text: string): {
   };
 }
 
+// --- Shared helpers for tool filtering & truncation ---
+
+const MUTATION = /create|update|delete|send|reply|post|archive|remove|add|invite|merge|close|assign|edit|publish|comment/i;
+
+function isTriageTool(name: string): boolean {
+  return !MUTATION.test(name);
+}
+
+const MAX_TOOL_RESULT_CHARS = 4000;
+
+function truncateToolResult(result: unknown): unknown {
+  if (result && typeof result === "object" && "content" in (result as Record<string, unknown>)) {
+    const obj = result as { content: { type: string; text: string }[] };
+    return {
+      ...obj,
+      content: obj.content.map((item) => {
+        if (item.type === "text" && item.text && item.text.length > MAX_TOOL_RESULT_CHARS) {
+          return {
+            ...item,
+            text: item.text.slice(0, MAX_TOOL_RESULT_CHARS) +
+              `\n...[truncated ${item.text.length - MAX_TOOL_RESULT_CHARS} chars]`,
+          };
+        }
+        return item;
+      }),
+    };
+  }
+  if (typeof result === "string" && result.length > MAX_TOOL_RESULT_CHARS) {
+    return result.slice(0, MAX_TOOL_RESULT_CHARS) +
+      `\n...[truncated ${result.length - MAX_TOOL_RESULT_CHARS} chars]`;
+  }
+  return result;
+}
+
 // --- Route handler ---
 
+{{#if (eq name "mastra")}}
+export async function POST() {
+  const user = await getSession();
+  if (!user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let streamController: ReadableStreamDefaultController<Uint8Array> | undefined;
+
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      streamController = controller;
+    },
+  });
+
+  function emit(event: PlanEvent) {
+    try {
+      streamController?.enqueue(encodeEvent(event));
+    } catch {
+      // Stream closed by client
+    }
+  }
+
+  (async () => {
+    try {
+      emit({ type: "status", message: "Connecting to Arcade Gateway..." });
+
+      setElicitationCallback(({ elicitationId, message, authUrl }) => {
+        emit({ type: "elicitation", elicitationId, authUrl, message });
+      });
+
+      const allToolsets = await mcpClient.listToolsets();
+
+      // Filter toolsets: keep only read-only triage tools, wrap execute for truncation.
+      // listToolsets() returns { serverName: { toolName: tool, ... } }.
+      const filteredToolsets: Record<string, Record<string, unknown>> = {};
+      const toolNames: string[] = [];
+      let allToolCount = 0;
+
+      for (const [setName, toolsObj] of Object.entries(allToolsets)) {
+        const tools = toolsObj as unknown as Record<string, { execute?: (...a: unknown[]) => Promise<unknown>; [k: string]: unknown }>;
+        const filtered: Record<string, unknown> = {};
+
+        for (const [toolName, tool] of Object.entries(tools)) {
+          allToolCount++;
+          if (!isTriageTool(toolName)) continue;
+          if (/[._]WhoAmI$/i.test(toolName)) continue;
+
+          if (tool.execute) {
+            const orig = tool.execute;
+            filtered[toolName] = {
+              ...tool,
+              execute: async (...args: unknown[]) => truncateToolResult(await orig(...args)),
+            };
+          } else {
+            filtered[toolName] = tool;
+          }
+          toolNames.push(toolName);
+        }
+
+        if (Object.keys(filtered).length > 0) {
+          filteredToolsets[setName] = filtered;
+        }
+      }
+
+      const sources = [...new Set(toolNames.map((n) => mapToolToSource(n)))];
+      console.log(`[plan] ${toolNames.length} triage tools (of ${allToolCount} total) from sources: ${sources.join(", ")}`);
+
+      emit({
+        type: "status",
+        message: `Found ${toolNames.length} tools across ${sources.length} sources. Starting triage...`,
+      });
+
+      emit({ type: "sources", sources });
+
+      const toolsBySource: Record<string, string[]> = {};
+      for (const name of toolNames) {
+        const src = mapToolToSource(name);
+        if (!toolsBySource[src]) toolsBySource[src] = [];
+        toolsBySource[src].push(name);
+      }
+      const toolInventory = Object.entries(toolsBySource)
+        .map(([src, names]) => `${src}: ${names.join(", ")}`)
+        .join("\n");
+
+      const prompt = `Plan my day. Today is ${new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}.\n\nHere are the tools available by source:\n\n${toolInventory}\n\nIn your FIRST step, call ALL non-WhoAmI tools in parallel — one call per tool. Do NOT skip any source.\nFor calendar tools, make sure to pass today's date range so you get today's events.\nAfter getting results, classify every item. If any source returned a list you can drill into, make follow-up calls.\nI need a COMPLETE picture: notifications, assigned work, upcoming events, and unread messages.`;
+
+      let accumulatedText = "";
+      let emittedTaskCount = 0;
+      let emittedSummary = false;
+
+      const agent = new Agent({
+        id: "plan-agent",
+        name: "Plan Agent",
+        model: getModel(),
+        instructions: PLAN_SYSTEM_PROMPT,
+      });
+
+      const result = await agent.stream(prompt, {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        toolsets: filteredToolsets as any,
+        maxSteps: 20,
+        onStepFinish: (step) => {
+          const { toolCalls = [], toolResults = [] } = step as unknown as {
+            toolCalls: { toolCallId: string; toolName: string }[];
+            toolResults: { toolCallId?: string; output: unknown }[];
+          };
+          console.log(`[plan] Step: ${toolCalls.length} calls, ${toolResults.length} results`);
+
+          for (const call of toolCalls) {
+            const source = mapToolToSource(call.toolName);
+            emit({
+              type: "status",
+              message: `Calling ${source}: ${call.toolName}...`,
+            });
+          }
+
+          const toolNameByCallId = new Map(
+            toolCalls.map((call) => [call.toolCallId, call.toolName] as const)
+          );
+
+          for (let i = 0; i < toolResults.length; i++) {
+            const tr = toolResults[i];
+            const authUrl = extractAuthUrlFromToolOutput(tr.output);
+            if (authUrl) {
+              const matchedToolName = tr.toolCallId
+                ? toolNameByCallId.get(tr.toolCallId)
+                : undefined;
+              const fallbackToolName = i < toolCalls.length
+                ? toolCalls[i].toolName
+                : undefined;
+              const toolName = mapToolToSource(matchedToolName ?? fallbackToolName ?? "");
+              emit({ type: "auth_required", authUrl, toolName });
+            }
+          }
+        },
+      });
+
+      for await (const chunk of result.textStream) {
+        if (chunk) {
+          accumulatedText += chunk;
+          const { tasks, summary, remaining } = extractJsonBlocks(accumulatedText);
+          accumulatedText = remaining;
+
+          for (const task of tasks) {
+            emittedTaskCount++;
+            emit({ type: "task", data: task });
+            emit({
+              type: "status",
+              message: `Classified ${emittedTaskCount} item${emittedTaskCount > 1 ? "s" : ""}...`,
+            });
+          }
+          if (summary) {
+            emit({ type: "summary", data: summary });
+            emittedSummary = true;
+          }
+        }
+      }
+
+      if (accumulatedText.length > 0) {
+        const { tasks, summary } = extractJsonBlocks(accumulatedText);
+        for (const task of tasks) {
+          emittedTaskCount++;
+          emit({ type: "task", data: task });
+        }
+        if (summary) {
+          emit({ type: "summary", data: summary });
+          emittedSummary = true;
+        }
+      }
+
+      if (!emittedSummary && emittedTaskCount > 0) {
+        emit({
+          type: "summary",
+          data: { total: emittedTaskCount, bySource: {} },
+        });
+      }
+
+      emit({ type: "done" });
+    } catch (error) {
+      console.error("[plan] Error:", error);
+      const msg = error instanceof Error ? error.message : "Unknown error";
+      const isAuthError =
+        msg.includes("401") ||
+        msg.includes("Missing Authorization") ||
+        msg.includes("Unauthorized");
+      emit({
+        type: "error",
+        message: isAuthError
+          ? "Not connected to Arcade. Please connect your Arcade account from the dashboard."
+          : msg,
+      });
+      emit({ type: "done" });
+    } finally {
+      setElicitationCallback(null);
+      try {
+        streamController?.close();
+      } catch {
+        /* ignore */
+      }
+    }
+  })();
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "application/x-ndjson",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    },
+  });
+}
+{{else}}
 export async function POST() {
   const user = await getSession();
   if (!user) {
@@ -174,50 +421,16 @@ export async function POST() {
     try {
       emit({ type: "status", message: "Connecting to Arcade Gateway..." });
 
-      mcpClient = await getArcadeMCPClient();
+      mcpClient = await getArcadeMCPClient({
+        onElicitation: ({ elicitationId, message, authUrl }) => {
+          emit({ type: "elicitation", elicitationId, authUrl, message });
+        },
+      });
       const allTools = await mcpClient.tools();
-
-      // Only keep tools useful for triage — filter out mutations (create, delete, send, etc.)
-      // so the agent only reads data during planning.
-      const MUTATION = /create|update|delete|send|reply|post|archive|remove|add|invite|merge|close|assign|edit|publish|comment/i;
-
-      function isTriageTool(name: string): boolean {
-        return !MUTATION.test(name);
-      }
-      // Cap individual tool results so they don't blow the model's context window.
-      // Gmail threads, GitHub notifications, etc. can return 50k+ chars each.
-      // MCP tools return { content: [{ type: "text", text: "..." }] } — we must
-      // preserve that structure or the AI SDK crashes.
-      const MAX_TOOL_RESULT_CHARS = 4000;
-
-      function truncateToolResult(result: unknown): unknown {
-        if (result && typeof result === "object" && "content" in (result as Record<string, unknown>)) {
-          const obj = result as { content: { type: string; text: string }[] };
-          return {
-            ...obj,
-            content: obj.content.map((item) => {
-              if (item.type === "text" && item.text && item.text.length > MAX_TOOL_RESULT_CHARS) {
-                return {
-                  ...item,
-                  text: item.text.slice(0, MAX_TOOL_RESULT_CHARS) +
-                    `\n...[truncated ${item.text.length - MAX_TOOL_RESULT_CHARS} chars]`,
-                };
-              }
-              return item;
-            }),
-          };
-        }
-        if (typeof result === "string" && result.length > MAX_TOOL_RESULT_CHARS) {
-          return result.slice(0, MAX_TOOL_RESULT_CHARS) +
-            `\n...[truncated ${result.length - MAX_TOOL_RESULT_CHARS} chars]`;
-        }
-        return result;
-      }
 
       const tools: typeof allTools = {};
       for (const [name, tool] of Object.entries(allTools)) {
         if (!isTriageTool(name)) continue;
-        // Don't give WhoAmI tools to the model — they're for auth checks, not data
         if (/[._]WhoAmI$/i.test(name)) continue;
         const orig = tool.execute;
         tools[name] = {
@@ -389,3 +602,4 @@ export async function POST() {
     },
   });
 }
+{{/if}}

@@ -16,6 +16,7 @@ import json
 import logging
 import secrets
 import time
+from collections.abc import Callable
 from pathlib import Path
 from urllib.parse import urlencode, urlparse
 
@@ -358,6 +359,32 @@ async def exchange_code(code: str) -> dict:
         return tokens
 
 
+# --- Per-request elicitation bridge ---
+# The MCP client is a module-level singleton, but the NDJSON emitter is
+# per-request. A module-level callback ref bridges the two.
+
+_elicitation_callback: Callable[[str, str, str], None] | None = None
+
+
+def set_elicitation_callback(cb: Callable[[str, str, str], None] | None):
+    """Set (or clear) the per-request elicitation event callback."""
+    global _elicitation_callback
+    _elicitation_callback = cb
+
+
+async def _on_elicitation(mcp_context, params, context):
+    """Handle URL-mode elicitation requests from Arcade gateway."""
+    from mcp.types import ElicitResult
+
+    message = getattr(params, "message", "Authorization required")
+    auth_url = getattr(params, "url", "")
+    elicitation_id = getattr(params, "elicitation_id", "") or getattr(params, "elicitationId", "")
+    logging.getLogger(__name__).info("[MCP] Elicitation request: %s", message)
+    if _elicitation_callback:
+        _elicitation_callback(elicitation_id, message, auth_url)
+    return ElicitResult(action="accept")
+
+
 # --- MCP Client factory ---
 
 
@@ -367,6 +394,7 @@ def create_mcp_client():
     After OAuth is complete, the stored access_token is sent as a
     Bearer token to authenticate with the Arcade MCP Gateway.
     """
+    from langchain_mcp_adapters.callbacks import Callbacks
     from langchain_mcp_adapters.client import MultiServerMCPClient
 
     if not settings.arcade_gateway_url:
@@ -387,7 +415,8 @@ def create_mcp_client():
                 "url": settings.arcade_gateway_url,
                 "headers": headers,
             }
-        }
+        },
+        callbacks=Callbacks(on_elicitation=_on_elicitation),
     )
 
 

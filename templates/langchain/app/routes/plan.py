@@ -17,7 +17,7 @@ from langchain_core.messages import HumanMessage
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agent import get_llm
-from app.arcade_oauth import get_cached_tools, get_mcp_client
+from app.arcade_oauth import get_cached_tools, get_mcp_client, set_elicitation_callback
 from app.auth import get_current_user
 from app.database import get_db
 
@@ -110,15 +110,15 @@ def _build_plan_prompt():
         "```\n\n"
         "URL RULES:\n"
         "Prefer a direct deep link to the item itself:\n"
-        "- Slack: use the \"permalink\" field if present"
+        '- Slack: use the "permalink" field if present'
         " (https://<team>.slack.com/archives/<channel>/p<ts>)\n"
         "- GitHub: use the issue or PR URL on github.com\n"
         "- Linear: use the Linear issue URL\n"
         "- Gmail: use the Gmail thread URL (https://mail.google.com/mail/u/0/#inbox/<threadId>)\n"
-        "- Google Calendar: use the \"htmlLink\" field if present\n"
+        '- Google Calendar: use the "htmlLink" field if present\n'
         "If no direct deep link is available, fall back to the most relevant URL"
         " found anywhere in the tool response.\n"
-        "Only omit \"url\" if there is truly no URL available in the response at all.\n\n"
+        'Only omit "url" if there is truly no URL available in the response at all.\n\n'
         "Rules:\n"
         "- One json:task block per ACTIONABLE item (skip empty results, metadata, and errors)\n"
         "- Brief status text between blocks is fine\n"
@@ -140,7 +140,7 @@ def _patch_tool_schemas(tools):
 
 
 def _extract_auth_url(content) -> str | None:
-    """Check if a tool result contains an Arcade authorization URL."""
+    """Fallback: extract auth URL from tool output for gateways that don't support elicitation."""
     if not isinstance(content, str):
         return None
     try:
@@ -206,6 +206,16 @@ async def plan(request: Request, db: AsyncSession = Depends(get_db)):
 
         yield _encode_event({"type": "status", "message": "Connecting to Arcade Gateway..."})
 
+        # Wire per-request elicitation events to the NDJSON stream.
+        # The elicitation callback fires during tool execution; we buffer events
+        # and drain them on each iteration of the stream loop.
+        elicitation_events: list[dict] = []
+        set_elicitation_callback(
+            lambda eid, msg, url: elicitation_events.append(
+                {"type": "elicitation", "elicitationId": eid, "authUrl": url, "message": msg}
+            )
+        )
+
         mcp_client = get_mcp_client()
 
         try:
@@ -216,7 +226,8 @@ async def plan(request: Request, db: AsyncSession = Depends(get_db)):
             # Uses pattern matching so it works regardless of Arcade's exact naming
             # convention (underscores, dots, or mixed casing are all handled).
             _KNOWN_SERVICE = re.compile(
-                r"^(github|gmail|google|calendar|linear|slack)", re.IGNORECASE,
+                r"^(github|gmail|google|calendar|linear|slack)",
+                re.IGNORECASE,
             )
             _MUTATION = re.compile(
                 r"create|update|delete|send|reply|post|archive|remove"
@@ -228,6 +239,7 @@ async def plan(request: Request, db: AsyncSession = Depends(get_db)):
                 if not _KNOWN_SERVICE.search(name):
                     return False
                 return not _MUTATION.search(name)
+
             MAX_TOOL_RESULT_CHARS = 4000
 
             def _wrap_tool(tool):
@@ -246,10 +258,13 @@ async def plan(request: Request, db: AsyncSession = Depends(get_db)):
 
                 updates = {"coroutine": _truncated_ainvoke}
                 if original_func is not None:
+
                     def _truncated_invoke(*args, **kwargs):
                         result = original_func(*args, **kwargs)
-                        s = result if isinstance(result, str) else (
-                            json.dumps(result) if result else ""
+                        s = (
+                            result
+                            if isinstance(result, str)
+                            else (json.dumps(result) if result else "")
                         )
                         if len(s) > MAX_TOOL_RESULT_CHARS:
                             return (
@@ -257,6 +272,7 @@ async def plan(request: Request, db: AsyncSession = Depends(get_db)):
                                 + f"\n...[truncated {len(s) - MAX_TOOL_RESULT_CHARS} chars]"
                             )
                         return result
+
                     updates["func"] = _truncated_invoke
 
                 return tool.model_copy(update=updates)
@@ -325,6 +341,10 @@ async def plan(request: Request, db: AsyncSession = Depends(get_db)):
                 {"messages": [HumanMessage(content=user_message)]},
                 stream_mode="updates",
             ):
+                # Drain any elicitation events that arrived during tool execution
+                while elicitation_events:
+                    yield _encode_event(elicitation_events.pop(0))
+
                 for node_name, update in event.items():
                     # Check for tool results with auth URLs
                     if node_name == "tools" and "messages" in update:
@@ -413,6 +433,8 @@ async def plan(request: Request, db: AsyncSession = Depends(get_db)):
                 }
             )
             yield _encode_event({"type": "done"})
+        finally:
+            set_elicitation_callback(None)
 
     return StreamingResponse(
         stream(),
