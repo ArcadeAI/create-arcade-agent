@@ -1,0 +1,105 @@
+/**
+ * Sources API Route — WhoAmI Auth Check
+ *
+ * POST /api/sources
+ *
+ * Calls *_WhoAmI tools in parallel to check which services are
+ * authenticated. Returns a map of source → { status, authUrl? }.
+ */
+
+import { getSession } from "@/lib/auth";
+import { getArcadeMCPClient } from "@/lib/arcade";
+
+// --- Helpers ---
+
+import { mapToolToSource } from "@/lib/sources";
+
+// Fallback: extract auth URL from tool output for gateways that don't support elicitation
+function extractAuthUrlFromToolOutput(output: unknown): string | null {
+  const looksLikeAuthUrl = (value: unknown): value is string =>
+    typeof value === "string" &&
+    /oauth|authorize/i.test(value);
+
+  const fromRecord = (value: unknown): string | null => {
+    if (!value || typeof value !== "object") return null;
+    const obj = value as Record<string, unknown>;
+    const direct =
+      (typeof obj.authorization_url === "string" && obj.authorization_url) ||
+      (looksLikeAuthUrl(obj.url) ? obj.url : null);
+    if (direct) return direct;
+
+    if (obj.structuredContent && typeof obj.structuredContent === "object") {
+      const nested = obj.structuredContent as Record<string, unknown>;
+      const nestedUrl =
+        (typeof nested.authorization_url === "string" &&
+          nested.authorization_url) ||
+        (looksLikeAuthUrl(nested.url) ? nested.url : null);
+      if (nestedUrl) return nestedUrl;
+    }
+    return null;
+  };
+
+  const fromObject = fromRecord(output);
+  if (fromObject) return fromObject;
+
+  const raw =
+    typeof output === "string" ? output : JSON.stringify(output ?? "");
+  const match = raw.match(
+    /https:\/\/[^\s"'\]}>]+\/oauth\/[^\s"'\]}>]+|https:\/\/[^\s"'\]}>]+authorize[^\s"'\]}>]*/i
+  );
+  return match ? match[0] : null;
+}
+
+// --- Route handler ---
+
+export async function POST() {
+  const user = await getSession();
+  if (!user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let mcpClient: Awaited<ReturnType<typeof getArcadeMCPClient>> | null = null;
+  try {
+    mcpClient = await getArcadeMCPClient();
+    const allTools = await mcpClient.tools();
+
+    // Find all WhoAmI tools — lightweight identity checks
+    const whoAmITools = Object.entries(allTools).filter(([name]) =>
+      /[._]WhoAmI$/i.test(name)
+    );
+
+    // Call them all in parallel
+    const results = await Promise.allSettled(
+      whoAmITools.map(async ([name, tool]) => {
+        const result = await tool.execute!({}, { toolCallId: name, messages: [] });
+        const authUrl = extractAuthUrlFromToolOutput(result);
+        const source = mapToolToSource(name);
+        return { source, authUrl };
+      })
+    );
+
+    // Build response: { sources: { gmail: { status, authUrl? }, ... } }
+    const sources: Record<string, { status: string; authUrl?: string }> = {};
+    for (const r of results) {
+      if (r.status === "fulfilled") {
+        const { source, authUrl } = r.value;
+        sources[source] = authUrl
+          ? { status: "auth_required", authUrl }
+          : { status: "connected" };
+      }
+    }
+
+    return Response.json({ sources });
+  } catch (error) {
+    console.error("[sources] Error checking WhoAmI tools:", error);
+    return Response.json({ sources: {} });
+  } finally {
+    if (mcpClient) {
+      try {
+        await mcpClient.close();
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+}

@@ -14,19 +14,29 @@ Look for these markers:
 
 {{#if (eq name "langchain")}}
 1. Edit `app/system-prompt.md` to change agent behavior.
-2. Change model choice in `app/agent.py`.
-3. Extend schema in `app/models.py` if you need app-specific data.
-4. Ensure `ARCADE_GATEWAY_URL` is set and the gateway has the expected tools.
+2. The plan prompt is built inline in `app/routes/plan.py` (`_build_plan_prompt`) — update it to match your system prompt.
+3. Change model choice in `app/agent.py`.
+4. Extend schema in `app/models.py` if you need app-specific data.
+5. Ensure `ARCADE_GATEWAY_URL` is set and the gateway has the expected tools.
+6. If your agent needs write/mutation tools (send, create, reply, post, etc.) during planning, edit the `_MUTATION` regex in `app/routes/plan.py`. By default, all write tools are stripped from the plan endpoint to keep triage read-only.
 {{else if (eq name "mastra")}}
 1. Edit `src/mastra/agents/system-prompt.md` to change agent behavior.
-2. Change model choice in `src/mastra/agents/triage-agent.ts`.
-3. Extend schema in `lib/db/schema.ts` if you need app-specific data.
-4. Ensure `ARCADE_GATEWAY_URL` is set and the gateway has the expected tools.
+2. Edit `src/mastra/agents/plan-prompt.md` to match your updated system prompt — this controls the plan endpoint's behavior.
+3. Change model choice in `src/mastra/agents/triage-agent.ts`.
+4. Extend schema in `lib/db/schema.ts` if you need app-specific data.
+5. Ensure `ARCADE_GATEWAY_URL` is set and the gateway has the expected tools.
+6. If your agent needs write/mutation tools (send, create, reply, post, etc.) during planning, edit the `MUTATION` regex filter in `app/api/plan/route.ts`. By default, all write tools are stripped from the plan endpoint to keep triage read-only.
+7. Update `components/dashboard/empty-state.tsx` to match your agent's purpose — replace "Ready to triage?" heading, the description text, and "Plan my day" button label.
+8. Look for `CUSTOMIZATION POINT` markers in UI files for other safe edit zones.
 {{else}}
 1. Edit `lib/system-prompt.md` to change agent behavior.
-2. Change model choice in `lib/agent.ts`.
-3. Extend schema in `lib/db/schema.ts` if you need app-specific data.
-4. Ensure `ARCADE_GATEWAY_URL` is set and the gateway has the expected tools.
+2. Edit `lib/plan-prompt.md` to match your updated system prompt — this controls the plan endpoint's behavior.
+3. Change model choice in `lib/agent.ts`.
+4. Extend schema in `lib/db/schema.ts` if you need app-specific data.
+5. Ensure `ARCADE_GATEWAY_URL` is set and the gateway has the expected tools.
+6. If your agent needs write/mutation tools (send, create, reply, post, etc.) during planning, edit the `MUTATION` regex filter in `app/api/plan/route.ts`. By default, all write tools are stripped from the plan endpoint to keep triage read-only.
+7. Update `components/dashboard/empty-state.tsx` to match your agent's purpose — replace "Ready to triage?" heading, the description text, and "Plan my day" button label.
+8. Look for `CUSTOMIZATION POINT` markers in UI files for other safe edit zones.
 {{/if}}
 
 ## Gateway Checklist
@@ -38,6 +48,8 @@ Create/configure your gateway at `https://app.arcade.dev/mcp-gateways` and add:
 - Linear
 - GitHub
 - Gmail
+
+If you add tools from services not listed above, also add a source entry in `lib/sources.ts` so they get proper icons and labels in the UI.
 
 ## Verification Commands
 

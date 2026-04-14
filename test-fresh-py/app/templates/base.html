@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Arcade Agent{% endblock %}</title>
+    <link rel="icon" href="/static/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --radius: 0.625rem;
+        --background: oklch(1 0 0);
+        --foreground: oklch(0.145 0 0);
+        --card: oklch(1 0 0);
+        --card-foreground: oklch(0.145 0 0);
+        --popover: oklch(1 0 0);
+        --popover-foreground: oklch(0.145 0 0);
+        --primary: oklch(0.631 0.255 22.8);
+        --primary-foreground: oklch(0.985 0 0);
+        --secondary: oklch(0.97 0 0);
+        --secondary-foreground: oklch(0.205 0 0);
+        --muted: oklch(0.97 0 0);
+        --muted-foreground: oklch(0.556 0 0);
+        --accent: oklch(0.97 0 0);
+        --accent-foreground: oklch(0.205 0 0);
+        --destructive: oklch(0.577 0.245 27.325);
+        --warning: oklch(0.769 0.188 70.08);
+        --warning-foreground: oklch(0.205 0 0);
+        --success: oklch(0.6 0.118 184.704);
+        --success-foreground: oklch(0.985 0 0);
+        --border: oklch(0.922 0 0);
+        --input: oklch(0.922 0 0);
+        --ring: oklch(0.631 0.255 22.8);
+      }
+      .dark {
+        --background: oklch(0.13 0 0);
+        --foreground: oklch(0.985 0 0);
+        --card: oklch(0.18 0 0);
+        --card-foreground: oklch(0.985 0 0);
+        --popover: oklch(0.18 0 0);
+        --popover-foreground: oklch(0.985 0 0);
+        --primary: oklch(0.631 0.255 22.8);
+        --primary-foreground: oklch(0.985 0 0);
+        --secondary: oklch(0.24 0 0);
+        --secondary-foreground: oklch(0.985 0 0);
+        --muted: oklch(0.24 0 0);
+        --muted-foreground: oklch(0.65 0 0);
+        --accent: oklch(0.24 0 0);
+        --accent-foreground: oklch(0.985 0 0);
+        --destructive: oklch(0.704 0.191 22.216);
+        --warning: oklch(0.769 0.188 70.08);
+        --warning-foreground: oklch(0.985 0 0);
+        --success: oklch(0.696 0.17 162.48);
+        --success-foreground: oklch(0.985 0 0);
+        --border: oklch(1 0 0 / 10%);
+        --input: oklch(1 0 0 / 12%);
+        --ring: oklch(0.631 0.255 22.8);
+      }
+    </style>
+    <script>
+      // Configure Tailwind v3 CDN for class-based dark mode
+      tailwind = { config: { darkMode: "class" } };
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script>
+      // Apply saved theme before paint to prevent flash
+      (function () {
+        const saved = localStorage.getItem("theme");
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        if (saved === "dark" || (!saved && prefersDark)) {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
+  </head>
+  <body class="bg-background text-foreground antialiased font-sans">
+    {% block content %}{% endblock %} {% block scripts %}{% endblock %}
+    <script>
+      function toggleTheme() {
+        const isDark = document.documentElement.classList.toggle("dark");
+        localStorage.setItem("theme", isDark ? "dark" : "light");
+        document.getElementById("theme-icon-sun")?.classList.toggle("hidden", !isDark);
+        document.getElementById("theme-icon-moon")?.classList.toggle("hidden", isDark);
+      }
+      // Sync icon visibility on load
+      document.addEventListener("DOMContentLoaded", function () {
+        const isDark = document.documentElement.classList.contains("dark");
+        document.getElementById("theme-icon-sun")?.classList.toggle("hidden", !isDark);
+        document.getElementById("theme-icon-moon")?.classList.toggle("hidden", isDark);
+      });
+    </script>
+  </body>
+</html>

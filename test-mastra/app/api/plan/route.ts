@@ -1,0 +1,443 @@
+/**
+ * Plan API Route — Daily Planning Agent
+ *
+ * POST /api/plan
+ *
+ * Triggers the triage agent to scan connected services (Slack, Calendar,
+ * Linear, GitHub, Gmail, etc.), classify each item, and stream back
+ * structured InboxItem data as NDJSON.
+ */
+
+import { Agent } from "@mastra/core/agent";
+import { getSession } from "@/lib/auth";
+import { getModel } from "@/src/mastra/agents/triage-agent";
+import { mcpClient, setElicitationCallback } from "@/src/mastra/tools/arcade";
+import type { InboxItem } from "@/types/inbox";
+
+export const maxDuration = 60;
+
+// --- Types ---
+
+type PlanEvent =
+  | { type: "status"; message: string }
+  | { type: "task"; data: InboxItem }
+  | { type: "summary"; data: { total: number; bySource: Record<string, number> } }
+  | { type: "auth_required"; authUrl: string; toolName?: string }
+  | { type: "elicitation"; elicitationId: string; authUrl: string; message: string }
+  | { type: "sources"; sources: string[] }
+  | { type: "error"; message: string }
+  | { type: "done" };
+
+function encodeEvent(event: PlanEvent): Uint8Array {
+  return new TextEncoder().encode(JSON.stringify(event) + "\n");
+}
+
+import { mapToolToSource } from "@/lib/sources";
+
+// Fallback: extract auth URL from tool output for gateways that don't support elicitation
+function extractAuthUrlFromToolOutput(output: unknown): string | null {
+  const looksLikeAuthUrl = (value: unknown): value is string =>
+    typeof value === "string" &&
+    /oauth|authorize/i.test(value);
+
+  const fromRecord = (value: unknown): string | null => {
+    if (!value || typeof value !== "object") return null;
+    const obj = value as Record<string, unknown>;
+    const direct =
+      (typeof obj.authorization_url === "string" && obj.authorization_url) ||
+      (looksLikeAuthUrl(obj.url) ? obj.url : null);
+    if (direct) return direct;
+
+    if (obj.structuredContent && typeof obj.structuredContent === "object") {
+      const nested = obj.structuredContent as Record<string, unknown>;
+      const nestedUrl =
+        (typeof nested.authorization_url === "string" &&
+          nested.authorization_url) ||
+        (looksLikeAuthUrl(nested.url) ? nested.url : null);
+      if (nestedUrl) return nestedUrl;
+    }
+    return null;
+  };
+
+  const fromObject = fromRecord(output);
+  if (fromObject) return fromObject;
+
+  const raw =
+    typeof output === "string" ? output : JSON.stringify(output ?? "");
+  const match = raw.match(
+    /https:\/\/[^\s"'\]}>]+\/oauth\/[^\s"'\]}>]+|https:\/\/[^\s"'\]}>]+authorize[^\s"'\]}>]*/i
+  );
+  return match ? match[0] : null;
+}
+
+// --- System prompt for plan mode ---
+
+const PLAN_SYSTEM_PROMPT = `You are a daily planning and triage agent. You have access to tools that connect to the user's services (e.g. Slack, Google Calendar, Linear, GitHub, Gmail). Your job is to thoroughly scan all available sources, read recent items AND currently assigned work, and classify each one.
+
+WORKFLOW:
+1. In your FIRST step, call every available non-WhoAmI tool in parallel — one per source.
+2. After getting results, if any tool offers parameters for deeper queries (e.g. filtering, pagination, or fetching specific items), make follow-up calls to get more data.
+3. Classify each item and output a structured JSON block.
+4. After processing ALL sources, output a summary.
+5. Do NOT call *_WhoAmI tools — those are for auth checking, not data fetching.
+6. If a tool returns truncated results, work with what you have — do not retry the same call.
+
+IMPORTANT RULES FOR TOOL RESULTS:
+- Do NOT create items for empty results. If a source returns 0 items, skip it silently.
+- Do NOT create items for metadata like "you are a member of N channels" — that is not actionable.
+- Only create items for ACTUAL content: messages, notifications, events, issues, emails, PRs, etc.
+- If a tool returns a list of channels/conversations, do NOT classify the list itself. Only classify individual messages or items with actual content.
+- If a tool returns an authorization error, skip it and move on — do not create an item for the error.
+
+CLASSIFICATION:
+- category: NEEDS_REPLY | NEEDS_FEEDBACK | NEEDS_DECISION | NEEDS_REVIEW | ATTEND | FYI | IGNORE
+- priority: P0 (urgent) | P1 (important) | P2 (can wait) | FYI
+- effort: XS (<5min) | S (5-15min) | M (15-30min) | L (>30min)
+- confidence: 0.0 to 1.0
+
+SOURCE MAPPING:
+- Tools starting with "Slack" → source: "slack"
+- Tools starting with "Google", "GoogleCalendar", or "Calendar" → source: "google_calendar"
+- Tools starting with "Linear" → source: "linear"
+- Tools starting with "Git" or "GitHub" → source: "github"
+- Tools starting with "Gmail" → source: "gmail"
+- Anything else → source: lowercase service name (e.g. "notion", "dropbox")
+
+OUTPUT: For EACH item, output EXACTLY this on its own line:
+
+\`\`\`json:task
+{
+  "id": "<unique-id>",
+  "source": "slack",
+  "sourceDetail": "DM with Alice",
+  "summary": "<1-2 sentences>",
+  "category": "NEEDS_REPLY",
+  "priority": "P1",
+  "effort": "S",
+  "why": "<brief explanation>",
+  "suggestedNextStep": "<what to do>",
+  "confidence": 0.85,
+  "participants": [{"id": "<uid>", "name": "<name>"}],
+  "url": "<deep link to the item if available>",
+  "scheduledTime": "<ISO time if this is a calendar event, otherwise omit>"
+}
+\`\`\`
+
+After all items from all sources, output:
+\`\`\`json:summary
+{"total": <total items>, "bySource": {"slack": 5, "google_calendar": 3, "linear": 2}}
+\`\`\`
+
+URL RULES:
+Prefer a direct deep link to the item itself:
+- Slack: use the "permalink" field if present (https://<team>.slack.com/archives/<channel>/p<ts>)
+- GitHub: use the issue or PR URL on github.com
+- Linear: use the Linear issue URL
+- Gmail: use the Gmail thread URL (https://mail.google.com/mail/u/0/#inbox/<threadId>)
+- Google Calendar: use the "htmlLink" field if present
+If no direct deep link is available, fall back to the most relevant URL found anywhere in the tool response.
+Only omit "url" if there is truly no URL available in the response at all.
+
+Rules:
+- One json:task block per ACTIONABLE item (skip empty results, metadata, and errors)
+- Brief status text between blocks is fine
+- Process ALL available sources before the summary
+- If a tool requires authorization, skip it and move on to other sources
+- If errors occur reading a source, skip it silently
+- Use ATTEND category for calendar events you need to join
+- Use NEEDS_REVIEW for code reviews (PRs, etc.)`;
+
+// --- Parse structured JSON blocks from streamed text ---
+
+function extractJsonBlocks(text: string): {
+  tasks: InboxItem[];
+  summary: { total: number; bySource: Record<string, number> } | null;
+  remaining: string;
+} {
+  const tasks: InboxItem[] = [];
+  let summary: { total: number; bySource: Record<string, number> } | null = null;
+  let lastConsumedIndex = 0;
+
+  const taskPattern = /```json:task\s*\n([\s\S]*?)```/g;
+  let match: RegExpExecArray | null;
+  while ((match = taskPattern.exec(text)) !== null) {
+    try {
+      tasks.push(JSON.parse(match[1].trim()) as InboxItem);
+      lastConsumedIndex = match.index + match[0].length;
+    } catch {
+      // Incomplete JSON
+    }
+  }
+
+  const summaryPattern = /```json:summary\s*\n([\s\S]*?)```/g;
+  while ((match = summaryPattern.exec(text)) !== null) {
+    try {
+      const raw = JSON.parse(match[1].trim());
+      // Normalize: handle both old { tasks, conversations } and new { total, bySource } shapes
+      if (raw.total !== undefined && raw.bySource !== undefined) {
+        summary = raw;
+      } else if (raw.tasks !== undefined) {
+        summary = { total: raw.tasks, bySource: {} };
+      } else {
+        summary = { total: 0, bySource: {} };
+      }
+      const endIdx = match.index + match[0].length;
+      if (endIdx > lastConsumedIndex) lastConsumedIndex = endIdx;
+    } catch {
+      // Incomplete JSON
+    }
+  }
+
+  return {
+    tasks,
+    summary,
+    remaining: lastConsumedIndex > 0 ? text.slice(lastConsumedIndex) : text,
+  };
+}
+
+// --- Shared helpers for tool filtering & truncation ---
+
+const MUTATION = /create|update|delete|send|reply|post|archive|remove|add|invite|merge|close|assign|edit|publish|comment/i;
+
+function isTriageTool(name: string): boolean {
+  return !MUTATION.test(name);
+}
+
+const MAX_TOOL_RESULT_CHARS = 4000;
+
+function truncateToolResult(result: unknown): unknown {
+  if (result && typeof result === "object" && "content" in (result as Record<string, unknown>)) {
+    const obj = result as { content: { type: string; text: string }[] };
+    return {
+      ...obj,
+      content: obj.content.map((item) => {
+        if (item.type === "text" && item.text && item.text.length > MAX_TOOL_RESULT_CHARS) {
+          return {
+            ...item,
+            text: item.text.slice(0, MAX_TOOL_RESULT_CHARS) +
+              `\n...[truncated ${item.text.length - MAX_TOOL_RESULT_CHARS} chars]`,
+          };
+        }
+        return item;
+      }),
+    };
+  }
+  if (typeof result === "string" && result.length > MAX_TOOL_RESULT_CHARS) {
+    return result.slice(0, MAX_TOOL_RESULT_CHARS) +
+      `\n...[truncated ${result.length - MAX_TOOL_RESULT_CHARS} chars]`;
+  }
+  return result;
+}
+
+// --- Route handler ---
+
+export async function POST() {
+  const user = await getSession();
+  if (!user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let streamController: ReadableStreamDefaultController<Uint8Array> | undefined;
+
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      streamController = controller;
+    },
+  });
+
+  function emit(event: PlanEvent) {
+    try {
+      streamController?.enqueue(encodeEvent(event));
+    } catch {
+      // Stream closed by client
+    }
+  }
+
+  (async () => {
+    try {
+      emit({ type: "status", message: "Connecting to Arcade Gateway..." });
+
+      setElicitationCallback(({ elicitationId, message, authUrl }) => {
+        emit({ type: "elicitation", elicitationId, authUrl, message });
+      });
+
+      const allToolsets = await mcpClient.listToolsets();
+
+      // Filter toolsets: keep only read-only triage tools, wrap execute for truncation.
+      // listToolsets() returns { serverName: { toolName: tool, ... } }.
+      const filteredToolsets: Record<string, Record<string, unknown>> = {};
+      const toolNames: string[] = [];
+      let allToolCount = 0;
+
+      for (const [setName, toolsObj] of Object.entries(allToolsets)) {
+        const tools = toolsObj as unknown as Record<string, { execute?: (...a: unknown[]) => Promise<unknown>; [k: string]: unknown }>;
+        const filtered: Record<string, unknown> = {};
+
+        for (const [toolName, tool] of Object.entries(tools)) {
+          allToolCount++;
+          if (!isTriageTool(toolName)) continue;
+          if (/[._]WhoAmI$/i.test(toolName)) continue;
+
+          if (tool.execute) {
+            const orig = tool.execute;
+            filtered[toolName] = {
+              ...tool,
+              execute: async (...args: unknown[]) => truncateToolResult(await orig(...args)),
+            };
+          } else {
+            filtered[toolName] = tool;
+          }
+          toolNames.push(toolName);
+        }
+
+        if (Object.keys(filtered).length > 0) {
+          filteredToolsets[setName] = filtered;
+        }
+      }
+
+      const sources = [...new Set(toolNames.map((n) => mapToolToSource(n)))];
+      console.log(`[plan] ${toolNames.length} triage tools (of ${allToolCount} total) from sources: ${sources.join(", ")}`);
+
+      emit({
+        type: "status",
+        message: `Found ${toolNames.length} tools across ${sources.length} sources. Starting triage...`,
+      });
+
+      emit({ type: "sources", sources });
+
+      const toolsBySource: Record<string, string[]> = {};
+      for (const name of toolNames) {
+        const src = mapToolToSource(name);
+        if (!toolsBySource[src]) toolsBySource[src] = [];
+        toolsBySource[src].push(name);
+      }
+      const toolInventory = Object.entries(toolsBySource)
+        .map(([src, names]) => `${src}: ${names.join(", ")}`)
+        .join("\n");
+
+      const prompt = `Plan my day. Today is ${new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}.\n\nHere are the tools available by source:\n\n${toolInventory}\n\nIn your FIRST step, call ALL non-WhoAmI tools in parallel — one call per tool. Do NOT skip any source.\nFor calendar tools, make sure to pass today's date range so you get today's events.\nAfter getting results, classify every item. If any source returned a list you can drill into, make follow-up calls.\nI need a COMPLETE picture: notifications, assigned work, upcoming events, and unread messages.`;
+
+      let accumulatedText = "";
+      let emittedTaskCount = 0;
+      let emittedSummary = false;
+
+      const agent = new Agent({
+        id: "plan-agent",
+        name: "Plan Agent",
+        model: getModel(),
+        instructions: PLAN_SYSTEM_PROMPT,
+      });
+
+      const result = await agent.stream(prompt, {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        toolsets: filteredToolsets as any,
+        maxSteps: 20,
+        onStepFinish: (step) => {
+          const { toolCalls = [], toolResults = [] } = step as unknown as {
+            toolCalls: { toolCallId: string; toolName: string }[];
+            toolResults: { toolCallId?: string; output: unknown }[];
+          };
+          console.log(`[plan] Step: ${toolCalls.length} calls, ${toolResults.length} results`);
+
+          for (const call of toolCalls) {
+            const source = mapToolToSource(call.toolName);
+            emit({
+              type: "status",
+              message: `Calling ${source}: ${call.toolName}...`,
+            });
+          }
+
+          const toolNameByCallId = new Map(
+            toolCalls.map((call) => [call.toolCallId, call.toolName] as const)
+          );
+
+          for (let i = 0; i < toolResults.length; i++) {
+            const tr = toolResults[i];
+            const authUrl = extractAuthUrlFromToolOutput(tr.output);
+            if (authUrl) {
+              const matchedToolName = tr.toolCallId
+                ? toolNameByCallId.get(tr.toolCallId)
+                : undefined;
+              const fallbackToolName = i < toolCalls.length
+                ? toolCalls[i].toolName
+                : undefined;
+              const toolName = mapToolToSource(matchedToolName ?? fallbackToolName ?? "");
+              emit({ type: "auth_required", authUrl, toolName });
+            }
+          }
+        },
+      });
+
+      for await (const chunk of result.textStream) {
+        if (chunk) {
+          accumulatedText += chunk;
+          const { tasks, summary, remaining } = extractJsonBlocks(accumulatedText);
+          accumulatedText = remaining;
+
+          for (const task of tasks) {
+            emittedTaskCount++;
+            emit({ type: "task", data: task });
+            emit({
+              type: "status",
+              message: `Classified ${emittedTaskCount} item${emittedTaskCount > 1 ? "s" : ""}...`,
+            });
+          }
+          if (summary) {
+            emit({ type: "summary", data: summary });
+            emittedSummary = true;
+          }
+        }
+      }
+
+      if (accumulatedText.length > 0) {
+        const { tasks, summary } = extractJsonBlocks(accumulatedText);
+        for (const task of tasks) {
+          emittedTaskCount++;
+          emit({ type: "task", data: task });
+        }
+        if (summary) {
+          emit({ type: "summary", data: summary });
+          emittedSummary = true;
+        }
+      }
+
+      if (!emittedSummary && emittedTaskCount > 0) {
+        emit({
+          type: "summary",
+          data: { total: emittedTaskCount, bySource: {} },
+        });
+      }
+
+      emit({ type: "done" });
+    } catch (error) {
+      console.error("[plan] Error:", error);
+      const msg = error instanceof Error ? error.message : "Unknown error";
+      const isAuthError =
+        msg.includes("401") ||
+        msg.includes("Missing Authorization") ||
+        msg.includes("Unauthorized");
+      emit({
+        type: "error",
+        message: isAuthError
+          ? "Not connected to Arcade. Please connect your Arcade account from the dashboard."
+          : msg,
+      });
+      emit({ type: "done" });
+    } finally {
+      setElicitationCallback(null);
+      try {
+        streamController?.close();
+      } catch {
+        /* ignore */
+      }
+    }
+  })();
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "application/x-ndjson",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    },
+  });
+}

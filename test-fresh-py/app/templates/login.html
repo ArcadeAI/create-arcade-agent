@@ -1,0 +1,154 @@
+{% extends "base.html" %} {% block title %}Login - Arcade Agent{% endblock %} {% block content %}
+<div class="min-h-screen flex items-center justify-center px-4">
+  <div class="w-full max-w-sm">
+    <div class="flex flex-col items-center gap-3 mb-8">
+      <svg width="40" height="41" viewBox="0 0 309 315" fill="currentColor" aria-hidden="true">
+        <path
+          d="M267.074 293.931L266.955 0L231.402 15.9321L45.0407 294.83L9.86791 299.653L0 314.989H98.1906L109.035 299.653L72.3429 293.963L109.535 234.191L171.521 206.478C177.611 203.757 184.212 202.348 190.877 202.348H221.339L221.306 212.98V213.024L221.089 293.974L191.843 298.266L180.705 315H296.993L308.25 298.212M171.293 187.977L125.145 209.176L221.86 60L221.881 86.3042L221.382 158.996L221.339 183.685L190.063 183.652C183.202 183.652 177.514 185.116 171.293 187.977Z"
+        />
+      </svg>
+      <span class="text-xl font-semibold tracking-tight">Arcade Agent</span>
+    </div>
+
+    <div class="rounded-lg border border-border bg-card px-4 py-3 text-sm mb-4 w-full" id="callout-two-signins" data-callout>
+      <div class="flex items-start gap-3">
+        <svg class="w-4 h-4 shrink-0 mt-0.5 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        <div class="flex-1">
+          <div class="flex items-center justify-between mb-1">
+            <p class="font-medium text-foreground">Two separate sign-ins</p>
+            <button onclick="dismissCallout('callout-two-signins')" class="ml-2 opacity-70 hover:opacity-100 text-foreground">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <p class="text-muted-foreground">This creates a local account for your agent app — it's just for session management and stays in your own database. You'll connect your Arcade account on the next screen to give the agent access to your tools.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-6 shadow-sm">
+      <!-- Tab switcher -->
+      <div class="mb-4 flex rounded-lg bg-muted p-1">
+        <button
+          type="button"
+          id="tab-register"
+          onclick="setMode(true)"
+          class="flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors bg-card text-foreground shadow-sm"
+        >
+          Create account
+        </button>
+        <button
+          type="button"
+          id="tab-signin"
+          onclick="setMode(false)"
+          class="flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors text-muted-foreground hover:text-foreground"
+        >
+          Sign in
+        </button>
+      </div>
+
+      <p class="text-sm text-muted-foreground mb-5" id="form-subtitle">
+        Get started with Arcade Agent
+      </p>
+
+      <form id="auth-form" class="space-y-4">
+        <input
+          type="email"
+          id="email"
+          placeholder="you@example.com"
+          required
+          class="w-full px-3 py-2 border border-input rounded-md bg-card text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        />
+        <input
+          type="password"
+          id="password"
+          placeholder="Your password"
+          required
+          class="w-full px-3 py-2 border border-input rounded-md bg-card text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        />
+
+        <p id="error-msg" class="text-sm text-destructive hidden"></p>
+
+        <button
+          type="submit"
+          id="submit-btn"
+          class="w-full py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 transition-colors font-medium"
+        >
+          Create account
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  function dismissCallout(id) {
+    localStorage.setItem(id, '1');
+    document.getElementById(id)?.classList.add('hidden');
+  }
+  document.querySelectorAll('[data-callout]').forEach(function(el) {
+    if (localStorage.getItem(el.id) === '1') el.classList.add('hidden');
+  });
+</script>
+<script>
+  let isRegister = true;
+
+  function setMode(register) {
+    isRegister = register;
+
+    // Update subtitle
+    document.getElementById("form-subtitle").textContent = register
+      ? "Get started with Arcade Agent"
+      : "Welcome back to Arcade Agent";
+
+    // Update submit button
+    document.getElementById("submit-btn").textContent = register ? "Create account" : "Sign in";
+
+    // Update tab appearance
+    const activeClasses = "bg-card text-foreground shadow-sm";
+    const inactiveClasses = "text-muted-foreground hover:text-foreground";
+
+    const tabRegister = document.getElementById("tab-register");
+    const tabSignin = document.getElementById("tab-signin");
+
+    tabRegister.className = `flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${register ? activeClasses : inactiveClasses}`;
+    tabSignin.className = `flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${!register ? activeClasses : inactiveClasses}`;
+
+    document.getElementById("error-msg").classList.add("hidden");
+    document.getElementById("auth-form").reset();
+  }
+
+  document.getElementById("auth-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const errorMsg = document.getElementById("error-msg");
+    const submitBtn = document.getElementById("submit-btn");
+    errorMsg.classList.add("hidden");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Loading...";
+
+    const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: document.getElementById("email").value,
+          password: document.getElementById("password").value,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        errorMsg.textContent = data.error || "Something went wrong";
+        errorMsg.classList.remove("hidden");
+        return;
+      }
+      window.location.href = "/dashboard";
+    } catch {
+      errorMsg.textContent = "Network error. Please try again.";
+      errorMsg.classList.remove("hidden");
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = isRegister ? "Create account" : "Sign in";
+    }
+  });
+</script>
+{% endblock %}

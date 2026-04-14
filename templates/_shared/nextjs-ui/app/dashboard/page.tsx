@@ -231,16 +231,13 @@ function DashboardContent() {
                 >
                   I&apos;ve already signed in &mdash; retry
                 </button>
-                <Alert>
+                <Alert className="text-left">
                   <Info className="size-4" />
                   <AlertTitle>Why Arcade?</AlertTitle>
                   <AlertDescription>
                     The agent uses Arcade as an MCP Gateway to read from your tools on your behalf.
                     Signing in here links your Arcade identity so the gateway knows which
-                    user&apos;s tools to access. Your{" "}
-                    <code className="rounded bg-muted px-1 py-0.5 text-xs">ARCADE_API_KEY</code> in{" "}
-                    <code className="rounded bg-muted px-1 py-0.5 text-xs">.env</code> handles the
-                    server-side connection.
+                    user&apos;s tools to access.
                   </AlertDescription>
                 </Alert>
               </CardContent>

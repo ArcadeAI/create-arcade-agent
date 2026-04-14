@@ -1,0 +1,25 @@
+line-length = 100
+target-version = "py312"
+
+[lint]
+select = [
+    "E", "W",  # pycodestyle
+    "F",       # pyflakes
+    "I",       # isort
+    "B",       # flake8-bugbear
+    "S",       # flake8-bandit (security)
+    "C4",      # flake8-comprehensions
+    "SIM",     # flake8-simplify
+    "UP",      # pyupgrade
+    "RUF",     # ruff-specific rules
+]
+ignore = [
+    "S105", "S106", "S107",  # hardcoded password — too many false positives
+    "B008",                   # Depends() in args is standard FastAPI
+]
+
+[lint.per-file-ignores]
+"alembic/**/*.py" = ["E501", "UP"]
+
+[format]
+quote-style = "double"

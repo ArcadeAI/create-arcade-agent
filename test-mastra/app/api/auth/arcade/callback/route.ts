@@ -1,0 +1,43 @@
+import { NextResponse } from "next/server";
+import { auth, oauthProvider } from "@/src/mastra/tools/arcade";
+
+/** Redirect using NEXT_PUBLIC_APP_URL when set (for ngrok/proxies), otherwise req.url. */
+function appRedirect(reqUrl: string, path: string): NextResponse {
+  const base = process.env.NEXT_PUBLIC_APP_URL
+    ? process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")
+    : new URL(reqUrl).origin;
+  return NextResponse.redirect(`${base}${path}`);
+}
+
+export async function GET(req: Request) {
+  const gatewayUrl = process.env.ARCADE_GATEWAY_URL?.trim();
+  if (!gatewayUrl) {
+    return appRedirect(req.url, "/dashboard?error=gateway_missing");
+  }
+
+  const url = new URL(req.url);
+  const code = url.searchParams.get("code");
+
+  if (!code) {
+    return NextResponse.json(
+      { error: "Missing authorization code" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const result = await auth(oauthProvider, {
+      serverUrl: gatewayUrl,
+      authorizationCode: code,
+    });
+
+    if (result === "AUTHORIZED") {
+      return appRedirect(req.url, "/dashboard");
+    }
+
+    return appRedirect(req.url, "/dashboard?error=auth_incomplete");
+  } catch (error) {
+    console.error("Arcade OAuth callback error:", error);
+    return appRedirect(req.url, "/dashboard?error=auth_failed");
+  }
+}

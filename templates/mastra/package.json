@@ -10,7 +10,8 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "db:setup": "bunx drizzle-kit generate && bunx drizzle-kit migrate"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.0",

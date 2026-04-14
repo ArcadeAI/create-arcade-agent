@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# env files
+.env*
+!.env.example
+
+# database
+*.db
+
+# Arcade OAuth tokens
+.arcade-auth/
+
+# IDE
+.vscode/
+.idea/
+
+# misc
+.DS_Store

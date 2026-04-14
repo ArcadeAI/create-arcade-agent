@@ -1,0 +1,324 @@
+{% extends "base.html" %} {% block title %}Dashboard - Arcade Agent{% endblock %} {% block content
+%}
+<div class="flex flex-col min-h-screen bg-background">
+  <!-- Header -->
+  <header
+    class="sticky top-0 z-10 bg-background border-b border-border flex items-center justify-between px-6 py-3 flex-shrink-0"
+  >
+    <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2">
+        <svg width="22" height="22" viewBox="0 0 309 315" fill="currentColor" aria-hidden="true">
+          <path
+            d="M267.074 293.931L266.955 0L231.402 15.9321L45.0407 294.83L9.86791 299.653L0 314.989H98.1906L109.035 299.653L72.3429 293.963L109.535 234.191L171.521 206.478C177.611 203.757 184.212 202.348 190.877 202.348H221.339L221.306 212.98V213.024L221.089 293.974L191.843 298.266L180.705 315H296.993L308.25 298.212M171.293 187.977L125.145 209.176L221.86 60L221.881 86.3042L221.382 158.996L221.339 183.685L190.063 183.652C183.202 183.652 177.514 185.116 171.293 187.977Z"
+          />
+        </svg>
+        <span class="text-base font-semibold tracking-tight">Arcade Agent</span>
+      </div>
+      <span class="hidden text-sm text-muted-foreground sm:block" id="header-date"></span>
+    </div>
+    <div class="flex items-center gap-1">
+      <button
+        onclick="toggleTheme()"
+        class="p-2 rounded-md hover:bg-muted text-muted-foreground transition-colors"
+        aria-label="Toggle theme"
+      >
+        <svg
+          id="theme-icon-sun"
+          class="w-4 h-4 hidden"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 3v1m0 16v1m8.66-9H21M3 12H2m15.07-6.07l-.71.71M6.64 17.36l-.71.71M17.66 17.07l-.71-.71M6.34 6.64l-.71-.71M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+          />
+        </svg>
+        <svg
+          id="theme-icon-moon"
+          class="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"
+          />
+        </svg>
+      </button>
+      <button
+        id="logout-btn"
+        class="p-2 rounded-md hover:bg-muted text-muted-foreground transition-colors"
+        aria-label="Logout"
+        title="Logout"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+          />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="flex-1 overflow-hidden flex flex-col">
+    <!-- Connection gate -->
+    <div id="gate" class="flex-1 flex items-center justify-center px-4">
+      <div id="gate-checking" class="text-center">
+        <div
+          class="animate-spin h-8 w-8 border-4 border-border border-t-primary rounded-full mx-auto mb-4"
+        ></div>
+        <p class="text-muted-foreground text-sm">Connecting to Arcade...</p>
+      </div>
+      <div
+        id="gate-auth"
+        class="hidden bg-card border border-border rounded-xl shadow-sm p-8 max-w-md w-full text-center"
+      >
+        <div class="flex justify-center mb-4">
+          <svg
+            class="w-10 h-10 text-primary"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+            />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 16h.01" />
+          </svg>
+        </div>
+        <h2 class="text-lg font-semibold mb-2">Connect to Arcade</h2>
+        <p class="text-muted-foreground text-sm mb-6">
+          Sign in with your Arcade account to give the agent access to your tools.
+        </p>
+        <div id="gate-auth-cta">
+          <a
+            id="gate-auth-link"
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="block w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm font-medium transition-colors mb-3"
+          >
+            Sign in with Arcade
+          </a>
+          <button
+            id="gate-auth-retry"
+            class="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            I've already signed in &mdash; retry
+          </button>
+        </div>
+        <div id="callout-why-arcade" class="rounded-lg border border-border bg-card px-4 py-3 text-sm text-left mt-4" data-callout>
+          <div class="flex items-start gap-3">
+            <svg class="w-4 h-4 shrink-0 mt-0.5 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            <div class="flex-1">
+              <div class="flex items-center justify-between mb-1">
+                <p class="font-medium text-foreground">Why Arcade?</p>
+                <button onclick="dismissCallout('callout-why-arcade')" class="ml-2 opacity-70 hover:opacity-100 text-foreground">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+              <p class="text-muted-foreground">The agent uses Arcade as an MCP Gateway to read from your tools on your behalf. Signing in here links your Arcade identity so the gateway knows which user's tools to access. Your <code class="rounded bg-muted px-1 py-0.5 text-xs">ARCADE_API_KEY</code> in <code class="rounded bg-muted px-1 py-0.5 text-xs">.env</code> handles the server-side connection.</p>
+            </div>
+          </div>
+        </div>
+        <div id="gate-auth-waiting" class="hidden">
+          <div class="flex items-center justify-center gap-2 mb-3">
+            <div
+              class="animate-spin h-4 w-4 border-2 border-border border-t-primary rounded-full"
+            ></div>
+            <span class="text-sm text-muted-foreground">Waiting for authorization...</span>
+          </div>
+          <button
+            id="gate-auth-waiting-retry"
+            class="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Done &mdash; check again
+          </button>
+        </div>
+      </div>
+      <div
+        id="gate-error"
+        class="hidden bg-card border border-border rounded-xl shadow-sm p-8 max-w-md w-full text-center"
+      >
+        <div class="flex justify-center mb-4">
+          <svg
+            class="w-10 h-10 text-destructive"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+            />
+          </svg>
+        </div>
+        <h2 class="text-lg font-semibold mb-2 text-destructive">Connection Failed</h2>
+        <p id="gate-error-msg" class="text-muted-foreground text-sm mb-6"></p>
+        <button
+          onclick="retryArcadeConnection()"
+          class="block w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm font-medium transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    </div>
+
+    <!-- Dashboard area (hidden until connected) -->
+    <div id="dashboard-area" class="hidden flex-1 overflow-y-auto">
+      <div class="max-w-4xl mx-auto w-full px-6 py-8 space-y-6">
+        <!-- Auth prompts from plan -->
+        <div id="auth-prompts" class="hidden space-y-3"></div>
+
+        <!-- Status message -->
+        <div id="status-bar" class="hidden flex items-center gap-2 text-sm text-muted-foreground">
+          <div
+            class="animate-spin h-4 w-4 border-2 border-border border-t-foreground rounded-full"
+          ></div>
+          <span id="status-text"></span>
+        </div>
+
+        <!-- Error display -->
+        <div
+          id="error-bar"
+          class="hidden rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+        ></div>
+
+        <!-- Empty state -->
+        <div id="empty-state" class="flex flex-col items-center justify-center py-24 text-center">
+          <div class="mb-6 rounded-full bg-muted p-4">
+            <svg
+              class="w-8 h-8 text-muted-foreground"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+              />
+            </svg>
+          </div>
+          <h2 class="text-2xl font-semibold tracking-tight mb-2">Ready to triage?</h2>
+          <p class="text-muted-foreground max-w-sm mb-8">
+            Your agent will scan your inbox, calendar, tasks, and PRs, then prioritize everything
+            and build your action plan.
+          </p>
+          <button
+            id="plan-btn"
+            class="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground transition-colors font-medium"
+          >
+            Plan my day
+          </button>
+          <div id="callout-how-it-works" class="rounded-lg border border-border bg-card px-4 py-3 text-sm text-left max-w-md mt-2" data-callout>
+            <div class="flex items-start gap-3">
+              <svg class="w-4 h-4 shrink-0 mt-0.5 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+              <div class="flex-1">
+                <div class="flex items-center justify-between mb-1">
+                  <p class="font-medium text-foreground">How this works</p>
+                  <button onclick="dismissCallout('callout-how-it-works')" class="ml-2 opacity-70 hover:opacity-100 text-foreground">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  </button>
+                </div>
+                <p class="text-muted-foreground">When you click "Plan my day", the agent connects to your Slack, Gmail, Google Calendar, Linear, and GitHub through Arcade's MCP Gateway. It will first check if any of those need authentication — if so, you'll be prompted to authorize before the run starts. Then it reads your recent messages, emails, events, issues, and pull requests, and classifies each item by priority and suggests next steps.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading skeletons -->
+        <div id="loading-skeletons" class="hidden space-y-6">
+          <div id="callout-whats-happening" class="rounded-lg border border-border bg-card px-4 py-3 text-sm" data-callout>
+            <div class="flex items-start gap-3">
+              <svg class="w-4 h-4 shrink-0 mt-0.5 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+              <div class="flex-1">
+                <div class="flex items-center justify-between mb-1">
+                  <p class="font-medium text-foreground">What's happening</p>
+                  <button onclick="dismissCallout('callout-whats-happening')" class="ml-2 opacity-70 hover:opacity-100 text-foreground">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  </button>
+                </div>
+                <p class="text-muted-foreground">The agent is reading from your connected sources and classifying what it finds. This behavior is driven by the system prompt in <code class="rounded bg-muted px-1 py-0.5 text-xs">app/system-prompt.md</code> — edit it to change what gets fetched, how items are prioritized, or what the agent focuses on.</p>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="h-24 rounded-xl bg-muted animate-pulse"></div>
+            <div class="h-24 rounded-xl bg-muted animate-pulse"></div>
+            <div class="h-24 rounded-xl bg-muted animate-pulse"></div>
+          </div>
+          <div class="space-y-3">
+            <div class="h-28 rounded-xl bg-muted animate-pulse"></div>
+            <div class="h-28 rounded-xl bg-muted animate-pulse"></div>
+            <div class="h-28 rounded-xl bg-muted animate-pulse"></div>
+          </div>
+        </div>
+
+        <!-- Stats bar (dynamic) -->
+        <div id="stats-bar" class="hidden">
+          <div id="stats-container" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
+        </div>
+
+        <!-- Task list -->
+        <div id="task-list" class="hidden space-y-3">
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="text-lg font-semibold flex items-center gap-2">
+              Today's Tasks
+              <span id="task-count" class="text-sm font-normal text-muted-foreground"></span>
+            </h2>
+            <button
+              id="replan-btn"
+              class="hidden px-3 py-1.5 border border-border rounded-md text-sm text-muted-foreground hover:bg-muted transition-colors"
+            >
+              Replan my day
+            </button>
+          </div>
+          <div id="callout-make-it-yours" class="rounded-lg border border-border bg-card px-4 py-3 text-sm" data-callout>
+            <div class="flex items-start gap-3">
+              <svg class="w-4 h-4 shrink-0 mt-0.5 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+              <div class="flex-1">
+                <div class="flex items-center justify-between mb-1">
+                  <p class="font-medium text-foreground">Make it yours</p>
+                  <button onclick="dismissCallout('callout-make-it-yours')" class="ml-2 opacity-70 hover:opacity-100 text-foreground">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  </button>
+                </div>
+                <p class="text-muted-foreground">Start with the system prompt in <code class="rounded bg-muted px-1 py-0.5 text-xs">app/system-prompt.md</code> — that's where the agent's behavior is defined. From there, check out <code class="rounded bg-muted px-1 py-0.5 text-xs">AGENT_PLAYBOOK.md</code> for a full walkthrough of customization points.</p>
+              </div>
+            </div>
+          </div>
+          <div id="task-container" class="space-y-3"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  function dismissCallout(id) {
+    localStorage.setItem(id, '1');
+    document.getElementById(id)?.classList.add('hidden');
+  }
+  document.querySelectorAll('[data-callout]').forEach(function(el) {
+    if (localStorage.getItem(el.id) === '1') el.classList.add('hidden');
+  });
+</script>
+<script src="/static/dashboard.js"></script>
+{% endblock %}
