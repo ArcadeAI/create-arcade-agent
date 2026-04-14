@@ -207,9 +207,21 @@ export const mcpClient = new MCPClient({
  * Create an AI SDK MCP client for Arcade Gateway using stored OAuth tokens.
  * Auto-detects transport: SSE for /sse URLs, Streamable HTTP otherwise.
  *
- * Auth URLs are surfaced via extractAuthUrlFromToolOutput — URL-mode elicitation
- * is not declared here because @ai-sdk/mcp only supports form-mode elicitation.
- * When URL-mode support lands in @ai-sdk/mcp it can be re-added.
+ * WHY NO URL-MODE ELICITATION (as of April 2026):
+ *   @ai-sdk/mcp only supports form-mode elicitation. Declaring
+ *   `capabilities: { elicitation: { url: {} } }` causes the Arcade gateway to
+ *   route tool auth through URL elicitation instead of embedding auth URLs in
+ *   tool output — but the AI SDK client has no handler for URL-mode requests,
+ *   so those requests are silently dropped and tool auth never surfaces to the
+ *   user. Additionally, Arcade's URL elicitation auth URLs redirect back to
+ *   app.arcade.dev after authorization (not to our local app), which would
+ *   leave users stranded there even if we could receive the URLs.
+ *
+ *   Revisit when @ai-sdk/mcp adds URL-mode elicitation support AND Arcade's
+ *   elicitation redirect_uri points back to the originating app.
+ *
+ *   In the meantime, auth URLs are surfaced via extractAuthUrlFromToolOutput
+ *   in onStepFinish, which scrapes them from tool result text.
  */
 export async function getArcadeMCPClient() {
   const gatewayUrl = getGatewayUrl();
