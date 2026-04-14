@@ -131,8 +131,11 @@ export async function POST() {
     try {
       emit({ type: "status", message: "Connecting to Arcade Gateway..." });
 
-      // Wire URL elicitation events from the singleton MCP client to this
-      // request's stream. Cleared in finally so the next request starts clean.
+      // Register the URL elicitation handler for this request, then connect.
+      // mcpClient.elicitation.onRequest requires the server name as the first
+      // argument and must be awaited — it connects to the server if needed and
+      // registers the handler on the underlying MCP client so the gateway can
+      // send auth URLs when tools need authorization.
       let elicitationCounter = 0;
       setElicitationCallback((authUrl, message) => {
         emit({
@@ -141,6 +144,18 @@ export async function POST() {
           authUrl,
           message,
         });
+      });
+      await mcpClient.elicitation.onRequest("arcade", async (request) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const params = request as any;
+        // Arcade sends the auth URL in message or a url field
+        const authUrl: string = params?.url ?? params?.message ?? "";
+        const message: string =
+          typeof params?.message === "string" ? params.message : "Authorization required";
+        if (authUrl && _elicitationCallback) {
+          _elicitationCallback(authUrl, message);
+        }
+        return { action: "accept" };
       });
 
       const allToolsets = await mcpClient.listToolsets();
@@ -302,8 +317,14 @@ export async function POST() {
       const msg = error instanceof Error ? error.message : "Unknown error";
       const isAuthError =
         msg.includes("401") ||
+        msg.includes("invalid_authorization") ||
         msg.includes("Missing Authorization") ||
         msg.includes("Unauthorized");
+      if (isAuthError) {
+        // Clear stored tokens so the connect route detects re-auth is needed
+        // on the next check (page reload or window focus).
+        clearArcadeTokens();
+      }
       emit({
         type: "error",
         message: isAuthError

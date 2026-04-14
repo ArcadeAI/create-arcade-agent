@@ -201,7 +201,6 @@ export const mcpClient = new MCPClient({
   servers: {
     arcade: {
       url: new URL(getGatewayUrl()),
-      capabilities: { elicitation: { url: {} } },
       fetch: async (url: RequestInfo | URL, init?: RequestInit) => {
         const tokens = oauthProvider.tokens();
         const headers = new Headers(init?.headers);
@@ -212,19 +211,6 @@ export const mcpClient = new MCPClient({
       },
     },
   },
-});
-
-mcpClient.elicitation.onRequest(async (request) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const params = request.params as any;
-  // Arcade sends the auth URL as params.url or params.message
-  const authUrl: string = params?.url ?? params?.message ?? "";
-  const message: string =
-    typeof params?.message === "string" ? params.message : "Authorization required";
-  if (authUrl && _elicitationCallback) {
-    _elicitationCallback(authUrl, message);
-  }
-  return { action: "accept" };
 });
 
 {{/if}}
