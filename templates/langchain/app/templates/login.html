@@ -10,29 +10,17 @@
       <span class="text-xl font-semibold tracking-tight">Arcade Agent</span>
     </div>
 
-    <div
-      id="callout-two-signins"
-      class="rounded-lg border border-border bg-card px-4 py-3 text-sm mb-4 w-full"
-    >
+    <div class="rounded-lg border border-border bg-card px-4 py-3 text-sm mb-4 w-full" id="callout-two-signins" data-callout>
       <div class="flex items-start gap-3">
-        <svg
-          class="w-4 h-4 shrink-0 mt-0.5 text-foreground"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          stroke-width="2"
-        >
-          <circle cx="12" cy="12" r="10" />
-          <path d="M12 16v-4" />
-          <path d="M12 8h.01" />
-        </svg>
+        <svg class="w-4 h-4 shrink-0 mt-0.5 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
         <div class="flex-1">
-          <p class="font-medium text-foreground mb-1">Two separate sign-ins</p>
-          <p class="text-muted-foreground">
-            This creates a local account for your agent app — it's just for session management and
-            stays in your own database. You'll connect your Arcade account on the next screen to
-            give the agent access to your tools.
-          </p>
+          <div class="flex items-center justify-between mb-1">
+            <p class="font-medium text-foreground">Two separate sign-ins</p>
+            <button onclick="dismissCallout('callout-two-signins')" class="ml-2 opacity-70 hover:opacity-100 text-foreground">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <p class="text-muted-foreground">This creates a local account for your agent app — it's just for session management and stays in your own database. You'll connect your Arcade account on the next screen to give the agent access to your tools.</p>
         </div>
       </div>
     </div>
@@ -92,6 +80,15 @@
   </div>
 </div>
 {% endblock %} {% block scripts %}
+<script>
+  function dismissCallout(id) {
+    localStorage.setItem(id, '1');
+    document.getElementById(id)?.classList.add('hidden');
+  }
+  document.querySelectorAll('[data-callout]').forEach(function(el) {
+    if (localStorage.getItem(el.id) === '1') el.classList.add('hidden');
+  });
+</script>
 <script>
   let isRegister = true;
 

@@ -131,6 +131,8 @@ export async function POST() {
     try {
       emit({ type: "status", message: "Connecting to Arcade Gateway..." });
 
+      await ensureElicitationHandler();
+
       setElicitationCallback(({ elicitationId, message, authUrl }) => {
         emit({ type: "elicitation", elicitationId, authUrl, message });
       });
@@ -207,33 +209,39 @@ export async function POST() {
         toolsets: filteredToolsets as any,
         maxSteps: 20,
         onStepFinish: (step) => {
-          const { toolCalls = [], toolResults = [] } = step as unknown as {
-            toolCalls: { toolCallId: string; toolName: string }[];
-            toolResults: { toolCallId?: string; output: unknown }[];
-          };
+          // Mastra's step.toolCalls/toolResults are ChunkType objects:
+          // { type: "tool-call"|"tool-result", payload: { toolCallId, toolName, output, ... } }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const stepData = step as any;
+          const toolCalls: { type: string; payload: { toolCallId: string; toolName: string } }[] =
+            stepData.toolCalls ?? [];
+          const toolResults: { type: string; payload: { toolCallId?: string; toolName?: string; output: unknown } }[] =
+            stepData.toolResults ?? [];
           console.log(`[plan] Step: ${toolCalls.length} calls, ${toolResults.length} results`);
 
           for (const call of toolCalls) {
-            const source = mapToolToSource(call.toolName);
+            const toolName = call.payload?.toolName;
+            if (!toolName) continue;
+            const source = mapToolToSource(toolName);
             emit({
               type: "status",
-              message: `Calling ${source}: ${call.toolName}...`,
+              message: `Calling ${source}: ${toolName}...`,
             });
           }
 
           const toolNameByCallId = new Map(
-            toolCalls.map((call) => [call.toolCallId, call.toolName] as const)
+            toolCalls.map((call) => [call.payload?.toolCallId, call.payload?.toolName] as const)
           );
 
           for (let i = 0; i < toolResults.length; i++) {
             const tr = toolResults[i];
-            const authUrl = extractAuthUrlFromToolOutput(tr.output);
+            const authUrl = extractAuthUrlFromToolOutput(tr.payload?.output);
             if (authUrl) {
-              const matchedToolName = tr.toolCallId
-                ? toolNameByCallId.get(tr.toolCallId)
+              const matchedToolName = tr.payload?.toolCallId
+                ? toolNameByCallId.get(tr.payload.toolCallId)
                 : undefined;
               const fallbackToolName = i < toolCalls.length
-                ? toolCalls[i].toolName
+                ? toolCalls[i].payload?.toolName
                 : undefined;
               const toolName = mapToolToSource(matchedToolName ?? fallbackToolName ?? "");
               emit({ type: "auth_required", authUrl, toolName });

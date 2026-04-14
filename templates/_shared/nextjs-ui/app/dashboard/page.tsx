@@ -178,6 +178,8 @@ function DashboardContent() {
 
   // --- Handlers ---
   const handleLogout = useCallback(async () => {
+    // Clear Arcade tokens so the next user who signs in has to re-authenticate.
+    await fetch("/api/auth/arcade/disconnect", { method: "POST" }).catch(() => {});
     await authClient.signOut();
     router.push("/");
   }, [router]);
@@ -233,7 +235,7 @@ function DashboardContent() {
                 </button>
                 <Alert className="text-left">
                   <Info className="size-4" />
-                  <AlertTitle>Why Arcade?</AlertTitle>
+                  <AlertTitle>Why sign into Arcade?</AlertTitle>
                   <AlertDescription>
                     The agent uses Arcade as an MCP Gateway to read from your tools on your behalf.
                     Signing in here links your Arcade identity so the gateway knows which
