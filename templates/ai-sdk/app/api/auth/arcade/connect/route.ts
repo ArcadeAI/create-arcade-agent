@@ -1,6 +1,5 @@
 import {
   oauthProvider,
-  getArcadeMCPClient,
   getPendingAuthUrl,
   clearPendingAuthUrl,
   initiateOAuth,
@@ -30,23 +29,15 @@ export async function POST() {
     );
   }
 
-  // Fast path: tokens already on disk.
+  // Fast path: tokens already on disk — trust them without a live verification
+  // request. Making a live request here caused a race condition where freshly-
+  // exchanged tokens could get a transient 401 from the gateway before it fully
+  // processed them, forcing an unnecessary second sign-in. If a stored token is
+  // actually expired the plan route surfaces an auth error and the user can
+  // reconnect from the error state on the dashboard.
   const existingTokens = oauthProvider.tokens();
   if (existingTokens?.access_token) {
-    const connStatus = await verifyExistingConnection();
-    if (connStatus === "ok") return Response.json({ connected: true });
-    if (connStatus === "unreachable") {
-      // Don't trigger a new OAuth redirect for transient connectivity failures —
-      // that would force the user to re-authorize when the gateway is just briefly down.
-      return Response.json(
-        {
-          connected: false,
-          error: "Cannot reach Arcade Gateway. Check ARCADE_GATEWAY_URL and try again.",
-        },
-        { status: 502 }
-      );
-    }
-    // "needs_reauth": tokens invalid/expired — fall through to OAuth
+    return Response.json({ connected: true });
   }
 
   if (!connectPromise) {
@@ -63,7 +54,6 @@ async function doConnect(): Promise<{
   data: Record<string, unknown>;
   status?: number;
 }> {
-  let mcpClient: Awaited<ReturnType<typeof getArcadeMCPClient>> | null = null;
   try {
     // Trigger MCP OAuth flow (discovery, registration, PKCE)
     const result = await initiateOAuth();
@@ -76,12 +66,8 @@ async function doConnect(): Promise<{
       }
     }
 
-    // AUTHORIZED — verify by listing tools
-    mcpClient = await getArcadeMCPClient();
-    const tools = await mcpClient.tools();
-    return {
-      data: { connected: true, toolCount: Object.keys(tools).length },
-    };
+    // AUTHORIZED
+    return { data: { connected: true } };
   } catch {
     const authUrl = getPendingAuthUrl();
     if (authUrl) {
@@ -97,34 +83,5 @@ async function doConnect(): Promise<{
       },
       status: 502,
     };
-  } finally {
-    if (mcpClient) {
-      try {
-        await mcpClient.close();
-      } catch {
-        // Ignore close errors from failed initialization attempts.
-      }
-    }
-  }
-}
-
-async function verifyExistingConnection(): Promise<"ok" | "needs_reauth" | "unreachable"> {
-  let mcpClient: Awaited<ReturnType<typeof getArcadeMCPClient>> | null = null;
-  try {
-    mcpClient = await getArcadeMCPClient();
-    await mcpClient.tools();
-    return "ok";
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    if (/401|403|unauthorized|forbidden/i.test(msg)) return "needs_reauth";
-    return "unreachable";
-  } finally {
-    if (mcpClient) {
-      try {
-        await mcpClient.close();
-      } catch {
-        // Best effort cleanup.
-      }
-    }
   }
 }

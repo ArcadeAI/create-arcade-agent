@@ -227,12 +227,6 @@ function DashboardContent() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <ArcadeSignInButton authUrl={arcadeStatus.authUrl} />
-                <button
-                  onClick={retryConnection}
-                  className="block w-full text-sm text-muted-foreground hover:text-foreground"
-                >
-                  I&apos;ve already signed in &mdash; retry
-                </button>
                 <Alert className="text-left">
                   <Info className="size-4" />
                   <AlertTitle>Why sign into Arcade?</AlertTitle>
