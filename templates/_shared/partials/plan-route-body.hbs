@@ -131,6 +131,18 @@ export async function POST() {
     try {
       emit({ type: "status", message: "Connecting to Arcade Gateway..." });
 
+      // Wire URL elicitation events from the singleton MCP client to this
+      // request's stream. Cleared in finally so the next request starts clean.
+      let elicitationCounter = 0;
+      setElicitationCallback((authUrl, message) => {
+        emit({
+          type: "elicitation",
+          elicitationId: `elicit-${++elicitationCounter}`,
+          authUrl,
+          message,
+        });
+      });
+
       const allToolsets = await mcpClient.listToolsets();
 
       // Filter toolsets: keep only read-only triage tools, wrap execute for truncation.
@@ -300,6 +312,7 @@ export async function POST() {
       });
       emit({ type: "done" });
     } finally {
+      setElicitationCallback(null);
       try {
         streamController?.close();
       } catch {

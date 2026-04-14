@@ -181,15 +181,27 @@ export async function initiateOAuth(): Promise<"AUTHORIZED" | "REDIRECT"> {
 // of authProvider, so the singleton never triggers its own OAuth handshake and
 // races with the connect route's initiateOAuth() call.
 //
-// NOTE: URL-mode elicitation is not declared here. Arcade's URL elicitation
-// auth URLs redirect back to app.arcade.dev after tool authorization (not to
-// our local app), leaving the user stranded. Auth URLs are surfaced instead
-// via extractAuthUrlFromToolOutput in onStepFinish — same fallback approach
-// used by the AI SDK template.
+// URL-mode elicitation is declared so the gateway proactively sends auth URLs
+// when a tool needs authorization. The frontend opens these in a new tab
+// (pointing to app.arcade.dev) — this is expected for tool auth and is
+// separate from the initial Arcade gateway connection, which always redirects
+// back to localhost via PKCE.
+
+// Per-request callback bridging the singleton elicitation handler to the
+// active response stream. Safe for single-user local dev use.
+let _elicitationCallback: ((authUrl: string, message: string) => void) | null = null;
+
+export function setElicitationCallback(
+  cb: ((authUrl: string, message: string) => void) | null
+) {
+  _elicitationCallback = cb;
+}
+
 export const mcpClient = new MCPClient({
   servers: {
     arcade: {
       url: new URL(getGatewayUrl()),
+      capabilities: { elicitation: { url: {} } },
       fetch: async (url: RequestInfo | URL, init?: RequestInit) => {
         const tokens = oauthProvider.tokens();
         const headers = new Headers(init?.headers);
@@ -200,6 +212,19 @@ export const mcpClient = new MCPClient({
       },
     },
   },
+});
+
+mcpClient.elicitation.onRequest(async (request) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const params = request.params as any;
+  // Arcade sends the auth URL as params.url or params.message
+  const authUrl: string = params?.url ?? params?.message ?? "";
+  const message: string =
+    typeof params?.message === "string" ? params.message : "Authorization required";
+  if (authUrl && _elicitationCallback) {
+    _elicitationCallback(authUrl, message);
+  }
+  return { action: "accept" };
 });
 
 {{/if}}
@@ -213,12 +238,10 @@ export const mcpClient = new MCPClient({
  *   route tool auth through URL elicitation instead of embedding auth URLs in
  *   tool output — but the AI SDK client has no handler for URL-mode requests,
  *   so those requests are silently dropped and tool auth never surfaces to the
- *   user. Additionally, Arcade's URL elicitation auth URLs redirect back to
- *   app.arcade.dev after authorization (not to our local app), which would
- *   leave users stranded there even if we could receive the URLs.
+ *   user. The Mastra template uses URL-mode elicitation instead via
+ *   @mastra/mcp's mcpClient.elicitation.onRequest().
  *
- *   Revisit when @ai-sdk/mcp adds URL-mode elicitation support AND Arcade's
- *   elicitation redirect_uri points back to the originating app.
+ *   Revisit when @ai-sdk/mcp adds URL-mode elicitation support.
  *
  *   In the meantime, auth URLs are surfaced via extractAuthUrlFromToolOutput
  *   in onStepFinish, which scrapes them from tool result text.
