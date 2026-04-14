@@ -131,12 +131,6 @@ export async function POST() {
     try {
       emit({ type: "status", message: "Connecting to Arcade Gateway..." });
 
-      await ensureElicitationHandler();
-
-      setElicitationCallback(({ elicitationId, message, authUrl }) => {
-        emit({ type: "elicitation", elicitationId, authUrl, message });
-      });
-
       const allToolsets = await mcpClient.listToolsets();
 
       // Filter toolsets: keep only read-only triage tools, wrap execute for truncation.
@@ -306,7 +300,6 @@ export async function POST() {
       });
       emit({ type: "done" });
     } finally {
-      setElicitationCallback(null);
       try {
         streamController?.close();
       } catch {

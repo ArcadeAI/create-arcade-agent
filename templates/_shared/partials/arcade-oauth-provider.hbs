@@ -180,6 +180,12 @@ export async function initiateOAuth(): Promise<"AUTHORIZED" | "REDIRECT"> {
 // Mastra MCP client — uses a per-request fetch to inject bearer tokens instead
 // of authProvider, so the singleton never triggers its own OAuth handshake and
 // races with the connect route's initiateOAuth() call.
+//
+// NOTE: URL-mode elicitation is not declared here. Arcade's URL elicitation
+// auth URLs redirect back to app.arcade.dev after tool authorization (not to
+// our local app), leaving the user stranded. Auth URLs are surfaced instead
+// via extractAuthUrlFromToolOutput in onStepFinish — same fallback approach
+// used by the AI SDK template.
 export const mcpClient = new MCPClient({
   servers: {
     arcade: {
@@ -192,42 +198,9 @@ export const mcpClient = new MCPClient({
         }
         return fetch(url, { ...init, headers });
       },
-      capabilities: { elicitation: { url: {} } },
     },
   },
 });
-
-// Per-request elicitation bridge: the singleton MCPClient handles elicitation
-// at the module level, but the NDJSON emit() function is per-request.
-let _elicitationCallback: ((params: {
-  elicitationId: string;
-  message: string;
-  authUrl: string;
-}) => void) | null = null;
-
-export function setElicitationCallback(
-  cb: typeof _elicitationCallback
-) {
-  _elicitationCallback = cb;
-}
-
-// Lazy elicitation registration — called once per process from the plan route.
-// Keeping it lazy avoids an eager connect() at module load time.
-let _elicitationRegistered = false;
-
-export async function ensureElicitationHandler() {
-  if (_elicitationRegistered) return;
-  _elicitationRegistered = true;
-  await mcpClient.elicitation.onRequest("arcade", async (request) => {
-    const params = request as Record<string, unknown>;
-    const message = (params.message as string) ?? "Authorization required";
-    const authUrl = (params.url as string) ?? "";
-    const elicitationId = (params.elicitationId as string) ?? "";
-    console.log(`[MCP] Elicitation request: ${message}`);
-    _elicitationCallback?.({ elicitationId, message, authUrl });
-    return { action: "accept" as const };
-  });
-}
 
 {{/if}}
 /**

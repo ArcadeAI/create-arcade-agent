@@ -11,7 +11,7 @@
 import { Agent } from "@mastra/core/agent";
 import { getSession } from "@/lib/auth";
 import { getModel, planPrompt } from "@/src/mastra/agents/triage-agent";
-import { mcpClient, setElicitationCallback, ensureElicitationHandler } from "@/src/mastra/tools/arcade";
+import { mcpClient } from "@/src/mastra/tools/arcade";
 import type { InboxItem } from "@/types/inbox";
 
 {{> plan-route-body}}
