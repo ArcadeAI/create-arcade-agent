@@ -4,7 +4,9 @@ These routes maintain the same URLs and JSON interface as before, but delegate
 all password hashing and user management to FastAPI Users' UserManager.
 """
 
+import contextlib
 from dataclasses import dataclass
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, Response
 from fastapi.responses import JSONResponse
@@ -14,6 +16,8 @@ from pydantic import BaseModel, EmailStr
 
 from app.auth_manager import UserManager, get_jwt_strategy, get_user_manager
 from app.config import settings
+
+_ARCADE_TOKENS_FILE = Path(__file__).resolve().parents[2] / ".arcade-auth" / "tokens.json"
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -84,5 +88,8 @@ async def login(
 
 @router.post("/logout")
 async def logout(response: Response):
+    # Clear Arcade tokens so the next user who signs in has to re-authenticate.
+    with contextlib.suppress(OSError):
+        _ARCADE_TOKENS_FILE.unlink()
     response.delete_cookie("session_id", path="/")
     return {"success": True}
