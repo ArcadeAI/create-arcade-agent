@@ -195,7 +195,7 @@ export async function POST() {
         id: "plan-agent",
         name: "Plan Agent",
         model: getModel(),
-        instructions: PLAN_SYSTEM_PROMPT,
+        instructions: planPrompt,
       });
 
       const result = await agent.stream(prompt, {
