@@ -125,6 +125,13 @@ window.addEventListener("focus", () => {
   retryArcadeConnection();
 });
 
+// Re-check source statuses quickly after the user returns from an auth tab.
+// visibilitychange fires as soon as the tab becomes visible (faster than focus).
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible") return;
+  if (authPrompts.children.length) checkSourceStatuses();
+});
+
 // --- Logout ---
 logoutBtn.addEventListener("click", async () => {
   await fetch("/api/auth/logout", { method: "POST" });
@@ -310,9 +317,23 @@ function showState() {
 }
 
 // --- Auth prompts ---
+let _sourceAuthPollId = null;
+function startSourceAuthPolling() {
+  if (_sourceAuthPollId) return;
+  _sourceAuthPollId = setInterval(() => {
+    if (!authPrompts.children.length) {
+      clearInterval(_sourceAuthPollId);
+      _sourceAuthPollId = null;
+      return;
+    }
+    checkSourceStatuses();
+  }, 3000);
+}
+
 function addAuthPrompt(url, toolName) {
   if (authPrompts.querySelector(`[data-url="${CSS.escape(url)}"]`)) return;
   authPrompts.classList.remove("hidden");
+  startSourceAuthPolling();
 
   const label = toolName || "Service";
   const card = document.createElement("div");

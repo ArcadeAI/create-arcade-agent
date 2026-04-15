@@ -69,14 +69,24 @@ export function useSourceCheck(options: { enabled: boolean }): {
     checkSources();
   }, [enabled, checkSources]);
 
-  // Re-check sources when user returns from an auth tab (while gate is active)
+  // Re-check sources while the auth gate is open:
+  // - focus / visibilitychange: immediately when user switches back to this tab
+  // - setInterval: every 3s so auth completion is detected quickly even if the
+  //   user stays on the external auth page for a moment before returning
   useEffect(() => {
     if (!authGateActive) return;
-    const onFocus = () => {
-      checkSources();
+    const onFocus = () => checkSources();
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") checkSources();
     };
     window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    const interval = setInterval(checkSources, 3000);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      clearInterval(interval);
+    };
   }, [authGateActive, checkSources]);
 
   const skipSource = (source: string) => {
