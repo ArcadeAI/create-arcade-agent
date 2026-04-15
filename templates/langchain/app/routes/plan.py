@@ -240,7 +240,14 @@ async def plan(request: Request, db: AsyncSession = Depends(get_db)):
                     return False
                 return not _MUTATION.search(name)
 
-            MAX_TOOL_RESULT_CHARS = 4000
+            MAX_TOOL_RESULT_CHARS = 2000
+
+            def _truncate(result) -> str:
+                """Serialize result to string and truncate if over the limit."""
+                s = result if isinstance(result, str) else json.dumps(result)
+                if len(s) > MAX_TOOL_RESULT_CHARS:
+                    return s[:MAX_TOOL_RESULT_CHARS] + f"\n...[truncated {len(s) - MAX_TOOL_RESULT_CHARS} chars]"
+                return s
 
             def _wrap_tool(tool):
                 """Wrap a tool to truncate large results and prevent context overflow."""
@@ -249,29 +256,14 @@ async def plan(request: Request, db: AsyncSession = Depends(get_db)):
 
                 async def _truncated_ainvoke(*args, **kwargs):
                     result = await original_coroutine(*args, **kwargs)
-                    if isinstance(result, str) and len(result) > MAX_TOOL_RESULT_CHARS:
-                        return (
-                            result[:MAX_TOOL_RESULT_CHARS]
-                            + f"\n...[truncated {len(result) - MAX_TOOL_RESULT_CHARS} chars]"
-                        )
-                    return result
+                    return _truncate(result)
 
                 updates = {"coroutine": _truncated_ainvoke}
                 if original_func is not None:
 
                     def _truncated_invoke(*args, **kwargs):
                         result = original_func(*args, **kwargs)
-                        s = (
-                            result
-                            if isinstance(result, str)
-                            else (json.dumps(result) if result else "")
-                        )
-                        if len(s) > MAX_TOOL_RESULT_CHARS:
-                            return (
-                                s[:MAX_TOOL_RESULT_CHARS]
-                                + f"\n...[truncated {len(s) - MAX_TOOL_RESULT_CHARS} chars]"
-                            )
-                        return result
+                        return _truncate(result)
 
                     updates["func"] = _truncated_invoke
 
@@ -337,9 +329,12 @@ async def plan(request: Request, db: AsyncSession = Depends(get_db)):
                 "work, upcoming events, and unread messages."
             )
 
+            # recursion_limit counts graph-node transitions; react_agent has
+            # 2 nodes (agent + tools), so limit 40 ≈ 20 LLM iterations.
             async for event in agent.astream(
                 {"messages": [HumanMessage(content=user_message)]},
                 stream_mode="updates",
+                config={"recursion_limit": 40},
             ):
                 # Drain any elicitation events that arrived during tool execution
                 while elicitation_events:
