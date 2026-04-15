@@ -64,13 +64,17 @@ export function useArcadeConnection(): {
 
   useEffect(() => {
     checkConnection();
-    const onFocus = () => {
+    const onFocusOrVisible = () => {
       if (Date.now() - lastCheckRef.current < 2000) return;
       authInProgress.current = false; // User returned from OAuth tab — re-check
       checkConnection();
     };
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
+    window.addEventListener("focus", onFocusOrVisible);
+    document.addEventListener("visibilitychange", onFocusOrVisible);
+    return () => {
+      window.removeEventListener("focus", onFocusOrVisible);
+      document.removeEventListener("visibilitychange", onFocusOrVisible);
+    };
   }, [checkConnection]);
 
   const retryConnection = useCallback(() => checkConnection({ isRetry: true }), [checkConnection]);
